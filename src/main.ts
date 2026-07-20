@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Ağ Atan Örümcek, Gezgin Uğur Böceği & 5 Ateşböceği Türü
-// Özellikler: Örümcek Ağ Çekimi, Gezgin Uğur Böceği Yörüngesi, Mor Mistik (+2) & Kızıl Yakut (Ağ Kıran) Ateşböcekleri.
+// ATEŞBÖCEKLERİ — Yuvarlak Fanus, Ultra Dribbble/Awwwards Vektör Karakterler & Tipografi
+// Özellikler: 3D Spherical Glass Fanus, Kristal Avcı Örümcek, Lüks Uğur Böceği, Modern 'Outfit' Tipografi.
 
 import {
   type FireflySubtype,
@@ -64,11 +64,9 @@ interface Critter {
   dead?: boolean;
   beingPulled?: boolean;
   pullAngle?: number;
-  // Örümcek Mekanik Süreleri
   webActive?: boolean;
   webTimer?: number;
   webCooldown?: number;
-  // Uğur Böceği Yörünge Parametreleri
   roamAngle?: number;
   roamSpeed?: number;
 }
@@ -127,7 +125,7 @@ const shake: Shake = { power: 0, t: 0 };
 let soundEnabled = true;
 let highMagnet = false;
 
-// Kavanoz Fizik & Kovalama Değişkenleri
+// Yuvarlak Fanus Fizik & Kovalama Değişkenleri
 let jarSquash = 0;
 let jarWobble = 0;
 let jarTilt = 0;
@@ -158,8 +156,8 @@ const levelGridButtons: { level: number; x: number; y: number; w: number; h: num
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
-  jar.w = 100 * SCALE;
-  jar.h = 116 * SCALE;
+  jar.w = 110 * SCALE; // Fanus genişliği
+  jar.h = 110 * SCALE; // Yuvarlak Fanus yüksekliği
   jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
@@ -256,7 +254,7 @@ function syncJarFireflies() {
   while (jarFireflies.length < caught) {
     jarFireflies.push({
       rx: (Math.random() - 0.5) * 0.5,
-      ry: -0.3 - Math.random() * 0.4,
+      ry: (Math.random() - 0.5) * 0.5,
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       t: Math.random() * 10,
@@ -272,14 +270,13 @@ function spawnCritter() {
   const isHazard = Math.random() < levelCfg.waspChance;
 
   if (!isHazard) {
-    // 5 Farklı Ateşböceği Türü (Gold, Emerald, Azure, Purple, Red)
     const amp = (14 + Math.random() * 20) * SCALE;
     let subType: FireflySubtype = "gold";
     const r = Math.random();
     if (r < 0.22) subType = "emerald";
     else if (r < 0.42) subType = "azure";
-    else if (r < 0.62) subType = "purple"; // Mor Mistik (+2 Işık)
-    else if (r < 0.78) subType = "red";    // Kızıl Yakut (Ağ Kıran)
+    else if (r < 0.62) subType = "purple";
+    else if (r < 0.78) subType = "red";
 
     critters.push({
       id: nextCritterId++,
@@ -296,7 +293,6 @@ function spawnCritter() {
       pullAngle: Math.random() * Math.PI * 2,
     });
   } else {
-    // Engel Üret
     const allowed = levelCfg.allowedHazards;
     const activeLadybugs = critters.filter((c) => c.kind === "ladybug" && !c.dead).length;
     const canSpawnLadybug = allowed.includes("ladybug") && activeLadybugs < levelCfg.maxLadybugs;
@@ -309,7 +305,6 @@ function spawnCritter() {
     }
 
     if (kind === "ladybug") {
-      // Gezgin Uğur Böceği (Ekrandan çıkmaz, sürekli gezinir)
       critters.push({
         id: nextCritterId++,
         kind: "ladybug",
@@ -320,12 +315,11 @@ function spawnCritter() {
         t: Math.random() * 10,
         amp: 40 * SCALE,
         freq: 0.3 + Math.random() * 0.2,
-        r: 12 * SCALE,
+        r: 13 * SCALE,
         roamAngle: Math.random() * Math.PI * 2,
-        roamSpeed: (40 + Math.random() * 30) * SCALE,
+        roamSpeed: (35 + Math.random() * 25) * SCALE,
       });
     } else if (kind === "spider") {
-      // Ağ Atan Avcı Örümcek
       critters.push({
         id: nextCritterId++,
         kind: "spider",
@@ -336,13 +330,12 @@ function spawnCritter() {
         t: Math.random() * 10,
         amp: 30 * SCALE,
         freq: 0.2,
-        r: 16 * SCALE,
+        r: 17 * SCALE,
         webActive: false,
         webTimer: 0,
-        webCooldown: 1.2 + Math.random() * 2.0, // Belirli bir süre sonra ağ atar
+        webCooldown: 1.2 + Math.random() * 2.0,
       });
     } else {
-      // Eşek Arısı
       const amp = (40 + Math.random() * 32) * SCALE;
       critters.push({
         id: nextCritterId++,
@@ -562,7 +555,6 @@ function updateJar(dt: number) {
     jar.y += jarVy * dt;
   }
 
-  // Örümcek Ağının Kavanoza Çekim Fizik Kuvveti
   for (const c of critters) {
     if (c.kind === "spider" && c.webActive && !c.dead) {
       const spX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
@@ -661,30 +653,6 @@ function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
   ctx.restore();
 }
 
-function drawMagnetIcon(x: number, y: number, size: number, color = "#38bdf8") {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.6 * SCALE;
-  ctx.lineCap = "round";
-
-  const w = size * 0.45;
-  const h = size * 0.55;
-
-  ctx.beginPath();
-  ctx.arc(0, -h * 0.2, w, Math.PI, 0);
-  ctx.lineTo(w, h * 0.4);
-  ctx.moveTo(-w, -h * 0.2);
-  ctx.lineTo(-w, h * 0.4);
-  ctx.stroke();
-
-  ctx.fillStyle = color;
-  ctx.fillRect(-w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
-  ctx.fillRect(w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
-
-  ctx.restore();
-}
-
 // --- Efektler & Metin Kırma --------------------------------------------------
 function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 20) {
   for (let i = 0; i < count; i++) {
@@ -764,9 +732,7 @@ function update(dt: number) {
     for (const c of critters) {
       c.t += dt;
 
-      // Özel Hareket Mekanikleri
       if (c.kind === "ladybug") {
-        // Gezgin Uğur Böceği: Ekrandan çıkmaz, yavaşça yumuşak yörüngede uçar
         c.roamAngle = (c.roamAngle || 0) + dt * 0.8;
         const roamVx = Math.cos(c.roamAngle) * (c.roamSpeed || 40 * SCALE);
         const roamVy = Math.sin(c.roamAngle * 1.5) * (c.roamSpeed || 40 * SCALE) * 0.6;
@@ -777,14 +743,13 @@ function update(dt: number) {
         c.baseX = Math.max(40 * SCALE, Math.min(W - 40 * SCALE, c.baseX));
         c.y = Math.max(H * 0.15, Math.min(H * 0.65, c.y));
       } else if (c.kind === "spider") {
-        // Ağ Atan Örümcek
-        c.y += fallSpeed * SCALE * dt * 0.3; // Yavaşça aşağı iner
+        c.y += fallSpeed * SCALE * dt * 0.3;
 
         if (!c.webActive) {
           c.webCooldown = (c.webCooldown || 0) - dt;
           if (c.webCooldown <= 0) {
             c.webActive = true;
-            c.webTimer = 2.8; // 2.8 Saniye boyunca kavanoza ağ çeker
+            c.webTimer = 2.8;
             addFloatingText(sway(c.t, c.baseX, c.amp, c.freq), c.y, "AĞ ATILDI!", "#c084fc");
           }
         } else {
@@ -800,7 +765,6 @@ function update(dt: number) {
         c.offsetX = aggrX - c.baseX;
         c.offsetY = extraY;
       } else {
-        // Ateşböceği
         c.y += fallSpeed * SCALE * dt;
       }
 
@@ -883,11 +847,10 @@ function update(dt: number) {
         let pColor = "hsl(52 100% 75%)";
 
         if (c.subType === "purple") {
-          pts = 2; // Mor Mistik +2
+          pts = 2;
           pColor = "hsl(280 100% 80%)";
           addFloatingText(x, y - 15 * SCALE, "+2 MOR MİSTİK!", "#e879f9");
         } else if (c.subType === "red") {
-          // Kızıl Yakut: Ağları anında yakar!
           pColor = "hsl(350 100% 75%)";
           for (const sp of critters) {
             if (sp.kind === "spider") sp.webActive = false;
@@ -896,7 +859,7 @@ function update(dt: number) {
         } else if (c.subType === "emerald") {
           magnetBoostTimer = 3.5;
           pColor = "hsl(150 100% 70%)";
-          addFloatingText(x, y - 15 * SCALE, "+1 MIผู้KNA TIS!", "#6ee7b7");
+          addFloatingText(x, y - 15 * SCALE, "+1 MIKNATIS!", "#6ee7b7");
         } else if (c.subType === "azure") {
           speedBoostTimer = 3.5;
           pColor = "hsl(200 100% 75%)";
@@ -927,7 +890,6 @@ function update(dt: number) {
           burst(W / 2, H * 0.4, "hsl(150 100% 75%)", 30);
         }
       } else {
-        // Engeller (Arı, Örümcek, Uğur Böceği)
         caught = Math.max(caught - 1, 0);
         syncJarFireflies();
         waspHitFlash = 0.42;
@@ -948,7 +910,7 @@ function update(dt: number) {
     jf.rx += jf.vx * dt;
     jf.ry += jf.vy * dt;
     if (jf.rx < -0.36 || jf.rx > 0.36) jf.vx *= -1;
-    if (jf.ry < -0.8 || jf.ry > -0.15) jf.vy *= -1;
+    if (jf.ry < -0.36 || jf.ry > 0.36) jf.vy *= -1;
     jf.vx += (Math.random() - 0.5) * dt * 2;
     jf.vy += (Math.random() - 0.5) * dt * 2;
     jf.vx = Math.max(-0.5, Math.min(0.5, jf.vx));
@@ -1132,7 +1094,7 @@ function drawBackground() {
 
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
-  const jarMouthY = jar.y - 8 * SCALE;
+  const jarMouthY = jar.y + 12 * SCALE; // Yuvarlak fanus ağzı
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -1170,7 +1132,6 @@ function drawSuctionBeams() {
       }
     }
 
-    // Örümcek Ağı Lazer İpeği Çizimi
     if (c.kind === "spider" && c.webActive && !c.dead) {
       const spX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
       const spY = c.y + c.offsetY;
@@ -1390,15 +1351,110 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.restore();
 }
 
+// ULTRA-HIGH END KRİSTAL AVCI ÖRÜMCEK (Dribbble/Awwwards Grade)
 function drawSpider(x: number, y: number, r: number, t: number, webActive = false) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Mor Işık Aurası
+  // Parlayan Mor/Siyan Ağ Aurası
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3.2);
+  g.addColorStop(0, webActive ? "rgba(232, 121, 249, 0.75)" : "rgba(168, 85, 247, 0.35)");
+  g.addColorStop(0.5, "rgba(126, 34, 206, 0.18)");
+  g.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 8 Eklem Bacaklı Kristal Bacaklar
+  ctx.strokeStyle = "#c084fc";
+  ctx.lineWidth = 2.4 * SCALE;
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < 4; i++) {
+    const legAngle = -0.7 + i * 0.45 + Math.sin(t * 4 + i) * 0.08;
+    
+    // Sol Bacaklar
+    ctx.save();
+    ctx.rotate(legAngle);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-r * 1.3, -r * 0.9);
+    ctx.lineTo(-r * 2.3, r * 0.6);
+    ctx.stroke();
+    
+    ctx.fillStyle = "#e879f9";
+    ctx.beginPath();
+    ctx.arc(-r * 1.3, -r * 0.9, 2.2 * SCALE, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Sağ Bacaklar
+    ctx.save();
+    ctx.rotate(-legAngle);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(r * 1.3, -r * 0.9);
+    ctx.lineTo(r * 2.3, r * 0.6);
+    ctx.stroke();
+
+    ctx.fillStyle = "#e879f9";
+    ctx.beginPath();
+    ctx.arc(r * 1.3, -r * 0.9, 2.2 * SCALE, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Örümcek Segmentli Gövde (Obsidyen & Violet Kristal)
+  const bodyG = ctx.createLinearGradient(-r, -r, r, r);
+  bodyG.addColorStop(0, "#581c87");
+  bodyG.addColorStop(0.5, "#3b0764");
+  bodyG.addColorStop(1, "#1e1b4b");
+
+  ctx.fillStyle = bodyG;
+  ctx.strokeStyle = "rgba(232, 121, 249, 0.6)";
+  ctx.lineWidth = 1.5 * SCALE;
+
+  // Arka Karın (Abdomen)
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.35, r * 0.85, r * 1.15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Ön Baş (Cephalothorax)
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.5, r * 0.58, r * 0.58, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Parlayan 6 Kristal Göz
+  ctx.fillStyle = "#f43f5e";
+  ctx.beginPath();
+  ctx.arc(-r * 0.24, -r * 0.65, r * 0.14, 0, Math.PI * 2);
+  ctx.arc(r * 0.24, -r * 0.65, r * 0.14, 0, Math.PI * 2);
+  ctx.arc(-r * 0.1, -r * 0.45, r * 0.09, 0, Math.PI * 2);
+  ctx.arc(r * 0.1, -r * 0.45, r * 0.09, 0, Math.PI * 2);
+  ctx.arc(-r * 0.35, -r * 0.48, r * 0.08, 0, Math.PI * 2);
+  ctx.arc(r * 0.35, -r * 0.48, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ULTRA-HIGH END GEZGİN UĞUR BÖCEĞİ (Dribbble/Awwwards Grade)
+function drawLadybug(x: number, y: number, r: number, t: number) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Parlayan Kızıl Parıltı Aurası
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.8);
-  g.addColorStop(0, webActive ? "rgba(232, 121, 249, 0.65)" : "rgba(168, 85, 247, 0.4)");
+  g.addColorStop(0, "rgba(244, 63, 94, 0.45)");
+  g.addColorStop(0.5, "rgba(225, 29, 72, 0.2)");
   g.addColorStop(1, "rgba(0, 0, 0, 0)");
   ctx.fillStyle = g;
   ctx.beginPath();
@@ -1406,135 +1462,103 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   ctx.fill();
   ctx.restore();
 
-  // 8 Bacak (Zarif Vektör Çizim)
-  ctx.strokeStyle = "#a855f7";
-  ctx.lineWidth = 2.2 * SCALE;
-  for (let i = 0; i < 4; i++) {
-    const angle = -0.6 + i * 0.4;
-    ctx.save();
-    ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(-r * 1.8, -r * 0.8, -r * 2.2, r * 0.4);
-    ctx.stroke();
-    ctx.restore();
+  // Saydam İç Kanatlar (Iridescent Wing Membrane)
+  const wingFlutter = Math.sin(t * 36) * 0.45;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.lineWidth = 1 * SCALE;
 
-    ctx.save();
-    ctx.rotate(-angle);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(r * 1.8, -r * 0.8, r * 2.2, r * 0.4);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // Örümcek Gövdesi
-  ctx.fillStyle = "#3b0764";
-  ctx.beginPath();
-  ctx.ellipse(0, r * 0.2, r * 0.75, r * 0.95, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#581c87";
-  ctx.beginPath();
-  ctx.ellipse(0, -r * 0.45, r * 0.5, r * 0.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Parlayan Gözler
-  ctx.fillStyle = "#f43f5e";
-  ctx.beginPath();
-  ctx.arc(-r * 0.2, -r * 0.6, r * 0.12, 0, Math.PI * 2);
-  ctx.arc(r * 0.2, -r * 0.6, r * 0.12, 0, Math.PI * 2);
-  ctx.arc(-r * 0.08, -r * 0.4, r * 0.08, 0, Math.PI * 2);
-  ctx.arc(r * 0.08, -r * 0.4, r * 0.08, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.save();
-  ctx.translate(x, y);
-
-  // Kırmızı Parıltı Aurası
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.5);
-  g.addColorStop(0, "rgba(244, 63, 94, 0.4)");
-  g.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = g;
+  ctx.rotate(-0.45 - wingFlutter);
   ctx.beginPath();
-  ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
+  ctx.ellipse(-r * 1.0, 0, r * 1.25, r * 0.48, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.restore();
-
-  // Çırpınan Saydam Kanatlar
-  const wingFlutter = Math.sin(t * 32) * 0.4;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-  ctx.save();
-  ctx.rotate(-0.4 - wingFlutter);
-  ctx.beginPath();
-  ctx.ellipse(-r * 0.9, 0, r * 1.1, r * 0.45, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.stroke();
   ctx.restore();
 
   ctx.save();
-  ctx.rotate(0.4 + wingFlutter);
+  ctx.rotate(0.45 + wingFlutter);
   ctx.beginPath();
-  ctx.ellipse(r * 0.9, 0, r * 1.1, r * 0.45, 0, 0, Math.PI * 2);
+  ctx.ellipse(r * 1.0, 0, r * 1.25, r * 0.48, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
   ctx.restore();
 
-  // Kırmızı Yakut Kabuk
-  ctx.fillStyle = "#e11d48";
+  // 3D Parlak Yakut Kabuk (Elytra)
+  const shellG = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r * 1.2);
+  shellG.addColorStop(0, "#fb7185");
+  shellG.addColorStop(0.4, "#e11d48");
+  shellG.addColorStop(1, "#881337");
+
+  ctx.fillStyle = shellG;
   ctx.beginPath();
-  ctx.ellipse(0, 0, r * 0.8, r * 0.9, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, r * 0.1, r * 0.88, r * 0.98, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Siyah Benekler
+  // Kabuk Siyah Bölme Çizgisi
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 1.8 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.85);
+  ctx.lineTo(0, r * 1.05);
+  ctx.stroke();
+
+  // Siyah Parlak Benekler
+  ctx.fillStyle = "#090d16";
+  ctx.beginPath();
+  ctx.arc(-r * 0.4, -r * 0.25, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(r * 0.4, -r * 0.25, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(-r * 0.42, r * 0.35, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(r * 0.42, r * 0.35, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(0, r * 0.1, r * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Obsidyen Baş & Şirin Gözler
   ctx.fillStyle = "#0f172a";
   ctx.beginPath();
-  ctx.arc(-r * 0.35, -r * 0.2, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(r * 0.35, -r * 0.2, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(-r * 0.35, r * 0.3, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(r * 0.35, r * 0.3, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(0, -r * 0.72, r * 0.38, 0, Math.PI * 2);
   ctx.fill();
 
-  // Baş & Duyargalar
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(0, -r * 0.7, r * 0.35, 0, Math.PI * 2);
+  ctx.arc(-r * 0.16, -r * 0.82, r * 0.1, 0, Math.PI * 2);
+  ctx.arc(r * 0.16, -r * 0.82, r * 0.1, 0, Math.PI * 2);
   ctx.fill();
 
+  // Zarif Duyargalar
   ctx.strokeStyle = "#0f172a";
-  ctx.lineWidth = 1.5 * SCALE;
+  ctx.lineWidth = 1.6 * SCALE;
   ctx.beginPath();
-  ctx.moveTo(-r * 0.15, -r * 0.9);
-  ctx.lineTo(-r * 0.4, -r * 1.3);
-  ctx.moveTo(r * 0.15, -r * 0.9);
-  ctx.lineTo(r * 0.4, -r * 1.3);
+  ctx.moveTo(-r * 0.15, -r * 0.95);
+  ctx.quadraticCurveTo(-r * 0.4, -r * 1.3, -r * 0.6, -r * 1.4);
+  ctx.moveTo(r * 0.15, -r * 0.95);
+  ctx.quadraticCurveTo(r * 0.4, -r * 1.3, r * 0.6, -r * 1.4);
   ctx.stroke();
 
   ctx.restore();
 }
 
+// 3D YUVARLAK CAM FANUS (Spherical Glass Bowl Terrarium)
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
+  const r = w / 2; // Fanus yarıçapı
   const glow = caught / levelCfg.target;
 
   ctx.save();
 
+  // 1. Dış Dairesel Işık Parıltısı (Pürüzsüz Kesintisiz Arc)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const glowR = w * 0.72;
-    const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
+    const glowR = r * 1.4;
+    const fillGlow = ctx.createRadialGradient(0, -r, 0, 0, -r, glowR);
     fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
     fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
     fillGlow.addColorStop(1, "hsl(52 100% 60% / 0)");
     ctx.fillStyle = fillGlow;
     ctx.beginPath();
-    ctx.arc(0, -h * 0.45, glowR, 0, Math.PI * 2);
+    ctx.arc(0, -r, glowR, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -1544,19 +1568,21 @@ function drawJar() {
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.7})`;
     ctx.beginPath();
-    ctx.roundRect(-w / 2 - 6 * SCALE, -h - 12 * SCALE, w + 12 * SCALE, h + 16 * SCALE, 16 * SCALE);
+    ctx.arc(0, -r, r + 8 * SCALE, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
+  // 2. Cam Fanus Gövdesi (Yuvarlak Küre)
   ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
   ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
+  ctx.arc(0, -r, r, 0, Math.PI * 2);
   ctx.fill();
 
-  const neckW = w * 0.82;
+  // Fanus Boynu ve Mantar Tıpa (Spherical Neck)
+  const neckW = w * 0.52;
   const neckH = 14 * SCALE;
-  const neckY = -h - neckH * 0.5;
+  const neckY = -h - 4 * SCALE;
 
   const corkG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
   corkG.addColorStop(0, "#8c5a32");
@@ -1564,28 +1590,22 @@ function drawJar() {
   corkG.addColorStop(1, "#6e4324");
   ctx.fillStyle = corkG;
   ctx.beginPath();
-  ctx.roundRect(-neckW * 0.44, neckY - 12 * SCALE, neckW * 0.88, 14 * SCALE, 4 * SCALE);
+  ctx.roundRect(-neckW * 0.42, neckY - 10 * SCALE, neckW * 0.84, 12 * SCALE, 4 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "rgba(195, 230, 255, 0.38)";
   ctx.strokeStyle = "rgba(220, 245, 255, 0.75)";
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 5 * SCALE);
+  ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 4 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = "#d4a373";
-  ctx.lineWidth = 2.5 * SCALE;
-  ctx.beginPath();
-  ctx.moveTo(-neckW / 2 + 2 * SCALE, neckY + neckH / 2);
-  ctx.lineTo(neckW / 2 - 2 * SCALE, neckY + neckH / 2);
-  ctx.stroke();
-
+  // 3. Sıvı Işık Dolgusu (Yuvarlak Fanusa Kırpılmış Liquid)
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(-w / 2 + 3 * SCALE, -h + 3 * SCALE, w - 6 * SCALE, h - 6 * SCALE, 12 * SCALE);
+    ctx.arc(0, -r, r - 3 * SCALE, 0, Math.PI * 2);
     ctx.clip();
 
     const liquidH = h * 0.7 * glow;
@@ -1598,18 +1618,19 @@ function drawJar() {
 
     ctx.fillStyle = liqG;
     ctx.beginPath();
-    ctx.moveTo(-w / 2, 0);
-    ctx.lineTo(-w / 2, liquidY + sloshing);
-    ctx.quadraticCurveTo(0, liquidY - sloshing, w / 2, liquidY + sloshing);
-    ctx.lineTo(w / 2, 0);
+    ctx.moveTo(-r, 0);
+    ctx.lineTo(-r, liquidY + sloshing);
+    ctx.quadraticCurveTo(0, liquidY - sloshing, r, liquidY + sloshing);
+    ctx.lineTo(r, 0);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
   }
 
+  // 4. İçeride Süzülen Ateşböcekleri
   for (const jf of jarFireflies) {
-    const fx = jf.rx * w;
-    const fy = jf.ry * h;
+    const fx = jf.rx * (r * 1.3);
+    const fy = -r + jf.ry * (r * 1.3);
     const pulse = 0.8 + 0.2 * Math.sin(jf.t * 8);
 
     ctx.save();
@@ -1630,23 +1651,21 @@ function drawJar() {
     ctx.fill();
   }
 
-  ctx.strokeStyle = "rgba(215, 240, 255, 0.65)";
-  ctx.lineWidth = 2.8 * SCALE;
+  // 5. 3D Cam Yansımaları ve Yuvarlak Çerçeve
+  ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
+  ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
   ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
+  ctx.arc(0, -r, r, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.32)";
+  // Cam Küre Hilal Yansıması (Curved Highlight)
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.lineWidth = 4 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(-w / 2 + 5 * SCALE, -h + 8 * SCALE, 6 * SCALE, h - 22 * SCALE, 3 * SCALE);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-  ctx.beginPath();
-  ctx.roundRect(w / 2 - 8 * SCALE, -h + 12 * SCALE, 3.5 * SCALE, h - 28 * SCALE, 2 * SCALE);
-  ctx.fill();
+  ctx.arc(0, -r, r - 6 * SCALE, Math.PI * 0.75, Math.PI * 1.25);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -1671,7 +1690,7 @@ function drawHUD() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${11 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${11 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`BÖLÜM ${levelCfg.level}/10 • ${levelCfg.name.toUpperCase()}`, lvlX + 16 * SCALE, lvlY + 8 * SCALE);
 
   const barX = lvlX + 16 * SCALE;
@@ -1698,7 +1717,7 @@ function drawHUD() {
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fef08a";
-  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${caught}/${levelCfg.target}`, lvlX + lvlW - 14 * SCALE, lvlY + lvlH / 2 + 1 * SCALE);
 
   const btnSize = 46 * SCALE;
@@ -1749,7 +1768,7 @@ function drawHUD() {
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 32 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -1794,12 +1813,12 @@ function drawLevelSelectModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BÖLÜM SEÇİMİ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText("10 EFSANEVİ BÖLÜM TABLOSU", W / 2, cardY + 58 * SCALE);
 
   const gridW = cardW - 48 * SCALE;
@@ -1834,7 +1853,7 @@ function drawLevelSelectModal() {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = isCurrent ? "#fef08a" : "#60a5fa";
-    ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(`BÖLÜM ${lvl.level}`, bx + colW / 2, by + 12 * SCALE);
 
     ctx.fillStyle = "#ffffff";
@@ -1846,7 +1865,7 @@ function drawLevelSelectModal() {
     ctx.fillText(`Hedef: ${lvl.target}`, bx + colW / 2, by + 68 * SCALE);
 
     ctx.fillStyle = lvl.allowedHazards.includes("spider") ? "#c084fc" : lvl.allowedHazards.includes("ladybug") ? "#f43f5e" : "#facc15";
-    ctx.font = `600 ${9 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `700 ${9 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(lvl.allowedHazards.length > 1 ? "ÖZEL BÖCEKLER" : "ARI", bx + colW / 2, by + 115 * SCALE);
   }
 
@@ -1868,7 +1887,7 @@ function drawLevelSelectModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("GERİ DÖN", W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -1904,7 +1923,7 @@ function drawModalCard(
   ctx.stroke();
 
   const heroJarX = cardX + 54 * SCALE;
-  const heroJarY = cardY + 65 * SCALE;
+  const heroJarY = cardY + 70 * SCALE;
   ctx.save();
   ctx.translate(heroJarX, heroJarY);
   ctx.scale(0.55, 0.55);
@@ -1934,12 +1953,12 @@ function drawModalCard(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = isWin ? "#fef08a" : "#fca5a5";
-  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(statusBadge, W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
   const gridW = cardW - 64 * SCALE;
@@ -1998,11 +2017,11 @@ function drawModalCard(
     }
 
     ctx.fillStyle = s.color;
-    ctx.font = `800 ${28 * SCALE * cardScale}px 'Outfit', sans-serif`;
+    ctx.font = `900 ${28 * SCALE * cardScale}px 'Outfit', sans-serif`;
     ctx.fillText(displayVal, cx + colW / 2, gridY + 48 * SCALE);
 
     ctx.fillStyle = "#cbd5e1";
-    ctx.font = `500 ${12 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `600 ${12 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(s.unit, cx + colW / 2, gridY + 98 * SCALE);
 
     ctx.restore();
@@ -2047,7 +2066,7 @@ function drawModalCard(
 
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -2092,12 +2111,12 @@ function drawTutorialModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("OYUN REHBERİ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText("BÖCEKLER & AĞ MEKANİĞİ", W / 2, cardY + 62 * SCALE);
 
   const gridW = cardW - 56 * SCALE;
@@ -2108,9 +2127,9 @@ function drawTutorialModal() {
   const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK AĞI", desc: "Kavanoza ipek ağ atarak seni yavaşça çeker. Karşı yöne asılarak ağdan kurtul!" },
+    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK AĞI", desc: "Fanusa ipek ağ atarak seni yavaşça çeker. Karşı yöne asılarak ağdan kurtul!" },
     { drawIcon: (x: number, y: number) => drawLadybug(x, y, 10 * SCALE, elapsed), title: "GEZGİN UĞUR BÖCEĞİ", desc: "Ekrandan hiç çıkmaz, sürekli yumuşak yörüngede uçar. Çarpmamaya dikkat et!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta fanusa tam +2 ışık kazandırır." },
     { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Yakalandığında Örümceğin bağlı olduğu ağı anında yakarak yok eder!" },
   ];
 
@@ -2140,7 +2159,7 @@ function drawTutorialModal() {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillStyle = "#fef08a";
-    ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(r.title, cx + 58 * SCALE, cy + 22 * SCALE);
 
     ctx.fillStyle = "#94a3b8";
@@ -2168,7 +2187,7 @@ function drawTutorialModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("OYUNA BAŞLA", W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -2213,18 +2232,17 @@ function drawSettingsModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#94a3b8";
-  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("SİSTEM MENÜSÜ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/10`, W / 2, cardY + 56 * SCALE);
 
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
 
-  // Row 1: Ses
   const row1Y = cardY + 105 * SCALE;
   const rowH = 64 * SCALE;
 
@@ -2239,7 +2257,7 @@ function drawSettingsModal() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("SES EFEKTLERİ", rowX + 24 * SCALE, row1Y + 14 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
@@ -2260,10 +2278,9 @@ function drawSettingsModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, toggle1Y + toggle1H / 2);
 
-  // Row 2: Vakum
   const row2Y = row1Y + rowH + 12 * SCALE;
 
   ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
@@ -2277,7 +2294,7 @@ function drawSettingsModal() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 24 * SCALE, row2Y + 14 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
@@ -2285,7 +2302,7 @@ function drawSettingsModal() {
   ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 24 * SCALE, row2Y + 36 * SCALE);
 
   const toggle2W = 110 * SCALE;
-  const toggle2H = 38 * SCALE;
+  const toggle2H = 36 * SCALE;
   const toggle2X = rowX + rowW - toggle2W - 16 * SCALE;
   const toggle2Y = row2Y + (rowH - toggle2H) / 2;
   uiButtons.toggleMagnet = { x: toggle2X, y: toggle2Y, w: toggle2W, h: toggle2H };
@@ -2298,10 +2315,9 @@ function drawSettingsModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, toggle2Y + toggle2H / 2);
 
-  // Row 3: 10 Bölüm Seçim Butonu
   const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnLvlH = 44 * SCALE;
   const btnLvlX = (W - btnLvlW) / 2;
@@ -2320,10 +2336,9 @@ function drawSettingsModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#93c5fd";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BÖLÜM SEÇİM TABLOSU (10 LEVEL)", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
 
-  // Butonlar
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnH = 46 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -2340,7 +2355,7 @@ function drawSettingsModal() {
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${16 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("DEVAM ET", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
   const btn2Y = cardY + cardH - 62 * SCALE;
@@ -2355,7 +2370,7 @@ function drawSettingsModal() {
   ctx.stroke();
 
   ctx.fillStyle = "#fca5a5";
-  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -2402,7 +2417,7 @@ function draw() {
     ctx.save();
     ctx.globalAlpha = ft.life / ft.max;
     ctx.fillStyle = ft.color;
-    ctx.font = `800 ${22 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `900 ${22 * SCALE}px 'Outfit', sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(ft.text, ft.x, ft.y);
     ctx.restore();
