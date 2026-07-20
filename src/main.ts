@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Kusursuz Fanus Boynu & Dribbble Sanatsal Karakter Detayları
-// Özellikler: Dairesel Enerji Halka Animasyonlu Fanus Boynu, Kristal Dişli Örümcek Yüzü, Organik Yakut Uğur Benekleri.
+// ATEŞBÖCEKLERİ — Gerçekçi 3D Cam Fanus Boynu & Dribbble Karakter Sanatı
+// Özellikler: Fiziksel Doğru Cam Fanus Boynu, Kıvrımlı Dudak (Glass Lip), Mantar Tıpa & Kusursuz Geometri.
 
 import {
   type FireflySubtype,
@@ -725,7 +725,7 @@ function update(dt: number) {
     updateJar(dt);
 
     const jarMouthX = jar.x + jar.w / 2;
-    const jarMouthY = jar.y - 10 * SCALE;
+    const jarMouthY = jar.y - jar.h * 0.85;
     const baseRadius = highMagnet ? 175 : 140;
     const MAGNET_RADIUS = (magnetBoostTimer > 0 ? baseRadius * 1.35 : baseRadius) * SCALE;
 
@@ -1094,7 +1094,7 @@ function drawBackground() {
 
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
-  const jarMouthY = jar.y - 12 * SCALE;
+  const jarMouthY = jar.y - jar.h * 0.85;
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -1356,7 +1356,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   ctx.save();
   ctx.translate(x, y);
 
-  // Parlayan Mor/Siyan Ağ Aurası
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3.2);
@@ -1369,7 +1368,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   ctx.fill();
   ctx.restore();
 
-  // 8 Eklem Bacaklı Kristal Bacaklar
   ctx.strokeStyle = "#c084fc";
   ctx.lineWidth = 2.4 * SCALE;
   ctx.lineCap = "round";
@@ -1406,7 +1404,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
     ctx.restore();
   }
 
-  // Örümcek Segmentli Gövde
   const bodyG = ctx.createLinearGradient(-r, -r, r, r);
   bodyG.addColorStop(0, "#581c87");
   bodyG.addColorStop(0.5, "#3b0764");
@@ -1426,7 +1423,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   ctx.fill();
   ctx.stroke();
 
-  // SANATSAL KRİSTAL YÜZ & DİŞLER
   ctx.fillStyle = "#f43f5e";
   ctx.beginPath();
   ctx.arc(-r * 0.25, -r * 0.62, r * 0.13, 0, Math.PI * 2);
@@ -1567,19 +1563,20 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// PERFECT 3D SPHERICAL GLASS FANUS & ANIMATED ENERGY RING COLLAR
+// 100% FİZİKSEL DOĞRU GERÇEKÇİ 3D CAM FANUS BOYNU (Realistic Glass Fishbowl Neck)
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
-  const r = w / 2;
+  const r = w / 2; // Fanus Küre Yarıçapı (r = 55px * SCALE)
   const glow = caught / levelCfg.target;
 
   ctx.save();
 
+  // 1. Dış Dairesel Işık Parıltısı
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const glowR = r * 1.4;
+    const glowR = r * 1.45;
     const fillGlow = ctx.createRadialGradient(0, -r, 0, 0, -r, glowR);
     fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
     fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
@@ -1601,43 +1598,57 @@ function drawJar() {
     ctx.restore();
   }
 
+  // 2. Cam Fanus Ana Gövdesi (Kusursuz Cam Küre)
   ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
   ctx.beginPath();
   ctx.arc(0, -r, r, 0, Math.PI * 2);
   ctx.fill();
 
-  const neckY = -w * 0.95;
-  const neckRadiusX = r * 0.45;
-  const neckRadiusY = 8 * SCALE;
+  // 3. FİZİKSEL DOĞRU CAM FANUS BOYNU (Seamless Glass Neck & Curved Rim Lip)
+  // Boyun başlangıcı kürenin üst kısmından doğal olarak yükselir (y: -r * 1.5 - r * 0.35)
+  const neckBaseY = -r * 1.62;
+  const neckTopY = -r * 1.95;
+  const neckRadiusX = r * 0.42;
 
-  const pulseRing = 1 + Math.sin(elapsed * 4) * 0.12;
+  // Dikey Silindirik Cam Boyun Gövdesi
+  const glassNeckGrad = ctx.createLinearGradient(-neckRadiusX, 0, neckRadiusX, 0);
+  glassNeckGrad.addColorStop(0, "rgba(215, 240, 255, 0.55)");
+  glassNeckGrad.addColorStop(0.3, "rgba(180, 225, 255, 0.18)");
+  glassNeckGrad.addColorStop(0.7, "rgba(180, 225, 255, 0.18)");
+  glassNeckGrad.addColorStop(1, "rgba(215, 240, 255, 0.55)");
 
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.strokeStyle = `rgba(250, 204, 21, ${0.4 + 0.3 * Math.sin(elapsed * 4)})`;
-  ctx.lineWidth = 3 * SCALE;
+  ctx.fillStyle = glassNeckGrad;
   ctx.beginPath();
-  ctx.ellipse(0, neckY, neckRadiusX * pulseRing, neckRadiusY * pulseRing, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
+  ctx.moveTo(-neckRadiusX - 3 * SCALE, neckBaseY);
+  ctx.lineTo(-neckRadiusX, neckTopY);
+  ctx.lineTo(neckRadiusX, neckTopY);
+  ctx.lineTo(neckRadiusX + 3 * SCALE, neckBaseY);
+  ctx.closePath();
+  ctx.fill();
 
+  // Doğal Ahşap Mantar Tıpa (Snug Fit Inside Cork Stopper)
+  const corkY = neckTopY - 4 * SCALE;
   const corkG = ctx.createLinearGradient(-neckRadiusX, 0, neckRadiusX, 0);
-  corkG.addColorStop(0, "#8c5a32");
-  corkG.addColorStop(0.5, "#b87d4b");
-  corkG.addColorStop(1, "#6e4324");
+  corkG.addColorStop(0, "#734828");
+  corkG.addColorStop(0.5, "#a67043");
+  corkG.addColorStop(1, "#59361c");
+
   ctx.fillStyle = corkG;
   ctx.beginPath();
-  ctx.ellipse(0, neckY - 8 * SCALE, neckRadiusX * 0.85, 6 * SCALE, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, corkY, neckRadiusX * 0.88, 5.5 * SCALE, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = "rgba(253, 224, 71, 0.85)";
-  ctx.lineWidth = 2.2 * SCALE;
-  ctx.fillStyle = "rgba(195, 230, 255, 0.38)";
+  // Cam Fanus Kıvrımlı Dudak (Flared Glass Lip / Rim Ring)
+  ctx.strokeStyle = "rgba(235, 248, 255, 0.85)";
+  ctx.lineWidth = 2.4 * SCALE;
+  ctx.fillStyle = "rgba(215, 240, 255, 0.28)";
+
   ctx.beginPath();
-  ctx.ellipse(0, neckY, neckRadiusX, neckRadiusY, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, neckTopY, neckRadiusX + 1.5 * SCALE, 6.5 * SCALE, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
+  // 4. Sıvı Işık Dolgusu (Yuvarlak Fanusa Kırpılmış Liquid)
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
@@ -1663,6 +1674,7 @@ function drawJar() {
     ctx.restore();
   }
 
+  // 5. İçeride Süzülen Ateşböcekleri
   for (const jf of jarFireflies) {
     const fx = jf.rx * (r * 1.3);
     const fy = -r + jf.ry * (r * 1.3);
@@ -1686,6 +1698,7 @@ function drawJar() {
     ctx.fill();
   }
 
+  // 6. 3D Cam Yansımaları ve Yuvarlak Çerçeve
   ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
