@@ -1,18 +1,17 @@
-// ATESHBÖCEKLERİ — saf oyun mantığı. DOM yok, canvas yok, Math.random zorunlu değil:
-// rastgelelik kapıdan (rand parametresi) verilir, her fonksiyon deterministik test edilir.
+// ATEŞBÖCEKLERİ — Saf Oyun Mantığı & Yeni Böcek Türleri
+// Özellikler: Ağ Atan Örümcek Çekim Fiziği, Uğur Böceği Gezinme Yörüngeleri, 5 Farklı Ateşböceği Türü.
 
-// --- Direk 1 — Spawner: metronom değil, yağmur -------------------------------
+// --- Direk 1 — Spawner -------------------------------------------------------
 
 export interface SpawnTimer {
-  next: number; // bir sonraki üretime kalan hedef süre (sn)
-  acc: number; // o hedefe doğru biriken süre
+  next: number;
+  acc: number;
 }
 
 export function createSpawnTimer(first = 0.6): SpawnTimer {
   return { next: first, acc: 0 };
 }
 
-// dt biriktir; süre dolduysa true döner ve rastgele yeni aralık kurar
 export function tickSpawn(
   t: SpawnTimer,
   dt: number,
@@ -21,14 +20,13 @@ export function tickSpawn(
 ): boolean {
   t.acc += dt;
   if (t.acc < t.next) return false;
-  t.acc -= t.next; // artığı koru: uzun bir karede zamanlama kaymasın
-  t.next = spawnEvery * (0.6 + rand() * 0.8); // ortalama spawnEvery, ±%40 sapma
+  t.acc -= t.next;
+  t.next = spawnEvery * (0.6 + rand() * 0.8);
   return true;
 }
 
-// --- Direk 2 — Salınım & Eğim ------------------------------------------------
+// --- Direk 2 — Salınım & Agresif Eğim ---------------------------------------
 
-// Sinüs salınımı: merkez çizgi etrafında yumuşak gidiş-geliş
 export function sway(
   t: number,
   base: number,
@@ -38,7 +36,6 @@ export function sway(
   return base + Math.sin(t * freq * Math.PI * 2) * amp;
 }
 
-// Salınımın anlık yatay hızı (türev): eğim/yön türetmek için
 export function swayVel(
   t: number,
   amp: number,
@@ -47,7 +44,6 @@ export function swayVel(
   return Math.cos(t * freq * Math.PI * 2) * amp * freq * Math.PI * 2;
 }
 
-// Karmaşık Arı Uçuş Eğim Hesabı (Bölüm İlerledikçe Saldırgan Dikey/Yatay Dalış)
 export function aggressiveSway(
   t: number,
   base: number,
@@ -55,15 +51,31 @@ export function aggressiveSway(
   freq: number,
   level: number,
 ): { x: number; extraY: number } {
-  const levelMult = 1 + (level - 1) * 0.12; // Seviye arttıkça salınım agresifleşir
+  const levelMult = 1 + (level - 1) * 0.12;
   const x = base + Math.sin(t * freq * levelMult * Math.PI * 2) * (amp * levelMult);
   const extraY = Math.sin(t * freq * 2.5 * Math.PI) * (14 * levelMult);
   return { x, extraY };
 }
 
+// Örümceğin Kavanoza Ağ Çekim Kuvveti Hesabı (Yavaşça Örümceğe Çeker)
+export function calculateSpiderWebPull(
+  spiderX: number,
+  spiderY: number,
+  jarX: number,
+  jarY: number,
+  pullForce = 160,
+): { vx: number; vy: number } {
+  const dx = spiderX - jarX;
+  const dy = spiderY - jarY;
+  const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+  return {
+    vx: (dx / dist) * pullForce,
+    vy: (dy / dist) * pullForce,
+  };
+}
+
 // --- Direk 4 — Çarpışma ------------------------------------------------------
 
-// Daire-dikdörtgen çarpışması: dikdörtgendeki en yakın noktayı bul, mesafeye bak
 export function hitCircleRect(
   cx: number,
   cy: number,
@@ -73,14 +85,14 @@ export function hitCircleRect(
   rw: number,
   rh: number,
 ): boolean {
-  const nx = Math.max(rx, Math.min(cx, rx + rw)); // en yakın x
-  const ny = Math.max(ry, Math.min(cy, ry + rh)); // en yakın y
+  const nx = Math.max(rx, Math.min(cx, rx + rw));
+  const ny = Math.max(ry, Math.min(cy, ry + rh));
   const dx = cx - nx;
   const dy = cy - ny;
   return dx * dx + dy * dy <= r * r;
 }
 
-// --- Tutam 1 — Ekran sarsıntısı ----------------------------------------------
+// --- Tutam 1 — Ekran Sarsıntısı ----------------------------------------------
 
 export interface Shake {
   power: number;
@@ -107,9 +119,10 @@ export function shakeOffset(
   };
 }
 
-// --- Tutam 4 — 10 Bölümlü Kurgu & Yeni Böcek Türleri --------------------------
+// --- Tutam 4 — 10 Bölüm Kurgusu & Tür Özellikleri -----------------------------
 
-export type HazardKind = "wasp" | "grasshopper" | "giant_beetle";
+export type FireflySubtype = "gold" | "emerald" | "azure" | "purple" | "red";
+export type HazardKind = "wasp" | "spider" | "ladybug";
 
 export interface LevelConfig {
   level: number;
@@ -119,22 +132,23 @@ export interface LevelConfig {
   waspChance: number;
   fallSpeedMult: number;
   spawnEvery: number;
+  maxLadybugs: number;
   skyTheme: "twilight" | "emerald" | "midnight" | "azure" | "storm" | "aurora" | "bloodmoon" | "fog" | "starstorm" | "legendary";
   description: string;
   allowedHazards: HazardKind[];
 }
 
 export const LEVELS: LevelConfig[] = [
-  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 5, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, skyTheme: "twilight", description: "Altın ateşböceklerini toplayarak başla.", allowedHazards: ["wasp"] },
-  { level: 2, name: "Zümrüt Vadi", subtitle: "Zümrüt Işıkları", target: 7, waspChance: 0.18, fallSpeedMult: 1.15, spawnEvery: 1.35, skyTheme: "emerald", description: "Hızlı zümrüt ateşböcekleri iniyor.", allowedHazards: ["wasp"] },
-  { level: 3, name: "Sıçrayan Tepe", subtitle: "Çekirgelerin Doğuşu", target: 8, waspChance: 0.25, fallSpeedMult: 1.25, spawnEvery: 1.2, skyTheme: "midnight", description: "Dikkat! Ani sıçrayan hızlı çekirgeler belirdi!", allowedHazards: ["wasp", "grasshopper"] },
-  { level: 4, name: "Mavi Yakut Gecesi", subtitle: "Azure Çekimi", target: 10, waspChance: 0.28, fallSpeedMult: 1.35, spawnEvery: 1.1, skyTheme: "azure", description: "Mavi yakut ateşböcekleri ve arı sürüleri.", allowedHazards: ["wasp", "grasshopper"] },
-  { level: 5, name: "Dev Kovan Geçidi", subtitle: "Dev Kral Böcek", target: 12, waspChance: 0.32, fallSpeedMult: 1.45, spawnEvery: 1.0, skyTheme: "storm", description: "Devasa yer kaplayan Dev Kral Böceklere dikkat!", allowedHazards: ["wasp", "giant_beetle"] },
-  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Fırtınası", target: 14, waspChance: 0.35, fallSpeedMult: 1.55, spawnEvery: 0.9, skyTheme: "aurora", description: "Çekirgeler ve dev böcekler bir arada saldırıyor.", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
-  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 15, waspChance: 0.40, fallSpeedMult: 1.70, spawnEvery: 0.8, skyTheme: "bloodmoon", description: "Agresif dalış yapan kovan arıları!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
-  { level: 8, name: "Derin Orman Sisleri", subtitle: "Sisli Sığınak", target: 18, waspChance: 0.42, fallSpeedMult: 1.85, spawnEvery: 0.72, skyTheme: "fog", description: "Yoğun sis altında hızlı sıçramalar.", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
-  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Kaos", target: 20, waspChance: 0.45, fallSpeedMult: 2.0, spawnEvery: 0.65, skyTheme: "starstorm", description: "Kaotik sıçrayışlar ve dev engel böcekleri!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
-  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, skyTheme: "legendary", description: "Tüm zararlılar ve 25 hedef ışık! Efsanevi şampiyon ol!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] }
+  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 5, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, maxLadybugs: 0, skyTheme: "twilight", description: "Altın ve zümrüt ateşböceklerini toplayarak başla.", allowedHazards: ["wasp"] },
+  { level: 2, name: "Gezgin Uğur Bahçesi", subtitle: "Uğur Böcekleri", target: 7, waspChance: 0.15, fallSpeedMult: 1.15, spawnEvery: 1.35, maxLadybugs: 1, skyTheme: "emerald", description: "Ekrandan çıkmayan yavaş uçan uğur böcekleri belirdi.", allowedHazards: ["wasp", "ladybug"] },
+  { level: 3, name: "Örümcekli Ağ Vadisi", subtitle: "Avcı Örümcek", target: 8, waspChance: 0.22, fallSpeedMult: 1.25, spawnEvery: 1.2, maxLadybugs: 1, skyTheme: "midnight", description: "Dikkat! Örümcek kavanoza ağ atıp seni çekmeye çalışır!", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 4, name: "Mor Mistik Gece", subtitle: "Mistik Işıklar", target: 10, waspChance: 0.26, fallSpeedMult: 1.35, spawnEvery: 1.1, maxLadybugs: 2, skyTheme: "azure", description: "+2 değerindeki Mor Mistik Ateşböcekleri gökyüzünde süzülüyor.", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 5, name: "Kızıl Yakut Fırtınası", subtitle: "Ağ Kıran Işıklar", target: 12, waspChance: 0.30, fallSpeedMult: 1.45, spawnEvery: 1.0, maxLadybugs: 2, skyTheme: "storm", description: "Kızıl Yakut Ateşböceği yakalandığında Örümceğin ağını anında yakar!", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Gecesi", target: 14, waspChance: 0.34, fallSpeedMult: 1.55, spawnEvery: 0.9, maxLadybugs: 2, skyTheme: "aurora", description: "Ağ atan örümcekler ve uğur böcekleri bir arada.", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 15, waspChance: 0.38, fallSpeedMult: 1.70, spawnEvery: 0.8, maxLadybugs: 2, skyTheme: "bloodmoon", description: "Kızıl ay altında agresif dalış yapan arılar ve örümcekler!", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 8, name: "Derin Orman Ağları", subtitle: "Yoğun Tuzak", target: 18, waspChance: 0.40, fallSpeedMult: 1.85, spawnEvery: 0.72, maxLadybugs: 3, skyTheme: "fog", description: "Maksimum 3 Uğur böceği ekranda sürekli uçuşur.", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Tuzak", target: 20, waspChance: 0.44, fallSpeedMult: 2.0, spawnEvery: 0.65, maxLadybugs: 3, skyTheme: "starstorm", description: "Hızlı örümcek ağları ve tüm ateşböceği türleri!", allowedHazards: ["wasp", "spider", "ladybug"] },
+  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, maxLadybugs: 3, skyTheme: "legendary", description: "Tüm özel böcekler ve 25 ışık hedefi! Efsanevi şampiyon ol!", allowedHazards: ["wasp", "spider", "ladybug"] }
 ];
 
 export function getLevelConfig(level: number): LevelConfig {
