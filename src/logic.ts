@@ -93,18 +93,49 @@ export function shakeOffset(
   };
 }
 
-// --- Tutam 4 — Zorluk eğrisi -------------------------------------------------
+// --- Tutam 4 — Bölümler & Zorluk Eğrisi ---------------------------------------
+
+export interface LevelConfig {
+  level: number;
+  name: string;
+  subtitle: string;
+  target: number;
+  waspChance: number;
+  fallSpeedMult: number;
+  spawnEvery: number;
+  skyTheme: "twilight" | "emerald" | "midnight" | "azure" | "storm" | "aurora" | "bloodmoon" | "fog" | "starstorm" | "legendary";
+  description: string;
+}
+
+export const LEVELS: LevelConfig[] = [
+  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 5, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, skyTheme: "twilight", description: "Hafif esintide ışıldayan altın ateşböceklerini toplayarak kavanozunu doldur." },
+  { level: 2, name: "Zümrüt Vadi", subtitle: "Zümrüt Işıkları", target: 7, waspChance: 0.18, fallSpeedMult: 1.15, spawnEvery: 1.35, skyTheme: "emerald", description: "Vadiye hızlı zümrüt ateşböcekleri iniyor. Dikkatli ol!" },
+  { level: 3, name: "Gece Yarısı Kovanı", subtitle: "Tehlike Artıyor", target: 8, waspChance: 0.25, fallSpeedMult: 1.25, spawnEvery: 1.2, skyTheme: "midnight", description: "Eşek arıları çoğalıyor, hareketlerini dikkatle planla!" },
+  { level: 4, name: "Mavi Yakut Gecesi", subtitle: "Azure Çekimi", target: 10, waspChance: 0.28, fallSpeedMult: 1.35, spawnEvery: 1.1, skyTheme: "azure", description: "Nadir mavi yakut ateşböcekleri hızlı süzülüyor." },
+  { level: 5, name: "Fırtına Öncesi Sessizlik", subtitle: "Rüzgarlı Yolculuk", target: 12, waspChance: 0.32, fallSpeedMult: 1.45, spawnEvery: 1.0, skyTheme: "storm", description: "Rüzgar sertleşiyor, böceklerin salınımı hızlanıyor!" },
+  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Gecesi", target: 14, waspChance: 0.35, fallSpeedMult: 1.55, spawnEvery: 0.9, skyTheme: "aurora", description: "Kutupsal ışık hüzmelerinin altında yüksek konsantrasyon gerekir." },
+  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 15, waspChance: 0.40, fallSpeedMult: 1.70, spawnEvery: 0.8, skyTheme: "bloodmoon", description: "Kızıl ay altında saldırgan eşek arılarına karşı hayatta kal!" },
+  { level: 8, name: "Derin Orman Sisleri", subtitle: "Sisli Sığınak", target: 18, waspChance: 0.42, fallSpeedMult: 1.85, spawnEvery: 0.72, skyTheme: "fog", description: "Yoğun sis altında süratli hareket ve yüksek refleks gerektirir." },
+  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Av", target: 20, waspChance: 0.45, fallSpeedMult: 2.0, spawnEvery: 0.65, skyTheme: "starstorm", description: "Gece gökyüzünden yağmur gibi inen böcekleri ustalıkla yakala!" },
+  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, skyTheme: "legendary", description: "Tüm seviyelerin en büyük sınavı! Gece bahçesinin efsanevi muhafızı ol!" }
+];
+
+export function getLevelConfig(level: number): LevelConfig {
+  const index = Math.max(1, Math.min(LEVELS.length, level)) - 1;
+  return LEVELS[index];
+}
 
 export interface Difficulty {
   spawnEvery: number;
   fallSpeed: number;
 }
 
-// Süre geçtikçe üretim sıklaşır, düşüş hızlanır; 60. saniyede doyuma ulaşır
-export function difficulty(elapsed: number): Difficulty {
-  const k = Math.min(elapsed / 60, 1); // 0 → 1: ilk dakikada tam zorluğa tırman
+// Süre ve bölüm numarasına göre dinamik zorluk hesabı
+export function difficulty(elapsed: number, level = 1): Difficulty {
+  const cfg = getLevelConfig(level);
+  const k = Math.min(elapsed / 60, 1);
   return {
-    spawnEvery: 1.4 - 0.9 * k, // ortalama aralık: 1.4 sn → 0.5 sn
-    fallSpeed: 120 + 160 * k, // düşüş: 120 → 280 px/sn (SCALE ile çarpılır)
+    spawnEvery: Math.max(0.4, (cfg.spawnEvery - 0.4 * k)),
+    fallSpeed: (120 + 140 * k) * cfg.fallSpeedMult,
   };
 }

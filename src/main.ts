@@ -1,12 +1,15 @@
-// ATEŞBÖCEKLERİ — Kesintisiz Pürüzsüz Kavanoz Işık Aurası & Sınırlı Blur
-// Özellikler: Daire Çeperli Sönümlenen Kavanoz Parıltısı (0 Kesilme), Canlı Karakterli İnfografik Modallar, Staggered Ticker.
+// ATEŞBÖCEKLERİ — 10 Bölümlü Hikaye Kurgulu & Seviye İlerleme Sistemli Profesyonel Oyun
+// Özellikler: 10 Özel Seviye Tema Atmosferi, Bölüm İlerleme Çubuğu, Seviye Sonu Modalı, Dribbble Dashboard.
 
 import {
+  type LevelConfig,
   type Shake,
   type SpawnTimer,
+  LEVELS,
   addShake,
   createSpawnTimer,
   difficulty,
+  getLevelConfig,
   hitCircleRect,
   shakeOffset,
   sway,
@@ -37,10 +40,9 @@ canvas.width = W;
 canvas.height = H;
 
 // --- Oyun Durumu & Tipler ---------------------------------------------------
-const TARGET = 6;
 const MAX_MISSED = 3;
 
-type GameState = "playing" | "paused" | "tutorial" | "settings" | "won" | "gameover";
+type GameState = "playing" | "paused" | "tutorial" | "settings" | "levelcomplete" | "gameover" | "campaignwon";
 type FireflyType = "gold" | "emerald" | "azure";
 
 interface Critter {
@@ -90,7 +92,10 @@ interface JarFirefly {
   color: string;
 }
 
+let currentLevel = 1;
+let levelCfg: LevelConfig = getLevelConfig(currentLevel);
 let state: GameState = "playing";
+
 let critters: Critter[] = [];
 let particles: Particle[] = [];
 let floatingTexts: FloatingText[] = [];
@@ -202,7 +207,9 @@ window.addEventListener(
   on,
 );
 
-function resetGame() {
+function resetStage(levelNum = currentLevel) {
+  currentLevel = Math.max(1, Math.min(LEVELS.length, levelNum));
+  levelCfg = getLevelConfig(currentLevel);
   critters = [];
   particles = [];
   floatingTexts = [];
@@ -243,7 +250,7 @@ function syncJarFireflies() {
 }
 
 function spawnCritter() {
-  const wasp = Math.random() < 0.28;
+  const wasp = Math.random() < levelCfg.waspChance;
   const amp = wasp
     ? (40 + Math.random() * 32) * SCALE
     : (14 + Math.random() * 20) * SCALE;
@@ -251,8 +258,8 @@ function spawnCritter() {
   let subType: FireflyType = "gold";
   if (!wasp) {
     const r = Math.random();
-    if (r < 0.25) subType = "emerald";
-    else if (r < 0.45) subType = "azure";
+    if (r < 0.3) subType = "emerald";
+    else if (r < 0.55) subType = "azure";
   }
 
   critters.push({
@@ -324,12 +331,17 @@ function handlePointerClick(clientX: number, clientY: number) {
       return true;
     }
     if (isInsideRect(cx, cy, uiButtons.modalSecondary)) {
-      resetGame();
+      resetStage(1);
       return true;
     }
-  } else if (state === "won" || state === "gameover") {
+  } else if (state === "levelcomplete") {
     if (isInsideRect(cx, cy, uiButtons.modalAction)) {
-      resetGame();
+      resetStage(currentLevel + 1);
+      return true;
+    }
+  } else if (state === "gameover" || state === "campaignwon") {
+    if (isInsideRect(cx, cy, uiButtons.modalAction)) {
+      resetStage(state === "campaignwon" ? 1 : currentLevel);
       return true;
     }
   }
@@ -396,7 +408,10 @@ canvas.addEventListener(
 window.addEventListener(
   "keydown",
   (e) => {
-    if ((state === "won" || state === "gameover") && e.key === "Enter") resetGame();
+    if (e.key === "Enter") {
+      if (state === "levelcomplete") resetStage(currentLevel + 1);
+      else if (state === "gameover" || state === "campaignwon") resetStage(state === "campaignwon" ? 1 : currentLevel);
+    }
     if (e.key === "Escape") {
       if (state === "playing") {
         state = "settings";
@@ -622,7 +637,7 @@ function update(dt: number) {
   if (state === "playing") {
     elapsed += dt;
 
-    const { spawnEvery, fallSpeed } = difficulty(elapsed);
+    const { spawnEvery, fallSpeed } = difficulty(elapsed, currentLevel);
     if (tickSpawn(spawnTimer, dt, spawnEvery)) spawnCritter();
 
     updateJar(dt);
@@ -715,7 +730,7 @@ function update(dt: number) {
       c.dead = true;
 
       if (c.kind === "firefly") {
-        caught = Math.min(caught + 1, TARGET);
+        caught = Math.min(caught + 1, levelCfg.target);
         syncJarFireflies();
 
         const pColor = c.subType === "emerald" ? "hsl(150 100% 70%)" : c.subType === "azure" ? "hsl(200 100% 75%)" : "hsl(52 100% 75%)";
@@ -726,9 +741,13 @@ function update(dt: number) {
         jarSquash = 0.32;
         jarWobble = 0.15;
 
-        if (caught === TARGET) {
+        if (caught === levelCfg.target) {
           finalTime = elapsed;
-          state = "won";
+          if (currentLevel < LEVELS.length) {
+            state = "levelcomplete";
+          } else {
+            state = "campaignwon";
+          }
           modalAnimTime = 0;
           burst(W / 2, H * 0.4, "hsl(52 100% 70%)", 70);
           burst(W / 2, H * 0.4, "hsl(180 100% 75%)", 50);
@@ -801,10 +820,47 @@ function update(dt: number) {
 
 function drawBackground() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, "#050816");
-  g.addColorStop(0.4, "#091026");
-  g.addColorStop(0.85, "#050814");
-  g.addColorStop(1, "#020307");
+
+  // Bölüm temasına göre dinamik arka plan atmosferi
+  switch (levelCfg.skyTheme) {
+    case "emerald":
+      g.addColorStop(0, "#021710");
+      g.addColorStop(0.4, "#05291d");
+      g.addColorStop(0.85, "#031711");
+      g.addColorStop(1, "#010a07");
+      break;
+    case "azure":
+      g.addColorStop(0, "#031424");
+      g.addColorStop(0.4, "#07243c");
+      g.addColorStop(0.85, "#031627");
+      g.addColorStop(1, "#010b14");
+      break;
+    case "bloodmoon":
+      g.addColorStop(0, "#1f0507");
+      g.addColorStop(0.4, "#360a0f");
+      g.addColorStop(0.85, "#1c0407");
+      g.addColorStop(1, "#0d0103");
+      break;
+    case "aurora":
+      g.addColorStop(0, "#031f24");
+      g.addColorStop(0.4, "#083a38");
+      g.addColorStop(0.85, "#031a1e");
+      g.addColorStop(1, "#010c0e");
+      break;
+    case "starstorm":
+    case "legendary":
+      g.addColorStop(0, "#190826");
+      g.addColorStop(0.4, "#2d0d42");
+      g.addColorStop(0.85, "#150621");
+      g.addColorStop(1, "#08020d");
+      break;
+    default:
+      g.addColorStop(0, "#050816");
+      g.addColorStop(0.4, "#091026");
+      g.addColorStop(0.85, "#050814");
+      g.addColorStop(1, "#020307");
+  }
+
   ctx.fillStyle = g;
   ctx.fillRect(-40, -40, W + 80, H + 80);
 
@@ -815,9 +871,19 @@ function drawBackground() {
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 3.5);
-  moonGlow.addColorStop(0, "rgba(230, 242, 255, 0.4)");
-  moonGlow.addColorStop(0.4, "rgba(180, 215, 255, 0.15)");
-  moonGlow.addColorStop(1, "rgba(180, 215, 255, 0)");
+  if (levelCfg.skyTheme === "bloodmoon") {
+    moonGlow.addColorStop(0, "rgba(255, 100, 100, 0.45)");
+    moonGlow.addColorStop(0.4, "rgba(200, 50, 50, 0.2)");
+    moonGlow.addColorStop(1, "rgba(200, 0, 0, 0)");
+  } else if (levelCfg.skyTheme === "emerald" || levelCfg.skyTheme === "aurora") {
+    moonGlow.addColorStop(0, "rgba(160, 255, 220, 0.4)");
+    moonGlow.addColorStop(0.4, "rgba(100, 220, 180, 0.18)");
+    moonGlow.addColorStop(1, "rgba(100, 220, 180, 0)");
+  } else {
+    moonGlow.addColorStop(0, "rgba(230, 242, 255, 0.4)");
+    moonGlow.addColorStop(0.4, "rgba(180, 215, 255, 0.15)");
+    moonGlow.addColorStop(1, "rgba(180, 215, 255, 0)");
+  }
   ctx.fillStyle = moonGlow;
   ctx.beginPath();
   ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
@@ -825,9 +891,15 @@ function drawBackground() {
   ctx.restore();
 
   const moonGrad = ctx.createLinearGradient(moonX - moonR, moonY - moonR, moonX + moonR, moonY + moonR);
-  moonGrad.addColorStop(0, "#f8fafc");
-  moonGrad.addColorStop(0.7, "#e2e8f0");
-  moonGrad.addColorStop(1, "#cbd5e1");
+  if (levelCfg.skyTheme === "bloodmoon") {
+    moonGrad.addColorStop(0, "#fca5a5");
+    moonGrad.addColorStop(0.7, "#ef4444");
+    moonGrad.addColorStop(1, "#991b1b");
+  } else {
+    moonGrad.addColorStop(0, "#f8fafc");
+    moonGrad.addColorStop(0.7, "#e2e8f0");
+    moonGrad.addColorStop(1, "#cbd5e1");
+  }
   ctx.fillStyle = moonGrad;
   ctx.beginPath();
   ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
@@ -1118,11 +1190,10 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
-  const glow = caught / TARGET;
+  const glow = caught / levelCfg.target;
 
   ctx.save();
 
-  // 1. Dış Işık Parıltısı (Daire Çeperli - Kesilme Yapmaz)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
@@ -1254,65 +1325,57 @@ function drawJar() {
 function drawHUD() {
   ctx.save();
 
-  const barW = Math.min(W * 0.48, 230 * SCALE);
-  const barH = 46 * SCALE;
-  const barX = 16 * SCALE;
-  const barY = 16 * SCALE;
+  // 1. Sol Üst: Bölüm İlerleme Kartı & Bar
+  const lvlW = Math.min(W * 0.45, 250 * SCALE);
+  const lvlH = 46 * SCALE;
+  const lvlX = 16 * SCALE;
+  const lvlY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.8)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(barX, barY, barW, barH, 23 * SCALE);
+  ctx.roundRect(lvlX, lvlY, lvlW, lvlH, 23 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  const iconX = barX + 20 * SCALE;
-  const iconY = barY + barH / 2;
-  drawFirefly(iconX, iconY, 6 * SCALE, elapsed, 0, 0, "gold");
-
+  // Seviye Etiketi
   ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#fef08a";
-  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${caught}/${TARGET}`, barX + 34 * SCALE, barY + barH / 2);
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#60a5fa";
+  ctx.font = `800 ${11 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`BÖLÜM ${levelCfg.level}/10 • ${levelCfg.name.toUpperCase()}`, lvlX + 16 * SCALE, lvlY + 8 * SCALE);
 
-  const heartsX = barX + 105 * SCALE;
-  const remainingLives = MAX_MISSED - missed;
+  // İlerleme Çubuğu (Progress Bar)
+  const barX = lvlX + 16 * SCALE;
+  const barY = lvlY + 26 * SCALE;
+  const barInnerW = lvlW - 85 * SCALE;
+  const barInnerH = 10 * SCALE;
+  const progressRatio = Math.min(1, caught / levelCfg.target);
 
-  for (let i = 0; i < MAX_MISSED; i++) {
-    const hx = heartsX + i * 20 * SCALE;
-    const hy = barY + barH / 2;
-    if (i < remainingLives) {
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.fillStyle = "hsl(52 100% 70%)";
-      ctx.beginPath();
-      ctx.arc(hx, hy, 5.5 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barInnerW, barInnerH, 5 * SCALE);
+  ctx.fill();
 
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(hx, hy, 2 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = "rgba(239, 68, 68, 0.25)";
-      ctx.beginPath();
-      ctx.arc(hx, hy, 5.5 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "#ef4444";
-      ctx.lineWidth = 1.8 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(hx - 3 * SCALE, hy - 3 * SCALE);
-      ctx.lineTo(hx + 3 * SCALE, hy + 3 * SCALE);
-      ctx.moveTo(hx + 3 * SCALE, hy - 3 * SCALE);
-      ctx.lineTo(hx - 3 * SCALE, hy + 3 * SCALE);
-      ctx.stroke();
-    }
+  if (progressRatio > 0) {
+    const pG = ctx.createLinearGradient(barX, 0, barX + barInnerW, 0);
+    pG.addColorStop(0, "#facc15");
+    pG.addColorStop(1, "#34d399");
+    ctx.fillStyle = pG;
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, Math.max(8 * SCALE, barInnerW * progressRatio), barInnerH, 5 * SCALE);
+    ctx.fill();
   }
 
+  // Skor Sayacı
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fef08a";
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`${caught}/${levelCfg.target}`, lvlX + lvlW - 14 * SCALE, lvlY + lvlH / 2 + 1 * SCALE);
+
+  // 2. Can Rozetleri (Hearts)
   const btnSize = 46 * SCALE;
   const btnGap = 10 * SCALE;
 
@@ -1344,7 +1407,7 @@ function drawHUD() {
 
   drawHelpIcon(helpX + btnSize / 2, helpY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  const timerW = Math.min(W * 0.22, 110 * SCALE);
+  const timerW = Math.min(W * 0.2, 100 * SCALE);
   const timerX = helpX - timerW - btnGap;
   const timerY = 16 * SCALE;
 
@@ -1356,18 +1419,18 @@ function drawHUD() {
   ctx.fill();
   ctx.stroke();
 
-  drawClockIcon(timerX + 20 * SCALE, timerY + btnSize / 2, 8 * SCALE, "#60a5fa");
+  drawClockIcon(timerX + 18 * SCALE, timerY + btnSize / 2, 8 * SCALE, "#60a5fa");
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 35 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 32 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- SIRALI ANİMASYONLU & CANLI GÖRSELLİ MODAL SİSTEMİ ---------------------
+// --- SIRALI ANİMASYONLU MODAL SİSTEMİ ---------------------------------------
 function drawModalCard(
   statusBadge: string,
   title: string,
@@ -1396,7 +1459,7 @@ function drawModalCard(
   ctx.fill();
   ctx.stroke();
 
-  // Canlı Oyundaki Uçan Karakter Görselleri (Header Dekoru)
+  // Canlı Oyundaki Uçan Karakter Görselleri
   const heroJarX = cardX + 54 * SCALE;
   const heroJarY = cardY + 65 * SCALE;
   ctx.save();
@@ -1412,8 +1475,8 @@ function drawModalCard(
     drawFirefly(cardX + cardW - 115 * SCALE, cardY + 80 * SCALE, 9 * SCALE, elapsed + 1, 0, 0, "emerald");
   }
 
-  // 1. Status Pill Badge
-  const badgeW = 180 * SCALE;
+  // Status Pill Badge
+  const badgeW = 200 * SCALE;
   const badgeH = 32 * SCALE;
   const badgeX = (W - badgeW) / 2;
   const badgeY = cardY + 24 * SCALE;
@@ -1432,13 +1495,13 @@ function drawModalCard(
   ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(statusBadge, W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
-  // 2. Ana Başlık
+  // Ana Başlık
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 30 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
-  // 3. İNFOGRAFİK STAT KARTLARI (Sıralı Animasyonlu Ticker / Counter)
+  // İNFOGRAFİK STAT KARTLARI
   const gridW = cardW - 64 * SCALE;
   const gridX = cardX + 32 * SCALE;
   const gridY = cardY + 128 * SCALE;
@@ -1448,12 +1511,12 @@ function drawModalCard(
 
   const stats = isWin
     ? [
-        { label: "TOPLANAN IŞIK", targetVal: caught, total: TARGET, unit: "100% Tamam", color: "#fef08a", type: "ratio" },
-        { label: "TAMAMLAMA SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "BAŞARI DERECESİ", targetVal: 100, total: 0, unit: "Mükemmel!", color: "#34d399", type: "rank" },
+        { label: "BÖLÜM HEDEFİ", targetVal: caught, total: levelCfg.target, unit: "100% Tamam", color: "#fef08a", type: "ratio" },
+        { label: "BÖLÜM SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
+        { label: "GEÇİLEN BÖLÜM", targetVal: currentLevel, total: 10, unit: `${levelCfg.name}`, color: "#34d399", type: "level" },
       ]
     : [
-        { label: "TOPLANAN IŞIK", targetVal: caught, total: TARGET, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
+        { label: "TOPLANAN IŞIK", targetVal: caught, total: levelCfg.target, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
         { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
         { label: "KAÇAN IŞIKLAR", targetVal: missed, total: MAX_MISSED, unit: "Geceye Karıştı", color: "#f87171", type: "ratio" },
       ];
@@ -1490,8 +1553,8 @@ function drawModalCard(
     } else if (s.type === "time") {
       const curT = (s.targetVal * cardProgress).toFixed(1);
       displayVal = `${curT}s`;
-    } else if (s.type === "rank") {
-      displayVal = cardProgress > 0.8 ? "S-SINIFI" : "...";
+    } else if (s.type === "level") {
+      displayVal = `${s.targetVal}/10`;
     }
 
     ctx.fillStyle = s.color;
@@ -1505,11 +1568,11 @@ function drawModalCard(
     ctx.restore();
   }
 
-  // 4. Özet Bilgi Çubuğu
+  // Özet Bilgi Çubuğu
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
-    ? "Tüm ateşböceklerini başardın ve gece bahçesini aydınlattın!"
-    : "3 ateşböceği geceye karıştı. Tekrar deneyerek tüm ışıkları topla!";
+    ? `${levelCfg.name} tamamlandı! ${currentLevel < 10 ? 'Sonraki seviyeye geçmeye hazırsın.' : 'Tüm 10 bölümü başardın!'}`
+    : "3 ateşböceği geceye karıştı. Tekrar deneyerek bu bölümü geç!";
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
   ctx.beginPath();
@@ -1522,7 +1585,7 @@ function drawModalCard(
   ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(descText, W / 2, descY + 22 * SCALE);
 
-  // 5. Ana Buton
+  // Ana Buton
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -1535,8 +1598,8 @@ function drawModalCard(
     g.addColorStop(0, "#dc2626");
     g.addColorStop(1, "#b91c1c");
   } else {
-    g.addColorStop(0, "#eab308");
-    g.addColorStop(1, "#ca8a04");
+    g.addColorStop(0, "#10b981");
+    g.addColorStop(1, "#059669");
   }
 
   ctx.fillStyle = g;
@@ -1545,7 +1608,7 @@ function drawModalCard(
   ctx.fill();
 
   ctx.textBaseline = "middle";
-  ctx.fillStyle = !isWin ? "#ffffff" : "#0f172a";
+  ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
 
@@ -1598,7 +1661,7 @@ function drawTutorialModal() {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 62 * SCALE);
+  ctx.fillText("10 BÖLÜMLÜ MACERA", W / 2, cardY + 62 * SCALE);
 
   // 2x2 İnfografik Grid Kartları
   const gridW = cardW - 56 * SCALE;
@@ -1609,15 +1672,15 @@ function drawTutorialModal() {
   const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 24 * SCALE, "#38bdf8"), title: "KONTROL & HAREKET", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu 2D serbest yönet." },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 7 * SCALE, elapsed, 0, 0, "gold"), title: "VAKUM ÇEKİM GÜCÜ", desc: "Ateşböceklerine yaklaştığında çekim gücü onları kavanoza çeker." },
-    { drawIcon: (x: number, y: number) => drawWasp(x, y, 8 * SCALE, elapsed, 0, 0), title: "ARILARDAN KAÇIN", desc: "Arıya çarparsan kavanozdan 1 ışık kaybedersin. Arılardan uzak dur!" },
+    { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 24 * SCALE, "#38bdf8"), title: "2D KONTROL", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönlendir." },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 7 * SCALE, elapsed, 0, 0, "gold"), title: "BÖLÜM HEDEFLERİ", desc: "10 farklı seviyede hedef sayıda ateşböceğini toplayarak ilerle." },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 8 * SCALE, elapsed, 0, 0), title: "ARTAN TEHLİKE", desc: "Üst bölümlerde eşek arıları çoğalır ve düşüş hızı katlanır." },
     { drawIcon: (x: number, y: number) => {
       ctx.fillStyle = "#ef4444";
       ctx.beginPath();
       ctx.arc(x, y, 7 * SCALE, 0, Math.PI * 2);
       ctx.fill();
-    }, title: "3 KAÇIRMA HAKKI", desc: "3 ateşböceği ekranın altından kaçarsa gece kararır ve oyun biter." },
+    }, title: "3 KAÇIRMA HAKKI", desc: "3 ateşböceği ekranın altından kaçarsa bölüm yeniden başlar." },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -1727,7 +1790,7 @@ function drawSettingsModal() {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 62 * SCALE);
+  ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/10`, W / 2, cardY + 62 * SCALE);
 
   // Tablo Satırları
   const rowW = cardW - 64 * SCALE;
@@ -1843,7 +1906,7 @@ function drawSettingsModal() {
 
   ctx.fillStyle = "#fca5a5";
   ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUNU SIFIRLA", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
+  ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
@@ -1904,10 +1967,12 @@ function draw() {
 
   ctx.restore();
 
-  if (state === "won") {
-    drawModalCard("ZAFER • TEBRİKLER", "KAVANOZ DOLDU", "TEKRAR OYNA", true);
+  if (state === "levelcomplete") {
+    drawModalCard(`BÖLÜM ${currentLevel} TAMAMLANDI`, `${levelCfg.name} Geçildi!`, `SONRAKİ BÖLÜM (Bölüm ${currentLevel + 1})`, true);
+  } else if (state === "campaignwon") {
+    drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
   } else if (state === "gameover") {
-    drawModalCard("SONUÇ • OYUN BİTTİ", "ATEŞBÖCEKLERİ KAÇTI", "TEKRAR DENE", false);
+    drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "ATEŞBÖCEKLERİ KAÇTI", "TEKRAR DENE", false);
   } else if (state === "tutorial") {
     drawTutorialModal();
   } else if (state === "settings") {
