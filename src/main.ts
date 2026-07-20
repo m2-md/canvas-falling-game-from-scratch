@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Sanatsal Warp Speed FX, Alev Parçacık Animasyonu, Seviye Başlangıç Modalı & Sıfır Emoji UI
-// Özellikler: Sıfır Emoji Awwwards UI, Hız İvme Çizgileri & Sonik Halkalar, Vektör Kaçan Ateşböceği Simgeleri, 1/10 HUD, Bölüm Başlangıç Tanıtım Modalı.
+// ATEŞBÖCEKLERİ — Sinematik Anime/Manga Atmosfer, Kristal Can Mücevheri & Hızlı Kaybolan Sanatsal Efektler
+// Özellikler: Kristal Yakut Can Mücevheri, Volümetrik Sis & Yıldız Kayması (Meteors), Anime İmpakt Şok Dalgaları & Hızlı Kıvılcım Patlamaları.
 
 import {
   type FireflySubtype,
@@ -96,6 +96,26 @@ interface FlameParticle {
   color: string;
 }
 
+interface AnimeShockwave {
+  x: number;
+  y: number;
+  r: number;
+  maxR: number;
+  life: number;
+  maxLife: number;
+  color: string;
+}
+
+interface ShootingStar {
+  x: number;
+  y: number;
+  length: number;
+  speed: number;
+  alpha: number;
+  life: number;
+  maxLife: number;
+}
+
 interface FloatingText {
   x: number;
   y: number;
@@ -121,6 +141,8 @@ let state: GameState = "levelintro";
 let critters: Critter[] = [];
 let particles: Particle[] = [];
 let flameParticles: FlameParticle[] = [];
+let animeShockwaves: AnimeShockwave[] = [];
+let shootingStars: ShootingStar[] = [];
 let floatingTexts: FloatingText[] = [];
 let jarFireflies: JarFirefly[] = [];
 let caught = 0;
@@ -153,7 +175,7 @@ const jar = { x: 0, y: 0, w: 0, h: 0 };
 // Atmosferik Ögeler
 let stars: { x: number; y: number; r: number; a: number; speed: number }[] = [];
 let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
-let clouds: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
+let volumetricFog: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
 let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
 
 // UI Yerleşimleri
@@ -196,13 +218,13 @@ function layout() {
     color: colors[Math.floor(Math.random() * colors.length)],
   }));
 
-  clouds = Array.from({ length: 4 }, (_, i) => ({
-    x: (i * W) / 3 - 50 * SCALE,
-    y: (40 + Math.random() * 60) * SCALE,
-    w: (180 + Math.random() * 120) * SCALE,
-    h: (45 + Math.random() * 25) * SCALE,
-    speed: (4 + Math.random() * 6) * SCALE,
-    alpha: 0.12 + Math.random() * 0.12,
+  volumetricFog = Array.from({ length: 5 }, (_, i) => ({
+    x: (i * W) / 4 - 60 * SCALE,
+    y: H * 0.4 + (Math.random() * 0.3) * H,
+    w: (280 + Math.random() * 180) * SCALE,
+    h: (80 + Math.random() * 40) * SCALE,
+    speed: (8 + Math.random() * 12) * SCALE,
+    alpha: 0.06 + Math.random() * 0.08,
   }));
 
   const grassCount = Math.floor(W / (10 * SCALE));
@@ -243,6 +265,8 @@ function resetStage(levelNum = currentLevel) {
   critters = [];
   particles = [];
   flameParticles = [];
+  animeShockwaves = [];
+  shootingStars = [];
   floatingTexts = [];
   jarFireflies = [];
   caught = 0;
@@ -370,25 +394,38 @@ function spawnCritter() {
   }
 }
 
-// --- Alev Parçacık Animasyon Efekti (Flame Plume FX) ------------------------
+// ANİME / MANGA HIZLI KAYBOLAN ŞOK DALGASI (Quick Anime Impact Flash)
+function addAnimeShockwave(x: number, y: number, color = "rgba(254, 240, 138, 0.9)") {
+  animeShockwaves.push({
+    x,
+    y,
+    r: 6 * SCALE,
+    maxR: (45 + Math.random() * 25) * SCALE,
+    life: 0.22,
+    maxLife: 0.22,
+    color,
+  });
+}
+
+// Alev Parçacık Animasyonu (Hızlı Kaybolan Yangın Efekti)
 function spawnFlameBurnEffect(startX: number, startY: number, targetX: number, targetY: number) {
-  const count = 35;
+  const count = 28;
   for (let i = 0; i < count; i++) {
     const progress = i / count;
     const px = startX + (targetX - startX) * progress;
     const py = startY + (targetY - startY) * progress;
     
-    const colors = ["#ff2200", "#ff6600", "#ffcc00", "#ffffff"];
+    const colors = ["#ff3300", "#ff7700", "#ffcc00", "#ffffff"];
     const color = colors[Math.floor(Math.random() * colors.length)];
     
     flameParticles.push({
-      x: px + (Math.random() - 0.5) * 12 * SCALE,
-      y: py + (Math.random() - 0.5) * 12 * SCALE,
-      vx: (Math.random() - 0.5) * 60 * SCALE,
-      vy: -60 * SCALE - Math.random() * 100 * SCALE,
-      life: 0.4 + Math.random() * 0.4,
-      max: 0.8,
-      size: (3 + Math.random() * 6) * SCALE,
+      x: px + (Math.random() - 0.5) * 10 * SCALE,
+      y: py + (Math.random() - 0.5) * 10 * SCALE,
+      vx: (Math.random() - 0.5) * 70 * SCALE,
+      vy: -70 * SCALE - Math.random() * 90 * SCALE,
+      life: 0.28,
+      max: 0.28,
+      size: (2.5 + Math.random() * 5) * SCALE,
       color,
     });
   }
@@ -676,20 +713,61 @@ function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
   ctx.restore();
 }
 
-function drawHeartIcon(x: number, y: number, size: number, filled = true) {
+// SANATSAL KRİSTAL YAKUT CAN MÜCEVHERİ (Faceted Bioluminescent Crystal Gem Icon)
+function drawCrystalHeartIcon(x: number, y: number, size: number, filled = true) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.fillStyle = filled ? "#ef4444" : "rgba(239, 68, 68, 0.2)";
-  ctx.strokeStyle = "#fca5a5";
-  ctx.lineWidth = 1.2 * SCALE;
+
+  if (filled) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2.2);
+    g.addColorStop(0, "rgba(244, 63, 94, 0.6)");
+    g.addColorStop(1, "rgba(244, 63, 94, 0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const gemG = ctx.createLinearGradient(-size, -size, size, size);
+  if (filled) {
+    gemG.addColorStop(0, "#fda4af");
+    gemG.addColorStop(0.4, "#f43f5e");
+    gemG.addColorStop(1, "#9f1239");
+  } else {
+    gemG.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+    gemG.addColorStop(1, "rgba(239, 68, 68, 0.1)");
+  }
+
+  ctx.fillStyle = gemG;
+  ctx.strokeStyle = filled ? "#fecdd3" : "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1.4 * SCALE;
 
   ctx.beginPath();
-  ctx.moveTo(0, size * 0.3);
-  ctx.bezierCurveTo(-size * 0.5, -size * 0.3, -size, size * 0.1, 0, size * 0.85);
-  ctx.bezierCurveTo(size, size * 0.1, size * 0.5, -size * 0.3, 0, size * 0.3);
+  ctx.moveTo(0, -size * 0.95);
+  ctx.lineTo(size * 0.75, -size * 0.45);
+  ctx.lineTo(size * 0.85, size * 0.05);
+  ctx.lineTo(0, size * 0.95);
+  ctx.lineTo(-size * 0.85, size * 0.05);
+  ctx.lineTo(-size * 0.75, -size * 0.45);
   ctx.closePath();
   ctx.fill();
-  if (filled) ctx.stroke();
+  ctx.stroke();
+
+  if (filled) {
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+    ctx.lineWidth = 1 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(0, -size * 0.95);
+    ctx.lineTo(0, size * 0.95);
+    ctx.moveTo(-size * 0.75, -size * 0.45);
+    ctx.lineTo(size * 0.75, -size * 0.45);
+    ctx.moveTo(-size * 0.85, size * 0.05);
+    ctx.lineTo(size * 0.85, size * 0.05);
+    ctx.stroke();
+  }
 
   ctx.restore();
 }
@@ -739,11 +817,11 @@ function drawHUDMissedFireflyIcon(x: number, y: number, r: number, active = true
 }
 
 // --- Efektler & Metin Kırma --------------------------------------------------
-function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 20) {
+function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
-    const speed = (60 + Math.random() * 200) * SCALE;
-    const life = 0.4 + Math.random() * 0.45;
+    const speed = (80 + Math.random() * 220) * SCALE;
+    const life = 0.22 + Math.random() * 0.18;
     particles.push({
       x,
       y,
@@ -764,8 +842,8 @@ function addFloatingText(x: number, y: number, text: string, color = "#fef08a") 
     y,
     text,
     color,
-    life: 0.85,
-    max: 0.85,
+    life: 0.65,
+    max: 0.65,
   });
 }
 
@@ -803,6 +881,19 @@ function update(dt: number) {
 
     if (magnetBoostTimer > 0) magnetBoostTimer -= dt;
     if (speedBoostTimer > 0) speedBoostTimer -= dt;
+
+    // Rastgele Yıldız Kayması (Meteor Streaks)
+    if (Math.random() < dt * 0.8) {
+      shootingStars.push({
+        x: Math.random() * W * 0.8,
+        y: Math.random() * H * 0.3,
+        length: (60 + Math.random() * 90) * SCALE,
+        speed: (400 + Math.random() * 350) * SCALE,
+        alpha: 0.7 + Math.random() * 0.3,
+        life: 0.35,
+        maxLife: 0.35,
+      });
+    }
 
     const { spawnEvery, fallSpeed } = difficulty(elapsed, currentLevel);
     if (tickSpawn(spawnTimer, dt, spawnEvery)) spawnCritter();
@@ -884,8 +975,8 @@ function update(dt: number) {
               y: c.y + c.offsetY,
               vx: (dx / dist) * 140 * SCALE + spiralX * 4,
               vy: (dy / dist) * 140 * SCALE + spiralY * 4,
-              life: 0.25,
-              max: 0.25,
+              life: 0.2,
+              max: 0.2,
               color: pColor,
               size: (1.5 + Math.random() * 2.5) * SCALE,
             });
@@ -904,8 +995,8 @@ function update(dt: number) {
           y: c.y + c.offsetY - 6 * SCALE,
           vx: (Math.random() - 0.5) * 12 * SCALE,
           vy: -15 * SCALE - Math.random() * 20 * SCALE,
-          life: 0.3 + Math.random() * 0.25,
-          max: 0.55,
+          life: 0.22 + Math.random() * 0.15,
+          max: 0.37,
           color: pColor,
           size: (1 + Math.random() * 1.8) * SCALE,
         });
@@ -949,13 +1040,14 @@ function update(dt: number) {
         let pts = 1;
         let pColor = "hsl(52 100% 75%)";
 
+        addAnimeShockwave(x, y, c.subType === "purple" ? "rgba(216, 180, 254, 0.95)" : c.subType === "red" ? "rgba(252, 165, 165, 0.95)" : "rgba(254, 240, 138, 0.95)");
+
         if (c.subType === "purple") {
           pts = 2;
           pColor = "hsl(280 100% 80%)";
           addFloatingText(x, y - 15 * SCALE, "+2", "#e879f9");
         } else if (c.subType === "red") {
           pColor = "hsl(350 100% 75%)";
-          // SADECE RED AĞ KIRAR — ANİMASYONLU ALEV EFEKTİ!
           if (shouldBurnSpiderWeb(c.subType)) {
             for (const sp of critters) {
               if (sp.kind === "spider" && sp.webActive) {
@@ -965,7 +1057,7 @@ function update(dt: number) {
                 spawnFlameBurnEffect(jar.x + jar.w / 2, jar.y, spX, spY);
               }
             }
-            burst(x, y, "hsl(15 100% 60%)", 35);
+            burst(x, y, "hsl(15 100% 60%)", 30);
           }
           addFloatingText(x, y - 15 * SCALE, "+1", "#f87171");
         } else if (c.subType === "emerald") {
@@ -983,8 +1075,8 @@ function update(dt: number) {
         caught = Math.min(caught + pts, levelCfg.target);
         syncJarFireflies();
 
-        burst(x, y, pColor, 26);
-        burst(x, y, "#ffffff", 8);
+        burst(x, y, pColor, 20);
+        burst(x, y, "#ffffff", 6);
 
         jarSquash = 0.32;
         jarWobble = 0.15;
@@ -1069,13 +1161,26 @@ function update(dt: number) {
     fp.life -= dt;
     fp.x += fp.vx * dt;
     fp.y += fp.vy * dt;
-    fp.size = Math.max(0.5 * SCALE, fp.size - dt * 4 * SCALE);
+    fp.size = Math.max(0.5 * SCALE, fp.size - dt * 6 * SCALE);
   }
   flameParticles = flameParticles.filter((fp) => fp.life > 0);
 
+  for (const sw of animeShockwaves) {
+    sw.life -= dt;
+    sw.r += dt * 240 * SCALE;
+  }
+  animeShockwaves = animeShockwaves.filter((sw) => sw.life > 0);
+
+  for (const ss of shootingStars) {
+    ss.life -= dt;
+    ss.x += ss.speed * dt;
+    ss.y += ss.speed * 0.45 * dt;
+  }
+  shootingStars = shootingStars.filter((ss) => ss.life > 0);
+
   for (const ft of floatingTexts) {
     ft.life -= dt;
-    ft.y -= 32 * SCALE * dt;
+    ft.y -= 45 * SCALE * dt;
   }
   floatingTexts = floatingTexts.filter((ft) => ft.life > 0);
 
@@ -1089,17 +1194,16 @@ function update(dt: number) {
     }
   }
 
-  for (const cl of clouds) {
-    cl.x += cl.speed * dt;
-    if (cl.x > W + cl.w) {
-      cl.x = -cl.w * 1.5;
-      cl.y = (30 + Math.random() * 80) * SCALE;
+  for (const fg of volumetricFog) {
+    fg.x += fg.speed * dt;
+    if (fg.x > W + fg.w) {
+      fg.x = -fg.w * 1.5;
+      fg.y = H * 0.35 + Math.random() * H * 0.4;
     }
   }
 }
 
-// --- Çizim Fonksiyonları ------------------------------------------------------
-
+// --- SİNEMATİK PARALAKS ATMOSFER VE YILDIZ KAYMASI ---------------------------
 function drawBackground() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
 
@@ -1193,13 +1297,35 @@ function drawBackground() {
   ctx.arc(moonX - 4 * SCALE, moonY + 14 * SCALE, 5 * SCALE, 0, Math.PI * 2);
   ctx.fill();
 
-  for (const cl of clouds) {
-    ctx.save();
-    ctx.fillStyle = `rgba(148, 163, 184, ${cl.alpha})`;
+  // YILDIZ KAYMALARI (Shooting Stars / Meteor Streaks)
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const ss of shootingStars) {
+    const alpha = (ss.life / ss.maxLife) * ss.alpha;
+    const starG = ctx.createLinearGradient(ss.x, ss.y, ss.x - ss.length, ss.y - ss.length * 0.45);
+    starG.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+    starG.addColorStop(0.4, `rgba(96, 165, 250, ${alpha * 0.6})`);
+    starG.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    ctx.strokeStyle = starG;
+    ctx.lineWidth = 2 * SCALE;
     ctx.beginPath();
-    ctx.ellipse(cl.x, cl.y, cl.w / 2, cl.h / 2, 0, 0, Math.PI * 2);
-    ctx.ellipse(cl.x - cl.w * 0.25, cl.y + 6 * SCALE, cl.w * 0.35, cl.h * 0.4, 0, 0, Math.PI * 2);
-    ctx.ellipse(cl.x + cl.w * 0.25, cl.y + 4 * SCALE, cl.w * 0.35, cl.h * 0.4, 0, 0, Math.PI * 2);
+    ctx.moveTo(ss.x, ss.y);
+    ctx.lineTo(ss.x - ss.length, ss.y - ss.length * 0.45);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // SİNEMATİK VOLÜMETRİK SİS VE GECE BULUTLARI
+  for (const fg of volumetricFog) {
+    ctx.save();
+    const fogG = ctx.createRadialGradient(fg.x, fg.y, 0, fg.x, fg.y, fg.w / 2);
+    fogG.addColorStop(0, `rgba(180, 215, 255, ${fg.alpha})`);
+    fogG.addColorStop(0.6, `rgba(100, 150, 220, ${fg.alpha * 0.4})`);
+    fogG.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = fogG;
+    ctx.beginPath();
+    ctx.ellipse(fg.x, fg.y, fg.w / 2, fg.h / 2, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -1778,12 +1904,10 @@ function drawJar() {
 
   ctx.save();
 
-  // HIGH END WARP SPEED ANİMASYON EFEKTİ (SPEED BOOST)
   if (speedBoostTimer > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     
-    // Hız Çizgileri & İvme Işınları
     for (let i = 0; i < 6; i++) {
       const lineX = (Math.random() - 0.5) * w * 1.2;
       const lineH = (40 + Math.random() * 80) * SCALE;
@@ -1797,7 +1921,6 @@ function drawJar() {
       ctx.stroke();
     }
 
-    // Sonik Şok Dalgası Halka Efekti
     const shockR = (w * 0.6) + ((elapsed * 12) % 1) * 35 * SCALE;
     ctx.strokeStyle = "rgba(56, 189, 248, 0.5)";
     ctx.lineWidth = 2 * SCALE;
@@ -1963,7 +2086,7 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- SANATSAL HUD (SADECE 1/10, SADECE RAKAM CAN, VEKTÖR KAÇAN SİMGELER) --------
+// --- SANATSAL HUD (SADECE 1/10, KRİSTAL YAKUT MÜCEVHERİ & SADECE RAKAM CAN) -------
 function drawHUD() {
   ctx.save();
 
@@ -1987,7 +2110,7 @@ function drawHUD() {
   ctx.font = `900 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${currentLevel}/10`, lvlX + lvlW / 2, lvlY + lvlH / 2 + 1 * SCALE);
 
-  // 2. Orta-Üst: SADECE RAKAM CAN (Örn: 3) & VEKTÖR KAÇAN ATEŞBÖCEKLERİ
+  // 2. Orta-Üst: KRİSTAL CAN MÜCEVHERİ & SADECE RAKAM CAN & VEKTÖR ATEŞBÖCEKLERİ
   const hudCenterW = 200 * SCALE;
   const hudCenterX = (W - hudCenterW) / 2;
   const hudCenterY = 16 * SCALE;
@@ -2000,8 +2123,8 @@ function drawHUD() {
   ctx.fill();
   ctx.stroke();
 
-  // Can İkonu & SADECE RAKAM CAN
-  drawHeartIcon(hudCenterX + 22 * SCALE, hudCenterY + 12 * SCALE, 11 * SCALE, true);
+  // Kristal Yakut Can Mücevheri İkonu & SADECE RAKAM CAN
+  drawCrystalHeartIcon(hudCenterX + 22 * SCALE, hudCenterY + lvlH / 2, 10 * SCALE, true);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
@@ -2802,13 +2925,22 @@ function draw() {
     ctx.fill();
   }
 
-  // ANİMASYONLU ALEV PARÇACIKLARININ ÇİZİMİ (FLAME BURST FX)
   for (const fp of flameParticles) {
     ctx.globalAlpha = fp.life / fp.max;
     ctx.fillStyle = fp.color;
     ctx.beginPath();
     ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // ANİME / MANGA İMPAKT ŞOK DALGALARI
+  for (const sw of animeShockwaves) {
+    const alpha = (sw.life / sw.maxLife);
+    ctx.strokeStyle = sw.color;
+    ctx.lineWidth = (3 - alpha * 2) * SCALE;
+    ctx.beginPath();
+    ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+    ctx.stroke();
   }
   ctx.restore();
 
