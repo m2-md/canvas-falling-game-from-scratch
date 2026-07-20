@@ -1,4 +1,4 @@
-// ATEŞBÖCEKLERİ — saf oyun mantığı. DOM yok, canvas yok, Math.random zorunlu değil:
+// ATESHBÖCEKLERİ — saf oyun mantığı. DOM yok, canvas yok, Math.random zorunlu değil:
 // rastgelelik kapıdan (rand parametresi) verilir, her fonksiyon deterministik test edilir.
 
 // --- Direk 1 — Spawner: metronom değil, yağmur -------------------------------
@@ -26,7 +26,7 @@ export function tickSpawn(
   return true;
 }
 
-// --- Direk 2 — Salınım -------------------------------------------------------
+// --- Direk 2 — Salınım & Eğim ------------------------------------------------
 
 // Sinüs salınımı: merkez çizgi etrafında yumuşak gidiş-geliş
 export function sway(
@@ -45,6 +45,20 @@ export function swayVel(
   freq: number,
 ): number {
   return Math.cos(t * freq * Math.PI * 2) * amp * freq * Math.PI * 2;
+}
+
+// Karmaşık Arı Uçuş Eğim Hesabı (Bölüm İlerledikçe Saldırgan Dikey/Yatay Dalış)
+export function aggressiveSway(
+  t: number,
+  base: number,
+  amp: number,
+  freq: number,
+  level: number,
+): { x: number; extraY: number } {
+  const levelMult = 1 + (level - 1) * 0.12; // Seviye arttıkça salınım agresifleşir
+  const x = base + Math.sin(t * freq * levelMult * Math.PI * 2) * (amp * levelMult);
+  const extraY = Math.sin(t * freq * 2.5 * Math.PI) * (14 * levelMult);
+  return { x, extraY };
 }
 
 // --- Direk 4 — Çarpışma ------------------------------------------------------
@@ -74,12 +88,12 @@ export interface Shake {
 }
 
 export function addShake(s: Shake, power: number): void {
-  s.power = Math.min(s.power + power, 24); // tavan: art arda arılar ekranı uçurmasın
+  s.power = Math.min(s.power + power, 24);
 }
 
 export function updateShake(s: Shake, dt: number): void {
   s.t += dt;
-  s.power = Math.max(0, s.power - dt * 30); // doğrusal sönüm: ~yarım saniyede durulur
+  s.power = Math.max(0, s.power - dt * 30);
 }
 
 export function shakeOffset(
@@ -93,7 +107,9 @@ export function shakeOffset(
   };
 }
 
-// --- Tutam 4 — Bölümler & Zorluk Eğrisi ---------------------------------------
+// --- Tutam 4 — 10 Bölümlü Kurgu & Yeni Böcek Türleri --------------------------
+
+export type HazardKind = "wasp" | "grasshopper" | "giant_beetle";
 
 export interface LevelConfig {
   level: number;
@@ -105,19 +121,20 @@ export interface LevelConfig {
   spawnEvery: number;
   skyTheme: "twilight" | "emerald" | "midnight" | "azure" | "storm" | "aurora" | "bloodmoon" | "fog" | "starstorm" | "legendary";
   description: string;
+  allowedHazards: HazardKind[];
 }
 
 export const LEVELS: LevelConfig[] = [
-  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 5, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, skyTheme: "twilight", description: "Hafif esintide ışıldayan altın ateşböceklerini toplayarak kavanozunu doldur." },
-  { level: 2, name: "Zümrüt Vadi", subtitle: "Zümrüt Işıkları", target: 7, waspChance: 0.18, fallSpeedMult: 1.15, spawnEvery: 1.35, skyTheme: "emerald", description: "Vadiye hızlı zümrüt ateşböcekleri iniyor. Dikkatli ol!" },
-  { level: 3, name: "Gece Yarısı Kovanı", subtitle: "Tehlike Artıyor", target: 8, waspChance: 0.25, fallSpeedMult: 1.25, spawnEvery: 1.2, skyTheme: "midnight", description: "Eşek arıları çoğalıyor, hareketlerini dikkatle planla!" },
-  { level: 4, name: "Mavi Yakut Gecesi", subtitle: "Azure Çekimi", target: 10, waspChance: 0.28, fallSpeedMult: 1.35, spawnEvery: 1.1, skyTheme: "azure", description: "Nadir mavi yakut ateşböcekleri hızlı süzülüyor." },
-  { level: 5, name: "Fırtına Öncesi Sessizlik", subtitle: "Rüzgarlı Yolculuk", target: 12, waspChance: 0.32, fallSpeedMult: 1.45, spawnEvery: 1.0, skyTheme: "storm", description: "Rüzgar sertleşiyor, böceklerin salınımı hızlanıyor!" },
-  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Gecesi", target: 14, waspChance: 0.35, fallSpeedMult: 1.55, spawnEvery: 0.9, skyTheme: "aurora", description: "Kutupsal ışık hüzmelerinin altında yüksek konsantrasyon gerekir." },
-  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 15, waspChance: 0.40, fallSpeedMult: 1.70, spawnEvery: 0.8, skyTheme: "bloodmoon", description: "Kızıl ay altında saldırgan eşek arılarına karşı hayatta kal!" },
-  { level: 8, name: "Derin Orman Sisleri", subtitle: "Sisli Sığınak", target: 18, waspChance: 0.42, fallSpeedMult: 1.85, spawnEvery: 0.72, skyTheme: "fog", description: "Yoğun sis altında süratli hareket ve yüksek refleks gerektirir." },
-  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Av", target: 20, waspChance: 0.45, fallSpeedMult: 2.0, spawnEvery: 0.65, skyTheme: "starstorm", description: "Gece gökyüzünden yağmur gibi inen böcekleri ustalıkla yakala!" },
-  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, skyTheme: "legendary", description: "Tüm seviyelerin en büyük sınavı! Gece bahçesinin efsanevi muhafızı ol!" }
+  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 5, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, skyTheme: "twilight", description: "Altın ateşböceklerini toplayarak başla.", allowedHazards: ["wasp"] },
+  { level: 2, name: "Zümrüt Vadi", subtitle: "Zümrüt Işıkları", target: 7, waspChance: 0.18, fallSpeedMult: 1.15, spawnEvery: 1.35, skyTheme: "emerald", description: "Hızlı zümrüt ateşböcekleri iniyor.", allowedHazards: ["wasp"] },
+  { level: 3, name: "Sıçrayan Tepe", subtitle: "Çekirgelerin Doğuşu", target: 8, waspChance: 0.25, fallSpeedMult: 1.25, spawnEvery: 1.2, skyTheme: "midnight", description: "Dikkat! Ani sıçrayan hızlı çekirgeler belirdi!", allowedHazards: ["wasp", "grasshopper"] },
+  { level: 4, name: "Mavi Yakut Gecesi", subtitle: "Azure Çekimi", target: 10, waspChance: 0.28, fallSpeedMult: 1.35, spawnEvery: 1.1, skyTheme: "azure", description: "Mavi yakut ateşböcekleri ve arı sürüleri.", allowedHazards: ["wasp", "grasshopper"] },
+  { level: 5, name: "Dev Kovan Geçidi", subtitle: "Dev Kral Böcek", target: 12, waspChance: 0.32, fallSpeedMult: 1.45, spawnEvery: 1.0, skyTheme: "storm", description: "Devasa yer kaplayan Dev Kral Böceklere dikkat!", allowedHazards: ["wasp", "giant_beetle"] },
+  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Fırtınası", target: 14, waspChance: 0.35, fallSpeedMult: 1.55, spawnEvery: 0.9, skyTheme: "aurora", description: "Çekirgeler ve dev böcekler bir arada saldırıyor.", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
+  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 15, waspChance: 0.40, fallSpeedMult: 1.70, spawnEvery: 0.8, skyTheme: "bloodmoon", description: "Agresif dalış yapan kovan arıları!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
+  { level: 8, name: "Derin Orman Sisleri", subtitle: "Sisli Sığınak", target: 18, waspChance: 0.42, fallSpeedMult: 1.85, spawnEvery: 0.72, skyTheme: "fog", description: "Yoğun sis altında hızlı sıçramalar.", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
+  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Kaos", target: 20, waspChance: 0.45, fallSpeedMult: 2.0, spawnEvery: 0.65, skyTheme: "starstorm", description: "Kaotik sıçrayışlar ve dev engel böcekleri!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] },
+  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, skyTheme: "legendary", description: "Tüm zararlılar ve 25 hedef ışık! Efsanevi şampiyon ol!", allowedHazards: ["wasp", "grasshopper", "giant_beetle"] }
 ];
 
 export function getLevelConfig(level: number): LevelConfig {
@@ -130,7 +147,6 @@ export interface Difficulty {
   fallSpeed: number;
 }
 
-// Süre ve bölüm numarasına göre dinamik zorluk hesabı
 export function difficulty(elapsed: number, level = 1): Difficulty {
   const cfg = getLevelConfig(level);
   const k = Math.min(elapsed / 60, 1);

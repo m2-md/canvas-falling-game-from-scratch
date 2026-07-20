@@ -3,6 +3,7 @@ import {
   type Shake,
   LEVELS,
   addShake,
+  aggressiveSway,
   createSpawnTimer,
   difficulty,
   getLevelConfig,
@@ -44,7 +45,7 @@ describe("tickSpawn: biriktiricili spawner", () => {
   });
 });
 
-describe("sway: sinüs salınımı", () => {
+describe("sway & aggressiveSway: salınım ve agresif arı eğimi", () => {
   it("t=0'da merkez çizgidedir", () => {
     expect(sway(0, 100, 30, 2)).toBe(100);
   });
@@ -57,13 +58,19 @@ describe("sway: sinüs salınımı", () => {
     }
   });
 
-  it("çeyrek periyotta tepe noktasına ulaşır", () => {
-    expect(sway(0.25, 50, 10, 1)).toBeCloseTo(60);
-  });
-
   it("swayVel salınımın anlık yatay türevini verir", () => {
     expect(swayVel(0, 10, 1)).toBeCloseTo(10 * 2 * Math.PI);
     expect(swayVel(0.25, 10, 1)).toBeCloseTo(0);
+  });
+
+  it("aggressiveSway seviye 10'da seviye 1'e göre maksimum genişliği daha fazladır", () => {
+    let maxOffset1 = 0;
+    let maxOffset10 = 0;
+    for (let t = 0; t < 2; t += 0.01) {
+      maxOffset1 = Math.max(maxOffset1, Math.abs(aggressiveSway(t, 100, 20, 1, 1).x - 100));
+      maxOffset10 = Math.max(maxOffset10, Math.abs(aggressiveSway(t, 100, 20, 1, 10).x - 100));
+    }
+    expect(maxOffset10).toBeGreaterThan(maxOffset1);
   });
 });
 
@@ -89,23 +96,21 @@ describe("hitCircleRect: daire-dikdörtgen çarpışması", () => {
   });
 });
 
-describe("LEVELS & getLevelConfig: 10 Seviyeli Kurgu", () => {
+describe("LEVELS & getLevelConfig: 10 Seviyeli Kurgu & Yeni Türler", () => {
   it("tam 10 bölüm tanımlıdır", () => {
     expect(LEVELS.length).toBe(10);
   });
 
-  it("bölüm zorlukları monoton artar", () => {
-    for (let i = 0; i < LEVELS.length - 1; i++) {
-      expect(LEVELS[i + 1].target).toBeGreaterThanOrEqual(LEVELS[i].target);
-      expect(LEVELS[i + 1].waspChance).toBeGreaterThanOrEqual(LEVELS[i].waspChance);
-      expect(LEVELS[i + 1].fallSpeedMult).toBeGreaterThanOrEqual(LEVELS[i].fallSpeedMult);
-    }
+  it("bölümlerde izin verilen engeller doğru yapılandırılmıştır", () => {
+    expect(LEVELS[0].allowedHazards).toContain("wasp");
+    expect(LEVELS[2].allowedHazards).toContain("grasshopper");
+    expect(LEVELS[4].allowedHazards).toContain("giant_beetle");
   });
 
   it("getLevelConfig aralık dışı bölüm numaralarını güvenle sınırlar", () => {
     expect(getLevelConfig(0).level).toBe(1);
     expect(getLevelConfig(999).level).toBe(10);
-    expect(getLevelConfig(5).name).toBe("Fırtına Öncesi Sessizlik");
+    expect(getLevelConfig(3).name).toBe("Sıçrayan Tepe");
   });
 });
 

@@ -1,12 +1,14 @@
-// ATEŞBÖCEKLERİ — 10 Bölümlü Hikaye Kurgulu & Seviye İlerleme Sistemli Profesyonel Oyun
-// Özellikler: 10 Özel Seviye Tema Atmosferi, Bölüm İlerleme Çubuğu, Seviye Sonu Modalı, Dribbble Dashboard.
+// ATEŞBÖCEKLERİ — 10 Bölüm Seçim Tablosu, Yeni Böcek Türleri & Agresif Arı Uçuşları
+// Özellikler: Sıçrayan Çekirgeler, Dev Kral Böcekler, Agresif Arı Uçuşları, 10'lu Bölüm Seçim Menüsü.
 
 import {
+  type HazardKind,
   type LevelConfig,
   type Shake,
   type SpawnTimer,
   LEVELS,
   addShake,
+  aggressiveSway,
   createSpawnTimer,
   difficulty,
   getLevelConfig,
@@ -42,12 +44,13 @@ canvas.height = H;
 // --- Oyun Durumu & Tipler ---------------------------------------------------
 const MAX_MISSED = 3;
 
-type GameState = "playing" | "paused" | "tutorial" | "settings" | "levelcomplete" | "gameover" | "campaignwon";
+type GameState = "playing" | "paused" | "tutorial" | "settings" | "levelselect" | "levelcomplete" | "gameover" | "campaignwon";
 type FireflyType = "gold" | "emerald" | "azure";
+type CritterKind = "firefly" | "wasp" | "grasshopper" | "giant_beetle";
 
 interface Critter {
   id: number;
-  kind: "firefly" | "wasp";
+  kind: CritterKind;
   subType?: FireflyType;
   baseX: number;
   y: number;
@@ -60,6 +63,7 @@ interface Critter {
   dead?: boolean;
   beingPulled?: boolean;
   pullAngle?: number;
+  jumpPhase?: number;
 }
 
 interface Particle {
@@ -129,15 +133,18 @@ let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha:
 let clouds: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
 let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
 
-// UI Buton Yerleşimleri
+// UI Buton & Tablo Yerleşimleri
 const uiButtons = {
   help: { x: 0, y: 0, w: 0, h: 0 },
   settings: { x: 0, y: 0, w: 0, h: 0 },
   modalAction: { x: 0, y: 0, w: 0, h: 0 },
   modalSecondary: { x: 0, y: 0, w: 0, h: 0 },
+  modalLevelSelect: { x: 0, y: 0, w: 0, h: 0 },
   toggleSound: { x: 0, y: 0, w: 0, h: 0 },
   toggleMagnet: { x: 0, y: 0, w: 0, h: 0 },
 };
+
+const levelGridButtons: { level: number; x: number; y: number; w: number; h: number }[] = [];
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
@@ -250,32 +257,81 @@ function syncJarFireflies() {
 }
 
 function spawnCritter() {
-  const wasp = Math.random() < levelCfg.waspChance;
-  const amp = wasp
-    ? (40 + Math.random() * 32) * SCALE
-    : (14 + Math.random() * 20) * SCALE;
+  const isHazard = Math.random() < levelCfg.waspChance;
 
-  let subType: FireflyType = "gold";
-  if (!wasp) {
+  if (!isHazard) {
+    // Ateşböceği Üret
+    const amp = (14 + Math.random() * 20) * SCALE;
+    let subType: FireflyType = "gold";
     const r = Math.random();
     if (r < 0.3) subType = "emerald";
     else if (r < 0.55) subType = "azure";
-  }
 
-  critters.push({
-    id: nextCritterId++,
-    kind: wasp ? "wasp" : "firefly",
-    subType,
-    baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
-    y: -35 * SCALE,
-    offsetX: 0,
-    offsetY: 0,
-    t: Math.random() * 10,
-    amp,
-    freq: wasp ? 0.26 + Math.random() * 0.2 : 0.65 + Math.random() * 0.75,
-    r: wasp ? 14 * SCALE : 10 * SCALE,
-    pullAngle: Math.random() * Math.PI * 2,
-  });
+    critters.push({
+      id: nextCritterId++,
+      kind: "firefly",
+      subType,
+      baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
+      y: -35 * SCALE,
+      offsetX: 0,
+      offsetY: 0,
+      t: Math.random() * 10,
+      amp,
+      freq: 0.65 + Math.random() * 0.75,
+      r: 10 * SCALE,
+      pullAngle: Math.random() * Math.PI * 2,
+    });
+  } else {
+    // Engel Üret (Arı, Çekirge, Dev Kral Böcek)
+    const allowed = levelCfg.allowedHazards;
+    const kind: CritterKind = allowed[Math.floor(Math.random() * allowed.length)];
+
+    if (kind === "grasshopper") {
+      const amp = (50 + Math.random() * 40) * SCALE;
+      critters.push({
+        id: nextCritterId++,
+        kind: "grasshopper",
+        baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
+        y: -35 * SCALE,
+        offsetX: 0,
+        offsetY: 0,
+        t: Math.random() * 10,
+        amp,
+        freq: 0.4 + Math.random() * 0.3,
+        r: 13 * SCALE,
+        jumpPhase: 0,
+      });
+    } else if (kind === "giant_beetle") {
+      const amp = (15 + Math.random() * 15) * SCALE;
+      critters.push({
+        id: nextCritterId++,
+        kind: "giant_beetle",
+        baseX: amp + 35 * SCALE + Math.random() * (W - 2 * (amp + 35 * SCALE)),
+        y: -45 * SCALE,
+        offsetX: 0,
+        offsetY: 0,
+        t: Math.random() * 10,
+        amp,
+        freq: 0.2 + Math.random() * 0.15,
+        r: 28 * SCALE, // Devasa Boyut!
+      });
+    } else {
+      // Standart Eşek Arısı
+      const amp = (40 + Math.random() * 32) * SCALE;
+      critters.push({
+        id: nextCritterId++,
+        kind: "wasp",
+        baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
+        y: -35 * SCALE,
+        offsetX: 0,
+        offsetY: 0,
+        t: Math.random() * 10,
+        amp,
+        freq: 0.26 + Math.random() * 0.2,
+        r: 14 * SCALE,
+      });
+    }
+  }
 }
 
 // --- Girdi Yönetimi ---------------------------------------------------------
@@ -326,12 +382,28 @@ function handlePointerClick(clientX: number, clientY: number) {
       highMagnet = !highMagnet;
       return true;
     }
+    if (isInsideRect(cx, cy, uiButtons.modalLevelSelect)) {
+      state = "levelselect";
+      modalAnimTime = 0;
+      return true;
+    }
     if (isInsideRect(cx, cy, uiButtons.modalAction)) {
       state = "playing";
       return true;
     }
     if (isInsideRect(cx, cy, uiButtons.modalSecondary)) {
       resetStage(1);
+      return true;
+    }
+  } else if (state === "levelselect") {
+    for (const b of levelGridButtons) {
+      if (isInsideRect(cx, cy, b)) {
+        resetStage(b.level);
+        return true;
+      }
+    }
+    if (isInsideRect(cx, cy, uiButtons.modalAction)) {
+      state = "settings";
       return true;
     }
   } else if (state === "levelcomplete") {
@@ -416,7 +488,7 @@ window.addEventListener(
       if (state === "playing") {
         state = "settings";
         modalAnimTime = 0;
-      } else if (state === "settings" || state === "tutorial") {
+      } else if (state === "settings" || state === "tutorial" || state === "levelselect") {
         state = "playing";
       }
     }
@@ -649,9 +721,23 @@ function update(dt: number) {
     for (const c of critters) {
       c.t += dt;
 
-      if (c.kind === "wasp") {
+      // Özel Böcek Hareket Mekanikleri
+      if (c.kind === "grasshopper") {
+        // Sıçrayan Çekirge: Ani zıplama patlamaları (Dash bursts)
+        c.y += fallSpeed * SCALE * dt * 1.2;
+        const jumpOffset = Math.sin(c.t * 7) * 45 * SCALE;
+        c.offsetX = jumpOffset;
+      } else if (c.kind === "giant_beetle") {
+        // Dev Kral Böcek: Ağır, hantal ve devasa düşüş
+        c.y += fallSpeed * SCALE * dt * 0.75;
+      } else if (c.kind === "wasp") {
+        // Agresif Eşek Arısı: Bölüm arttıkça kaotik ve hızlı dalış!
         c.y += fallSpeed * SCALE * dt * 1.1;
+        const { x: aggrX, extraY } = aggressiveSway(c.t, c.baseX, c.amp, c.freq, currentLevel);
+        c.offsetX = aggrX - c.baseX;
+        c.offsetY = extraY;
       } else {
+        // Ateşböceği
         c.y += fallSpeed * SCALE * dt;
       }
 
@@ -754,12 +840,17 @@ function update(dt: number) {
           burst(W / 2, H * 0.4, "hsl(150 100% 75%)", 30);
         }
       } else {
+        // Engel Çarpışmaları (Arı, Çekirge, Dev Kral Böcek)
         caught = Math.max(caught - 1, 0);
         syncJarFireflies();
         waspHitFlash = 0.42;
-        addShake(shake, 20 * SCALE);
-        addFloatingText(x, y - 15 * SCALE, "-1", "#f87171");
-        burst(x, y, "hsl(15 100% 60%)", 18);
+
+        const penaltyPower = c.kind === "giant_beetle" ? 24 * SCALE : 18 * SCALE;
+        addShake(shake, penaltyPower);
+
+        const txt = c.kind === "giant_beetle" ? "DEV ENGEL!" : c.kind === "grasshopper" ? "SIÇRAMA!" : "-1";
+        addFloatingText(x, y - 15 * SCALE, txt, "#f87171");
+        burst(x, y, "hsl(15 100% 60%)", 22);
       }
     }
     critters = critters.filter((c) => !c.dead && c.y + c.offsetY < H + 50 * SCALE);
@@ -821,7 +912,6 @@ function update(dt: number) {
 function drawBackground() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
 
-  // Bölüm temasına göre dinamik arka plan atmosferi
   switch (levelCfg.skyTheme) {
     case "emerald":
       g.addColorStop(0, "#021710");
@@ -1187,6 +1277,93 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.restore();
 }
 
+function drawGrasshopper(x: number, y: number, r: number, t: number) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Yeşil Parıltı Aurası
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
+  g.addColorStop(0, "rgba(74, 222, 128, 0.4)");
+  g.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Uzun Bacaklar (Zıplama Yayları)
+  ctx.strokeStyle = "#15803d";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.4, 0);
+  ctx.lineTo(-r * 1.2, r * 0.8);
+  ctx.lineTo(-r * 0.8, r * 1.6);
+
+  ctx.moveTo(r * 0.4, 0);
+  ctx.lineTo(r * 1.2, r * 0.8);
+  ctx.lineTo(r * 0.8, r * 1.6);
+  ctx.stroke();
+
+  // Gövde
+  ctx.fillStyle = "#22c55e";
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.6, r * 1.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Gözler
+  ctx.fillStyle = "#facc15";
+  ctx.beginPath();
+  ctx.arc(-r * 0.25, -r * 0.6, r * 0.18, 0, Math.PI * 2);
+  ctx.arc(r * 0.25, -r * 0.6, r * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawGiantBeetle(x: number, y: number, r: number, t: number) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Dev Tehdit Kırmızı Aurası
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.4);
+  g.addColorStop(0, "rgba(225, 29, 72, 0.5)");
+  g.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 2.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Dev Kabuk
+  ctx.fillStyle = "#1e1b18";
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.85, r * 1.05, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Zırh Çizgisi
+  ctx.strokeStyle = "#e11d48";
+  ctx.lineWidth = 2.5 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.9);
+  ctx.lineTo(0, r * 0.9);
+  ctx.stroke();
+
+  // Dev Boynuz
+  ctx.fillStyle = "#e11d48";
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.2, -r * 0.8);
+  ctx.lineTo(r * 0.2, -r * 0.8);
+  ctx.lineTo(0, -r * 1.5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
@@ -1325,7 +1502,6 @@ function drawJar() {
 function drawHUD() {
   ctx.save();
 
-  // 1. Sol Üst: Bölüm İlerleme Kartı & Bar
   const lvlW = Math.min(W * 0.45, 250 * SCALE);
   const lvlH = 46 * SCALE;
   const lvlX = 16 * SCALE;
@@ -1339,14 +1515,12 @@ function drawHUD() {
   ctx.fill();
   ctx.stroke();
 
-  // Seviye Etiketi
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#60a5fa";
   ctx.font = `800 ${11 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`BÖLÜM ${levelCfg.level}/10 • ${levelCfg.name.toUpperCase()}`, lvlX + 16 * SCALE, lvlY + 8 * SCALE);
 
-  // İlerleme Çubuğu (Progress Bar)
   const barX = lvlX + 16 * SCALE;
   const barY = lvlY + 26 * SCALE;
   const barInnerW = lvlW - 85 * SCALE;
@@ -1368,14 +1542,12 @@ function drawHUD() {
     ctx.fill();
   }
 
-  // Skor Sayacı
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fef08a";
   ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${caught}/${levelCfg.target}`, lvlX + lvlW - 14 * SCALE, lvlY + lvlH / 2 + 1 * SCALE);
 
-  // 2. Can Rozetleri (Hearts)
   const btnSize = 46 * SCALE;
   const btnGap = 10 * SCALE;
 
@@ -1430,6 +1602,129 @@ function drawHUD() {
   ctx.restore();
 }
 
+// --- 10 BÖLÜM SEÇİM TABLOSU MODALI (Dribbble Dashboard Grid) ------------------
+function drawLevelSelectModal() {
+  ctx.save();
+  ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
+  ctx.fillRect(0, 0, W, H);
+
+  const cardW = Math.min(W * 0.94, 680 * SCALE);
+  const cardH = Math.min(H * 0.90, 540 * SCALE);
+  const cardX = (W - cardW) / 2;
+  const cardY = (H - cardH) / 2;
+
+  const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
+
+  ctx.fillStyle = cardGrad;
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.45)";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 28 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  // Header Badge
+  const badgeW = 180 * SCALE;
+  const badgeH = 30 * SCALE;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = cardY + 22 * SCALE;
+
+  ctx.fillStyle = "rgba(96, 165, 250, 0.15)";
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 15 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#60a5fa";
+  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("BÖLÜM SEÇİMİ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
+
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `800 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText("10 EFSANEVİ BÖLÜM TABLOSU", W / 2, cardY + 58 * SCALE);
+
+  // 10'lu Grid Tablosu (5 Kolon x 2 Satır)
+  const gridW = cardW - 48 * SCALE;
+  const gridX = cardX + 24 * SCALE;
+  const gridY = cardY + 102 * SCALE;
+
+  const cols = 5;
+  const rows = 2;
+  const colW = (gridW - (cols - 1) * 10 * SCALE) / cols;
+  const rowH = 150 * SCALE;
+
+  levelGridButtons.length = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const c = i % cols;
+    const r = Math.floor(i / cols);
+    const bx = gridX + c * (colW + 10 * SCALE);
+    const by = gridY + r * (rowH + 12 * SCALE);
+    const lvl = LEVELS[i];
+
+    levelGridButtons.push({ level: lvl.level, x: bx, y: by, w: colW, h: rowH });
+
+    const isCurrent = lvl.level === currentLevel;
+
+    ctx.fillStyle = isCurrent ? "rgba(37, 99, 235, 0.35)" : "rgba(30, 41, 59, 0.5)";
+    ctx.strokeStyle = isCurrent ? "#60a5fa" : "rgba(255, 255, 255, 0.12)";
+    ctx.lineWidth = (isCurrent ? 2 : 1.2) * SCALE;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, colW, rowH, 16 * SCALE);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = isCurrent ? "#fef08a" : "#60a5fa";
+    ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(`BÖLÜM ${lvl.level}`, bx + colW / 2, by + 12 * SCALE);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `700 ${10.5 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(lvl.name, bx + colW / 2, by + 34 * SCALE);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `500 ${9.5 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(`Hedef: ${lvl.target}`, bx + colW / 2, by + 68 * SCALE);
+
+    ctx.fillStyle = lvl.allowedHazards.includes("giant_beetle") ? "#f43f5e" : lvl.allowedHazards.includes("grasshopper") ? "#4ade80" : "#facc15";
+    ctx.font = `600 ${9 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(lvl.allowedHazards.length > 1 ? "ÇOKLU ENGEL" : "ARI", bx + colW / 2, by + 115 * SCALE);
+  }
+
+  // Buton
+  const btnW = Math.min(cardW - 80 * SCALE, 320 * SCALE);
+  const btnH = 46 * SCALE;
+  const btnX = (W - btnW) / 2;
+  const btnY = cardY + cardH - 64 * SCALE;
+
+  uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 23 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("GERİ DÖN", W / 2, btnY + btnH / 2 + 1 * SCALE);
+
+  ctx.restore();
+}
+
 // --- SIRALI ANİMASYONLU MODAL SİSTEMİ ---------------------------------------
 function drawModalCard(
   statusBadge: string,
@@ -1459,7 +1754,6 @@ function drawModalCard(
   ctx.fill();
   ctx.stroke();
 
-  // Canlı Oyundaki Uçan Karakter Görselleri
   const heroJarX = cardX + 54 * SCALE;
   const heroJarY = cardY + 65 * SCALE;
   ctx.save();
@@ -1475,7 +1769,6 @@ function drawModalCard(
     drawFirefly(cardX + cardW - 115 * SCALE, cardY + 80 * SCALE, 9 * SCALE, elapsed + 1, 0, 0, "emerald");
   }
 
-  // Status Pill Badge
   const badgeW = 200 * SCALE;
   const badgeH = 32 * SCALE;
   const badgeX = (W - badgeW) / 2;
@@ -1495,13 +1788,11 @@ function drawModalCard(
   ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(statusBadge, W / 2, badgeY + badgeH / 2 + 1 * SCALE);
 
-  // Ana Başlık
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
-  // İNFOGRAFİK STAT KARTLARI
   const gridW = cardW - 64 * SCALE;
   const gridX = cardX + 32 * SCALE;
   const gridY = cardY + 128 * SCALE;
@@ -1568,7 +1859,6 @@ function drawModalCard(
     ctx.restore();
   }
 
-  // Özet Bilgi Çubuğu
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
     ? `${levelCfg.name} tamamlandı! ${currentLevel < 10 ? 'Sonraki seviyeye geçmeye hazırsın.' : 'Tüm 10 bölümü başardın!'}`
@@ -1585,7 +1875,6 @@ function drawModalCard(
   ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(descText, W / 2, descY + 22 * SCALE);
 
-  // Ana Buton
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -1638,7 +1927,6 @@ function drawTutorialModal() {
   ctx.fill();
   ctx.stroke();
 
-  // Header Badge
   const badgeW = 160 * SCALE;
   const badgeH = 30 * SCALE;
   const badgeX = (W - badgeW) / 2;
@@ -1661,9 +1949,8 @@ function drawTutorialModal() {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("10 BÖLÜMLÜ MACERA", W / 2, cardY + 62 * SCALE);
+  ctx.fillText("10 BÖLÜM & ENGELLER", W / 2, cardY + 62 * SCALE);
 
-  // 2x2 İnfografik Grid Kartları
   const gridW = cardW - 56 * SCALE;
   const gridX = cardX + 28 * SCALE;
   const gridY = cardY + 110 * SCALE;
@@ -1673,14 +1960,9 @@ function drawTutorialModal() {
 
   const rules = [
     { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 24 * SCALE, "#38bdf8"), title: "2D KONTROL", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönlendir." },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 7 * SCALE, elapsed, 0, 0, "gold"), title: "BÖLÜM HEDEFLERİ", desc: "10 farklı seviyede hedef sayıda ateşböceğini toplayarak ilerle." },
-    { drawIcon: (x: number, y: number) => drawWasp(x, y, 8 * SCALE, elapsed, 0, 0), title: "ARTAN TEHLİKE", desc: "Üst bölümlerde eşek arıları çoğalır ve düşüş hızı katlanır." },
-    { drawIcon: (x: number, y: number) => {
-      ctx.fillStyle = "#ef4444";
-      ctx.beginPath();
-      ctx.arc(x, y, 7 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
-    }, title: "3 KAÇIRMA HAKKI", desc: "3 ateşböceği ekranın altından kaçarsa bölüm yeniden başlar." },
+    { drawIcon: (x: number, y: number) => drawGrasshopper(x, y, 9 * SCALE, elapsed), title: "SIÇRAYAN ÇEKİRGE", desc: "Patlamalı ani zıplamalar yapar. Hareket yönünü önceden tahmin et!" },
+    { drawIcon: (x: number, y: number) => drawGiantBeetle(x, y, 14 * SCALE, elapsed), title: "DEV KRAL BÖCEK", desc: "Ekranda devasa yer kaplayan ağır zırhlı engel böceği." },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 8 * SCALE, elapsed, 0, 0), title: "AGRESİF KANATLAR", desc: "İlerleyen bölümlerde arılar kaotik ve hızlı dalışlar gerçekleştirir." },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -1719,7 +2001,6 @@ function drawTutorialModal() {
     ctx.restore();
   }
 
-  // Buton
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -1751,7 +2032,7 @@ function drawSettingsModal() {
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 500 * SCALE);
+  const cardH = Math.min(H * 0.90, 520 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
@@ -1767,11 +2048,10 @@ function drawSettingsModal() {
   ctx.fill();
   ctx.stroke();
 
-  // Header Badge
   const badgeW = 160 * SCALE;
   const badgeH = 30 * SCALE;
   const badgeX = (W - badgeW) / 2;
-  const badgeY = cardY + 24 * SCALE;
+  const badgeY = cardY + 20 * SCALE;
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
@@ -1789,16 +2069,15 @@ function drawSettingsModal() {
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/10`, W / 2, cardY + 62 * SCALE);
+  ctx.font = `800 ${Math.min(cardW * 0.055, 26 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/10`, W / 2, cardY + 56 * SCALE);
 
-  // Tablo Satırları
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
 
-  // Row 1: Ses Efektleri
-  const row1Y = cardY + 115 * SCALE;
-  const rowH = 68 * SCALE;
+  // Row 1: Ses
+  const row1Y = cardY + 105 * SCALE;
+  const rowH = 64 * SCALE;
 
   ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
@@ -1811,32 +2090,32 @@ function drawSettingsModal() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("SES EFEKTLERİ", rowX + 24 * SCALE, row1Y + 16 * SCALE);
+  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("SES EFEKTLERİ", rowX + 24 * SCALE, row1Y + 14 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
-  ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 24 * SCALE, row1Y + 38 * SCALE);
+  ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 24 * SCALE, row1Y + 36 * SCALE);
 
   const toggle1W = 110 * SCALE;
-  const toggle1H = 38 * SCALE;
-  const toggle1X = rowX + rowW - toggle1W - 20 * SCALE;
+  const toggle1H = 36 * SCALE;
+  const toggle1X = rowX + rowW - toggle1W - 16 * SCALE;
   const toggle1Y = row1Y + (rowH - toggle1H) / 2;
   uiButtons.toggleSound = { x: toggle1X, y: toggle1Y, w: toggle1W, h: toggle1H };
 
   ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle1X, toggle1Y, toggle1W, toggle1H, 19 * SCALE);
+  ctx.roundRect(toggle1X, toggle1Y, toggle1W, toggle1H, 18 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, toggle1Y + toggle1H / 2);
 
-  // Row 2: Vakum Gücü
-  const row2Y = row1Y + rowH + 16 * SCALE;
+  // Row 2: Vakum
+  const row2Y = row1Y + rowH + 12 * SCALE;
 
   ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
@@ -1849,36 +2128,58 @@ function drawSettingsModal() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 24 * SCALE, row2Y + 16 * SCALE);
+  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 24 * SCALE, row2Y + 14 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
-  ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 24 * SCALE, row2Y + 38 * SCALE);
+  ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 24 * SCALE, row2Y + 36 * SCALE);
 
   const toggle2W = 110 * SCALE;
-  const toggle2H = 38 * SCALE;
-  const toggle2X = rowX + rowW - toggle2W - 20 * SCALE;
+  const toggle2H = 36 * SCALE;
+  const toggle2X = rowX + rowW - toggle2W - 16 * SCALE;
   const toggle2Y = row2Y + (rowH - toggle2H) / 2;
   uiButtons.toggleMagnet = { x: toggle2X, y: toggle2Y, w: toggle2W, h: toggle2H };
 
   ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle2X, toggle2Y, toggle2W, toggle2H, 19 * SCALE);
+  ctx.roundRect(toggle2X, toggle2Y, toggle2W, toggle2H, 18 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, toggle2Y + toggle2H / 2);
+
+  // Row 3: 10 Bölüm Seçim Butonu
+  const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
+  const btnLvlH = 44 * SCALE;
+  const btnLvlX = (W - btnLvlW) / 2;
+  const btnLvlY = row2Y + rowH + 16 * SCALE;
+
+  uiButtons.modalLevelSelect = { x: btnLvlX, y: btnLvlY, w: btnLvlW, h: btnLvlH };
+
+  ctx.fillStyle = "rgba(59, 130, 246, 0.2)";
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.6)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(btnLvlX, btnLvlY, btnLvlW, btnLvlH, 22 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#93c5fd";
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("BÖLÜM SEÇİM TABLOSU (10 LEVEL)", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
 
   // Butonlar
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
-  const btnH = 50 * SCALE;
+  const btnH = 46 * SCALE;
   const btnX = (W - btnW) / 2;
 
-  const btn1Y = cardY + cardH - 135 * SCALE;
+  const btn1Y = cardY + cardH - 118 * SCALE;
   uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
   const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -1886,26 +2187,26 @@ function drawSettingsModal() {
   g1.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn1Y, btnW, btnH, 25 * SCALE);
+  ctx.roundRect(btnX, btn1Y, btnW, btnH, 23 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("DEVAM ET", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
-  const btn2Y = cardY + cardH - 70 * SCALE;
+  const btn2Y = cardY + cardH - 62 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
   ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
   ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn2Y, btnW, btnH, 25 * SCALE);
+  ctx.roundRect(btnX, btn2Y, btnW, btnH, 23 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "#fca5a5";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -1928,6 +2229,10 @@ function draw() {
     const y = c.y + c.offsetY;
     if (c.kind === "firefly") {
       drawFirefly(x, y, c.r, c.t, c.amp, c.freq, c.subType);
+    } else if (c.kind === "grasshopper") {
+      drawGrasshopper(x, y, c.r, c.t);
+    } else if (c.kind === "giant_beetle") {
+      drawGiantBeetle(x, y, c.r, c.t);
     } else {
       drawWasp(x, y, c.r, c.t, c.amp, c.freq);
     }
@@ -1967,7 +2272,9 @@ function draw() {
 
   ctx.restore();
 
-  if (state === "levelcomplete") {
+  if (state === "levelselect") {
+    drawLevelSelectModal();
+  } else if (state === "levelcomplete") {
     drawModalCard(`BÖLÜM ${currentLevel} TAMAMLANDI`, `${levelCfg.name} Geçildi!`, `SONRAKİ BÖLÜM (Bölüm ${currentLevel + 1})`, true);
   } else if (state === "campaignwon") {
     drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
