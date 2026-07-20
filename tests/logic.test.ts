@@ -9,12 +9,70 @@ import {
   difficulty,
   getLevelConfig,
   hitCircleRect,
+  processFireflyMiss,
+  processHazardCollision,
+  processWaspCollision,
   shakeOffset,
+  shouldBurnSpiderWeb,
   sway,
   swayVel,
   tickSpawn,
   updateShake,
 } from "../src/logic";
+
+describe("processWaspCollision & Can Kuralları", () => {
+  it("ateşböceği > 0 ise arı çarpması sadece 1 ateşböceği düşürür, can gitmez", () => {
+    const res = processWaspCollision(5, 3);
+    expect(res.newCaught).toBe(4);
+    expect(res.newLives).toBe(3);
+    expect(res.lostLife).toBe(false);
+  });
+
+  it("ateşböceği = 0 iken arı çarpması 1 CAN düşürür", () => {
+    const res = processWaspCollision(0, 3);
+    expect(res.newCaught).toBe(0);
+    expect(res.newLives).toBe(2);
+    expect(res.lostLife).toBe(true);
+  });
+});
+
+describe("processHazardCollision: Örümcek & Uğur Böceği Darbesi", () => {
+  it("örümcek veya uğur böceği çarptığında direkt 1 Can düşer", () => {
+    const res = processHazardCollision(3);
+    expect(res.newLives).toBe(2);
+    expect(res.lostLife).toBe(true);
+  });
+});
+
+describe("processFireflyMiss: 3 Ateşböceği Kaçırma Mekaniği", () => {
+  it("1 ve 2 ateşböceği kaçtığında henüz can düşmez", () => {
+    const res1 = processFireflyMiss(0, 3);
+    expect(res1.newMissed).toBe(1);
+    expect(res1.newLives).toBe(3);
+
+    const res2 = processFireflyMiss(1, 3);
+    expect(res2.newMissed).toBe(2);
+    expect(res2.newLives).toBe(3);
+  });
+
+  it("3. ateşböceği kaçtığında 1 CAN düşer ve kaçan sayısı sıfırlanır", () => {
+    const res3 = processFireflyMiss(2, 3);
+    expect(res3.newMissed).toBe(0);
+    expect(res3.newLives).toBe(2);
+    expect(res3.lostLife).toBe(true);
+  });
+});
+
+describe("shouldBurnSpiderWeb: Ağ Kıran Kızıl Yakut Kontrolü", () => {
+  it("sadece red (Kızıl Yakut) ağ yakıp kırabilir", () => {
+    expect(shouldBurnSpiderWeb("red")).toBe(true);
+    expect(shouldBurnSpiderWeb("gold")).toBe(false);
+    expect(shouldBurnSpiderWeb("emerald")).toBe(false);
+    expect(shouldBurnSpiderWeb("purple")).toBe(false);
+    expect(shouldBurnSpiderWeb("azure")).toBe(false);
+    expect(shouldBurnSpiderWeb(undefined)).toBe(false);
+  });
+});
 
 describe("tickSpawn: biriktiricili spawner", () => {
   it("enjekte edilen rand ile spawn aralığı deterministiktir", () => {

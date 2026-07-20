@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Saf Oyun Mantığı & Yeni Böcek Türleri
-// Özellikler: Ağ Atan Örümcek Çekim Fiziği, Uğur Böceği Gezinme Yörüngeleri, 5 Farklı Ateşböceği Türü.
+// ATEŞBÖCEKLERİ — Saf Oyun Mantığı & Zarar/Can Sistem Kuralları
+// Özellikler: 3 Can Hakları Sistem Mantığı, Ağ Kıran Kızıl Yakut Kontrolü, Sarsıntı ve Seviye Yapılandırması.
 
 // --- Direk 1 — Spawner -------------------------------------------------------
 
@@ -72,6 +72,43 @@ export function calculateSpiderWebPull(
     vx: (dx / dist) * pullForce,
     vy: (dy / dist) * pullForce,
   };
+}
+
+// --- Direk 3 — Can & Zarar Sistem Kuralları ----------------------------------
+
+// Arı Çarptığında: 0 ateşböceği varsa 1 Can gider, >0 ateşböceği varsa -1 Ateşböceği eksilir.
+export function processWaspCollision(
+  caught: number,
+  lives: number,
+): { newCaught: number; newLives: number; lostLife: boolean } {
+  if (caught > 0) {
+    return { newCaught: caught - 1, newLives: lives, lostLife: false };
+  }
+  return { newCaught: 0, newLives: Math.max(0, lives - 1), lostLife: true };
+}
+
+// Örümcek veya Uğur Böceği Çarptığında: Direkt 1 Can gider!
+export function processHazardCollision(
+  lives: number,
+): { newLives: number; lostLife: boolean } {
+  return { newLives: Math.max(0, lives - 1), lostLife: true };
+}
+
+// 3 Ateşböceği Kaçtığında: 1 Can gider!
+export function processFireflyMiss(
+  missedCount: number,
+  lives: number,
+): { newMissed: number; newLives: number; lostLife: boolean } {
+  const nextMissed = missedCount + 1;
+  if (nextMissed >= 3) {
+    return { newMissed: 0, newLives: Math.max(0, lives - 1), lostLife: true };
+  }
+  return { newMissed: nextMissed, newLives: lives, lostLife: false };
+}
+
+// Ağ Kıran Kontrolü: SADECE Kızıl Yakut (Red Firefly) Ağ Kırabilir!
+export function shouldBurnSpiderWeb(subType?: FireflySubtype): boolean {
+  return subType === "red";
 }
 
 // --- Direk 4 — Çarpışma ------------------------------------------------------

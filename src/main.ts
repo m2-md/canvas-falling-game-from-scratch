@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Sanatsal Doğal Ahşap Mantar Kapak & Dribbble Cam Estetiği
-// Özellikler: Gerçekçi Ahşap Dokulu Mantar Kapak (Micro-Pores & Grain), 3D Bevel Pahı, Çift Katmanlı Sıvı Yüzeyi.
+// ATEŞBÖCEKLERİ — 3 Can Hakları Sistem Mekaniği & Sanatsal HUD / Ayarlar Rehber Butonu
+// Özellikler: 3 Can Hakları (Hearts System), Sayısal Simgeler (+1, +2, -1, -1 ❤️), Kızıl Yakut Ağ Kıran Efekti & Ayarlar İçinde Rehber.
 
 import {
   type FireflySubtype,
@@ -15,7 +15,11 @@ import {
   difficulty,
   getLevelConfig,
   hitCircleRect,
+  processFireflyMiss,
+  processHazardCollision,
+  processWaspCollision,
   shakeOffset,
+  shouldBurnSpiderWeb,
   sway,
   swayVel,
   tickSpawn,
@@ -44,8 +48,6 @@ canvas.width = W;
 canvas.height = H;
 
 // --- Oyun Durumu & Tipler ---------------------------------------------------
-const MAX_MISSED = 3;
-
 type GameState = "playing" | "paused" | "tutorial" | "settings" | "levelselect" | "levelcomplete" | "gameover" | "campaignwon";
 type CritterKind = "firefly" | "wasp" | "spider" | "ladybug";
 
@@ -111,6 +113,7 @@ let floatingTexts: FloatingText[] = [];
 let jarFireflies: JarFirefly[] = [];
 let caught = 0;
 let missed = 0;
+let lives = 3;
 let elapsed = 0;
 let finalTime = 0;
 let modalAnimTime = 0;
@@ -143,11 +146,11 @@ let grassBlades: { x: number; height: number; swayOffset: number; width: number;
 
 // UI Yerleşimleri
 const uiButtons = {
-  help: { x: 0, y: 0, w: 0, h: 0 },
   settings: { x: 0, y: 0, w: 0, h: 0 },
   modalAction: { x: 0, y: 0, w: 0, h: 0 },
   modalSecondary: { x: 0, y: 0, w: 0, h: 0 },
   modalLevelSelect: { x: 0, y: 0, w: 0, h: 0 },
+  modalTutorialBtn: { x: 0, y: 0, w: 0, h: 0 },
   toggleSound: { x: 0, y: 0, w: 0, h: 0 },
   toggleMagnet: { x: 0, y: 0, w: 0, h: 0 },
 };
@@ -231,6 +234,7 @@ function resetStage(levelNum = currentLevel) {
   jarFireflies = [];
   caught = 0;
   missed = 0;
+  lives = 3;
   elapsed = 0;
   modalAnimTime = 0;
   magnetBoostTimer = 0;
@@ -377,11 +381,6 @@ function handlePointerClick(clientX: number, clientY: number) {
   const cy = ((clientY - rect.top) / rect.height) * H;
 
   if (state === "playing") {
-    if (isInsideRect(cx, cy, uiButtons.help)) {
-      state = "tutorial";
-      modalAnimTime = 0;
-      return true;
-    }
     if (isInsideRect(cx, cy, uiButtons.settings)) {
       state = "settings";
       modalAnimTime = 0;
@@ -389,7 +388,7 @@ function handlePointerClick(clientX: number, clientY: number) {
     }
   } else if (state === "tutorial") {
     if (isInsideRect(cx, cy, uiButtons.modalAction)) {
-      state = "playing";
+      state = "settings";
       return true;
     }
   } else if (state === "settings") {
@@ -399,6 +398,11 @@ function handlePointerClick(clientX: number, clientY: number) {
     }
     if (isInsideRect(cx, cy, uiButtons.toggleMagnet)) {
       highMagnet = !highMagnet;
+      return true;
+    }
+    if (isInsideRect(cx, cy, uiButtons.modalTutorialBtn)) {
+      state = "tutorial";
+      modalAnimTime = 0;
       return true;
     }
     if (isInsideRect(cx, cy, uiButtons.modalLevelSelect)) {
@@ -608,30 +612,6 @@ function drawGearIcon(x: number, y: number, r: number, color = "#94a3b8") {
   ctx.restore();
 }
 
-function drawHelpIcon(x: number, y: number, r: number, color = "#94a3b8") {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 2.2 * SCALE;
-  ctx.lineCap = "round";
-
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 0.88, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(0, -r * 0.22, r * 0.3, -Math.PI * 0.8, Math.PI * 0.25);
-  ctx.lineTo(0, r * 0.15);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(0, r * 0.45, 1.8 * SCALE, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
 function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
   ctx.save();
   ctx.translate(x, y);
@@ -649,6 +629,24 @@ function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
   ctx.moveTo(0, 0);
   ctx.lineTo(r * 0.35, -r * 0.15);
   ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHeartIcon(x: number, y: number, size: number, filled = true) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = filled ? "#ef4444" : "rgba(239, 68, 68, 0.2)";
+  ctx.strokeStyle = "#fca5a5";
+  ctx.lineWidth = 1.2 * SCALE;
+
+  ctx.beginPath();
+  ctx.moveTo(0, size * 0.3);
+  ctx.bezierCurveTo(-size * 0.5, -size * 0.3, -size, size * 0.1, 0, size * 0.85);
+  ctx.bezierCurveTo(size, size * 0.1, size * 0.5, -size * 0.3, 0, size * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  if (filled) ctx.stroke();
 
   ctx.restore();
 }
@@ -711,7 +709,7 @@ function drawWrappedText(
   return currentY;
 }
 
-// --- Güncelleme & Fizik Düzeltmesi ------------------------------------------
+// --- Güncelleme & Can / Zarar Kuralları ------------------------------------
 function update(dt: number) {
   if (state === "playing") {
     elapsed += dt;
@@ -750,7 +748,6 @@ function update(dt: number) {
           if (c.webCooldown <= 0) {
             c.webActive = true;
             c.webTimer = 2.8;
-            addFloatingText(sway(c.t, c.baseX, c.amp, c.freq), c.y, "AĞ ATILDI!", "#c084fc");
           }
         } else {
           c.webTimer = (c.webTimer || 0) - dt;
@@ -827,14 +824,24 @@ function update(dt: number) {
         });
       }
 
+      // 3 Ateşböceği Kaçırma Mekaniği -> 1 CAN GİDER!
       if (c.kind !== "ladybug" && c.y + c.offsetY > H + 40 * SCALE && !c.dead) {
         c.dead = true;
         if (c.kind === "firefly") {
-          missed++;
+          const res = processFireflyMiss(missed, lives);
+          missed = res.newMissed;
+          lives = res.newLives;
+
           burst(currentX, H - 20 * SCALE, "hsl(0 100% 65%)", 16);
           addShake(shake, 12 * SCALE);
-          addFloatingText(currentX, H - 40 * SCALE, "KAÇTI!", "#f87171");
-          if (missed >= MAX_MISSED) {
+
+          if (res.lostLife) {
+            addFloatingText(currentX, H - 40 * SCALE, "-1 ❤️", "#ef4444");
+          } else {
+            addFloatingText(currentX, H - 40 * SCALE, `⚠️ (${missed}/3)`, "#fca5a5");
+          }
+
+          if (lives <= 0) {
             finalTime = elapsed;
             state = "gameover";
             modalAnimTime = 0;
@@ -858,21 +865,25 @@ function update(dt: number) {
         if (c.subType === "purple") {
           pts = 2;
           pColor = "hsl(280 100% 80%)";
-          addFloatingText(x, y - 15 * SCALE, "+2 MOR MİSTİK!", "#e879f9");
+          addFloatingText(x, y - 15 * SCALE, "+2", "#e879f9");
         } else if (c.subType === "red") {
           pColor = "hsl(350 100% 75%)";
-          for (const sp of critters) {
-            if (sp.kind === "spider") sp.webActive = false;
+          // SADECE RED AĞ KIRAR!
+          if (shouldBurnSpiderWeb(c.subType)) {
+            for (const sp of critters) {
+              if (sp.kind === "spider") sp.webActive = false;
+            }
+            burst(x, y, "hsl(15 100% 60%)", 35);
           }
-          addFloatingText(x, y - 15 * SCALE, "+1 AĞ KILINDI!", "#f87171");
+          addFloatingText(x, y - 15 * SCALE, "+1 🔥", "#f87171");
         } else if (c.subType === "emerald") {
           magnetBoostTimer = 3.5;
           pColor = "hsl(150 100% 70%)";
-          addFloatingText(x, y - 15 * SCALE, "+1 MIKNATIS!", "#6ee7b7");
+          addFloatingText(x, y - 15 * SCALE, "+1", "#6ee7b7");
         } else if (c.subType === "azure") {
           speedBoostTimer = 3.5;
           pColor = "hsl(200 100% 75%)";
-          addFloatingText(x, y - 15 * SCALE, "+1 HIZ TAKVİYESİ!", "#7dd3fc");
+          addFloatingText(x, y - 15 * SCALE, "+1", "#7dd3fc");
         } else {
           addFloatingText(x, y - 15 * SCALE, "+1", "#fef08a");
         }
@@ -898,15 +909,41 @@ function update(dt: number) {
           burst(W / 2, H * 0.4, "hsl(180 100% 75%)", 50);
           burst(W / 2, H * 0.4, "hsl(150 100% 75%)", 30);
         }
-      } else {
-        caught = Math.max(caught - 1, 0);
+      } else if (c.kind === "wasp") {
+        // Arı Çarpması: Ateşböceği varsa -1 Ateşböceği, yoksa (0 ise) 1 CAN GİDER!
+        const res = processWaspCollision(caught, lives);
+        caught = res.newCaught;
+        lives = res.newLives;
         syncJarFireflies();
         waspHitFlash = 0.42;
 
         addShake(shake, 18 * SCALE);
-        const txt = c.kind === "spider" ? "ÖRÜMCEK DARBESİ!" : c.kind === "ladybug" ? "UĞUR BÖCEĞİ TEMASI!" : "-1 ARI!";
-        addFloatingText(x, y - 15 * SCALE, txt, "#f87171");
-        burst(x, y, "hsl(15 100% 60%)", 20);
+
+        if (res.lostLife) {
+          addFloatingText(x, y - 15 * SCALE, "-1 ❤️", "#ef4444");
+        } else {
+          addFloatingText(x, y - 15 * SCALE, "-1", "#f87171");
+        }
+
+        if (lives <= 0) {
+          finalTime = elapsed;
+          state = "gameover";
+          modalAnimTime = 0;
+        }
+      } else {
+        // Örümcek veya Uğur Böceği Darbesi -> DİREKT 1 CAN GİDER!
+        const res = processHazardCollision(lives);
+        lives = res.newLives;
+        waspHitFlash = 0.5;
+
+        addShake(shake, 22 * SCALE);
+        addFloatingText(x, y - 15 * SCALE, "-1 ❤️", "#ef4444");
+
+        if (lives <= 0) {
+          finalTime = elapsed;
+          state = "gameover";
+          modalAnimTime = 0;
+        }
       }
     }
     critters = critters.filter((c) => !c.dead && (c.kind === "ladybug" || c.y + c.offsetY < H + 50 * SCALE));
@@ -1572,7 +1609,7 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// ULTRA-GERÇEKÇİ SANATSAL DOĞAL AHŞAP MANTAR KAPAK (Realistic Organic Cork Stopper with Wood Grain & Pores)
+// ULTRA-GERÇEKÇİ SANATSAL DOĞAL AHŞAP MANTAR KAPAK
 function drawArtisticCorkStopper(neckW: number, neckY: number) {
   const corkW = neckW * 0.88;
   const corkH = 15 * SCALE;
@@ -1580,13 +1617,13 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
 
   ctx.save();
 
-  // 1. Mantar Tıpa Alt Gölge Pahı (3D Cast Shadow onto Glass Neck)
+  // 1. Mantar Tıpa Alt Gölge Pahı
   ctx.fillStyle = "rgba(15, 10, 5, 0.35)";
   ctx.beginPath();
   ctx.roundRect(-corkW / 2, corkY + 3 * SCALE, corkW, corkH, 4 * SCALE);
   ctx.fill();
 
-  // 2. Çok Tonlu Doğal Meşe Mantarı Gradyanı (Organic Warm Cork Gradient)
+  // 2. Çok Tonlu Doğal Meşe Mantarı Gradyanı
   const corkG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
   corkG.addColorStop(0, "#5c371d");
   corkG.addColorStop(0.2, "#87532a");
@@ -1602,13 +1639,12 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
   ctx.fill();
   ctx.stroke();
 
-  // 3. Doğal Ahşap Dokusu & Gözenek Çizgileri (Organic Wood Grain Specks & Lines)
+  // 3. Doğal Ahşap Dokusu & Gözenek Çizgileri
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
   ctx.clip();
 
-  // Koyu Ahşap Gözenek Noktaları (Dark Cork Pores)
   ctx.fillStyle = "rgba(60, 32, 14, 0.55)";
   const specks = [
     { x: -corkW * 0.35, y: corkY + 4 * SCALE, r: 1.2 * SCALE },
@@ -1623,7 +1659,6 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
     ctx.fill();
   }
 
-  // Amber Rengi Damar Çizgileri (Warm Amber Grain Streaks)
   ctx.strokeStyle = "rgba(230, 175, 115, 0.35)";
   ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
@@ -1635,7 +1670,7 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
 
   ctx.restore();
 
-  // 4. Mantar Üst Kenar Pahı & Speküler Vurgusu (Top Bevel Highlight)
+  // 4. Mantar Üst Kenar Pahı & Speküler Vurgusu
   ctx.fillStyle = "rgba(255, 240, 215, 0.32)";
   ctx.beginPath();
   ctx.roundRect(-corkW / 2 + 2 * SCALE, corkY + 1.2 * SCALE, corkW - 4 * SCALE, 3.2 * SCALE, 2 * SCALE);
@@ -1652,7 +1687,6 @@ function drawJar() {
 
   ctx.save();
 
-  // 1. Çok Katmanlı Sanatsal Aura Parlaması (Bioluminescent Soft Radial Ambient Glow)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
@@ -1680,7 +1714,6 @@ function drawJar() {
     ctx.restore();
   }
 
-  // 2. Cam İç Hacim Gölgesi (Volumetric Dark Glass Tinting)
   const glassVolumeGrad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
   glassVolumeGrad.addColorStop(0, "rgba(8, 18, 35, 0.65)");
   glassVolumeGrad.addColorStop(0.3, "rgba(12, 28, 50, 0.35)");
@@ -1696,10 +1729,8 @@ function drawJar() {
   const neckH = 14 * SCALE;
   const neckY = -h - neckH * 0.5;
 
-  // 3. SANATSAL AHŞAP DOKULU MANTAR KAPAK
   drawArtisticCorkStopper(neckW, neckY);
 
-  // Cam Boğaz Çerçevesi & Dudak (Flared Glass Lip Collar)
   ctx.fillStyle = "rgba(195, 230, 255, 0.35)";
   ctx.strokeStyle = "rgba(220, 245, 255, 0.85)";
   ctx.lineWidth = 2 * SCALE;
@@ -1708,7 +1739,6 @@ function drawJar() {
   ctx.fill();
   ctx.stroke();
 
-  // Şerit Pirinç/Zümrüt Halka Detayı
   const ringG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
   ringG.addColorStop(0, "#d4a373");
   ringG.addColorStop(0.5, "#fef08a");
@@ -1720,7 +1750,6 @@ function drawJar() {
   ctx.lineTo(neckW / 2 - 2 * SCALE, neckY + neckH / 2);
   ctx.stroke();
 
-  // 4. Çift-Katmanlı Sıvı Yüzeyi Animasyonu (Dual-Layer Wave Fluid Surface)
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
@@ -1733,7 +1762,6 @@ function drawJar() {
     const wave1 = Math.sin(elapsed * 4.5 + jar.x * 0.02) * 4.5 * SCALE;
     const wave2 = Math.cos(elapsed * 6.5 + jar.x * 0.03) * 2.8 * SCALE;
 
-    // Arka Dalga Katmanı
     ctx.fillStyle = `hsl(45 100% 55% / ${0.2 + glow * 0.35})`;
     ctx.beginPath();
     ctx.moveTo(-w / 2 - 10 * SCALE, 0);
@@ -1743,7 +1771,6 @@ function drawJar() {
     ctx.closePath();
     ctx.fill();
 
-    // Ön Ana Sıvı Katmanı
     const liqG = ctx.createLinearGradient(0, liquidY, 0, 0);
     liqG.addColorStop(0, `hsl(54 100% 78% / ${0.35 + glow * 0.45})`);
     liqG.addColorStop(1, `hsl(48 100% 62% / ${0.2 + glow * 0.35})`);
@@ -1757,7 +1784,6 @@ function drawJar() {
     ctx.closePath();
     ctx.fill();
 
-    // Sıvı Yüzeyi Köpük/Işık Köprüsü (Crest Line Highlight)
     ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + glow * 0.4})`;
     ctx.lineWidth = 1.8 * SCALE;
     ctx.beginPath();
@@ -1768,7 +1794,6 @@ function drawJar() {
     ctx.restore();
   }
 
-  // 5. İçeride Süzülen Ateşböcekleri & İç Parıltı Tozları
   for (const jf of jarFireflies) {
     const fx = jf.rx * (w * 0.7);
     const fy = -h * 0.5 + jf.ry * (h * 0.7);
@@ -1792,7 +1817,6 @@ function drawJar() {
     ctx.fill();
   }
 
-  // 6. 3D Cam Çerçeve & Canlı Nefes Alan Cam Yansımaları (Breathing Specular Highlights)
   ctx.strokeStyle = "rgba(215, 240, 255, 0.82)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
@@ -1801,7 +1825,6 @@ function drawJar() {
   ctx.fill();
   ctx.stroke();
 
-  // Sol Cam Kavis Yansıması
   const highlightAlpha = 0.38 + 0.15 * Math.sin(elapsed * 2.5);
   ctx.strokeStyle = `rgba(255, 255, 255, ${highlightAlpha})`;
   ctx.lineWidth = 3.5 * SCALE;
@@ -1810,7 +1833,6 @@ function drawJar() {
   ctx.lineTo(-w / 2 + 6 * SCALE, -16 * SCALE);
   ctx.stroke();
 
-  // Sağ Üst Köşe Cam Yansıması Accent
   ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
@@ -1820,16 +1842,17 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD ---------------------------------------------------------------------
+// --- SANATSAL HUD (Can Kalpleri, Kaçırma Simgeleri, Süre & Bölüm İlerlemesi) --
 function drawHUD() {
   ctx.save();
 
-  const lvlW = Math.min(W * 0.45, 250 * SCALE);
+  // 1. Sol Üst: Bölüm Bilgisi & İlerleme Çubuğu
+  const lvlW = Math.min(W * 0.38, 230 * SCALE);
   const lvlH = 46 * SCALE;
   const lvlX = 16 * SCALE;
   const lvlY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(10, 15, 30, 0.8)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
@@ -1870,15 +1893,55 @@ function drawHUD() {
   ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${caught}/${levelCfg.target}`, lvlX + lvlW - 14 * SCALE, lvlY + lvlH / 2 + 1 * SCALE);
 
-  const btnSize = 46 * SCALE;
-  const btnGap = 10 * SCALE;
+  // 2. Orta-Üst: 3 CAN KALPLERİ (❤️ ❤️ ❤️) & 3 Kaçan Simgeleri (⚠️ ⚠️ ⚠️)
+  const hudCenterW = 210 * SCALE;
+  const hudCenterX = (W - hudCenterW) / 2;
+  const hudCenterY = 16 * SCALE;
 
+  ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(hudCenterX, hudCenterY, hudCenterW, lvlH, 23 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  // Can Kalpleri Çizimi
+  const heartStartX = hudCenterX + 16 * SCALE;
+  const heartGap = 22 * SCALE;
+  for (let i = 0; i < 3; i++) {
+    drawHeartIcon(heartStartX + i * heartGap, hudCenterY + 12 * SCALE, 11 * SCALE, i < lives);
+  }
+
+  // Kaçan Ateşböcekleri İndikatörü (3 Slot)
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = `700 ${11 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("KAÇAN:", hudCenterX + hudCenterW - 54 * SCALE, hudCenterY + lvlH / 2 + 1 * SCALE);
+
+  const missStartX = hudCenterX + hudCenterW - 44 * SCALE;
+  for (let i = 0; i < 3; i++) {
+    const isMissed = i < missed;
+    ctx.fillStyle = isMissed ? "#fca5a5" : "rgba(255, 255, 255, 0.15)";
+    ctx.beginPath();
+    ctx.arc(missStartX + i * 14 * SCALE, hudCenterY + lvlH / 2, 4.5 * SCALE, 0, Math.PI * 2);
+    ctx.fill();
+    if (isMissed) {
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 1 * SCALE;
+      ctx.stroke();
+    }
+  }
+
+  // 3. Sağ Üst: Süre & Ayarlar Menü Butonu
+  const btnSize = 46 * SCALE;
   const setX = W - btnSize - 16 * SCALE;
   const setY = 16 * SCALE;
   uiButtons.settings = { x: setX, y: setY, w: btnSize, h: btnSize };
 
-  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(setX, setY, btnSize, btnSize, 14 * SCALE);
@@ -1887,26 +1950,12 @@ function drawHUD() {
 
   drawGearIcon(setX + btnSize / 2, setY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  const helpX = setX - btnSize - btnGap;
-  const helpY = 16 * SCALE;
-  uiButtons.help = { x: helpX, y: helpY, w: btnSize, h: btnSize };
-
-  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
-  ctx.lineWidth = 1.5 * SCALE;
-  ctx.beginPath();
-  ctx.roundRect(helpX, helpY, btnSize, btnSize, 14 * SCALE);
-  ctx.fill();
-  ctx.stroke();
-
-  drawHelpIcon(helpX + btnSize / 2, helpY + btnSize / 2, 11 * SCALE, "#94a3b8");
-
-  const timerW = Math.min(W * 0.2, 100 * SCALE);
-  const timerX = helpX - timerW - btnGap;
+  const timerW = Math.min(W * 0.18, 95 * SCALE);
+  const timerX = setX - timerW - 10 * SCALE;
   const timerY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(timerX, timerY, timerW, btnSize, 23 * SCALE);
@@ -2122,12 +2171,12 @@ function drawModalCard(
     ? [
         { label: "BÖLÜM HEDEFİ", targetVal: caught, total: levelCfg.target, unit: "100% Tamam", color: "#fef08a", type: "ratio" },
         { label: "BÖLÜM SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "GEÇİLEN BÖLÜM", targetVal: currentLevel, total: 10, unit: `${levelCfg.name}`, color: "#34d399", type: "level" },
+        { label: "KALAN CAN", targetVal: lives, total: 3, unit: "❤️ Can Hakları", color: "#ef4444", type: "ratio" },
       ]
     : [
         { label: "TOPLANAN IŞIK", targetVal: caught, total: levelCfg.target, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
         { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KAÇAN IŞIKLAR", targetVal: missed, total: MAX_MISSED, unit: "Geceye Karıştı", color: "#f87171", type: "ratio" },
+        { label: "KALAN CAN", targetVal: 0, total: 3, unit: "Tükendi", color: "#f87171", type: "ratio" },
       ];
 
   for (let i = 0; i < 3; i++) {
@@ -2162,8 +2211,6 @@ function drawModalCard(
     } else if (s.type === "time") {
       const curT = (s.targetVal * cardProgress).toFixed(1);
       displayVal = `${curT}s`;
-    } else if (s.type === "level") {
-      displayVal = `${s.targetVal}/10`;
     }
 
     ctx.fillStyle = s.color;
@@ -2180,7 +2227,7 @@ function drawModalCard(
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
     ? `${levelCfg.name} tamamlandı! ${currentLevel < 10 ? 'Sonraki seviyeye geçmeye hazırsın.' : 'Tüm 10 bölümü başardın!'}`
-    : "3 ateşböceği geceye karıştı. Tekrar deneyerek bu bölümü geç!";
+    : "Tüm canların tükendi. Tekrar deneyerek bu bölümü geç!";
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
   ctx.beginPath();
@@ -2267,7 +2314,7 @@ function drawTutorialModal() {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("BÖCEKLER & AĞ MEKANİĞİ", W / 2, cardY + 62 * SCALE);
+  ctx.fillText("CAN & KIZIL YAKUT MEKANİĞİ", W / 2, cardY + 62 * SCALE);
 
   const gridW = cardW - 56 * SCALE;
   const gridX = cardX + 28 * SCALE;
@@ -2277,10 +2324,10 @@ function drawTutorialModal() {
   const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK AĞI", desc: "Kavanoza ipek ağ atarak seni yavaşça çeker. Karşı yöne asılarak ağdan kurtul!" },
-    { drawIcon: (x: number, y: number) => drawLadybug(x, y, 10 * SCALE, elapsed), title: "GEZGİN UĞUR BÖCEĞİ", desc: "Ekrandan hiç çıkmaz, sürekli yumuşak yörüngede uçar. Çarpmamaya dikkat et!" },
+    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK (-1 ❤️)", desc: "Örümcek veya Uğur böceği çarptığında DİREKT 1 CAN eksilir!" },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 10 * SCALE, elapsed, 0, 0), title: "TEHLİKELİ ARI (-1 / -1 ❤️)", desc: "Ateşböceğin varsa -1 eksiltir, 0 ateşböceğinde ise 1 CAN götürür!" },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Sadece Kızıl Yakut ateşböceği Örümceğin ipek ağını anında yakar!" },
     { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Yakalandığında Örümceğin bağlı olduğu ağı anında yakarak yok eder!" },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -2338,19 +2385,19 @@ function drawTutorialModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUNA BAŞLA", W / 2, btnY + btnH / 2 + 1 * SCALE);
+  ctx.fillText("GERİ DÖN", W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- İNFOGRAFİK AYARLAR MODALI -----------------------------------------------
+// --- İNFOGRAFİK AYARLAR MODALI & REHBER BUTONU ------------------------------
 function drawSettingsModal() {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 520 * SCALE);
+  const cardH = Math.min(H * 0.92, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
@@ -2393,85 +2440,109 @@ function drawSettingsModal() {
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
 
-  const row1Y = cardY + 105 * SCALE;
-  const rowH = 64 * SCALE;
+  const row1Y = cardY + 98 * SCALE;
+  const rowH = 58 * SCALE;
 
+  // 1. Ses Efektleri Toggle
   ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
   ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(rowX, row1Y, rowW, rowH, 18 * SCALE);
+  ctx.roundRect(rowX, row1Y, rowW, rowH, 16 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("SES EFEKTLERİ", rowX + 24 * SCALE, row1Y + 14 * SCALE);
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("SES EFEKTLERİ", rowX + 20 * SCALE, row1Y + 12 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 24 * SCALE, row1Y + 36 * SCALE);
+  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 20 * SCALE, row1Y + 32 * SCALE);
 
-  const toggle1W = 110 * SCALE;
-  const toggle1H = 36 * SCALE;
-  const toggle1X = rowX + rowW - toggle1W - 16 * SCALE;
+  const toggle1W = 100 * SCALE;
+  const toggle1H = 32 * SCALE;
+  const toggle1X = rowX + rowW - toggle1W - 14 * SCALE;
   const toggle1Y = row1Y + (rowH - toggle1H) / 2;
   uiButtons.toggleSound = { x: toggle1X, y: toggle1Y, w: toggle1W, h: toggle1H };
 
   ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle1X, toggle1Y, toggle1W, toggle1H, 18 * SCALE);
+  ctx.roundRect(toggle1X, toggle1Y, toggle1W, toggle1H, 16 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, toggle1Y + toggle1H / 2);
 
-  const row2Y = row1Y + rowH + 12 * SCALE;
+  // 2. Mıknatıs Gücü Toggle
+  const row2Y = row1Y + rowH + 10 * SCALE;
 
   ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
   ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(rowX, row2Y, rowW, rowH, 18 * SCALE);
+  ctx.roundRect(rowX, row2Y, rowW, rowH, 16 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 24 * SCALE, row2Y + 14 * SCALE);
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 20 * SCALE, row2Y + 12 * SCALE);
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 24 * SCALE, row2Y + 36 * SCALE);
+  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 20 * SCALE, row2Y + 32 * SCALE);
 
-  const toggle2W = 110 * SCALE;
-  const toggle2H = 36 * SCALE;
-  const toggle2X = rowX + rowW - toggle2W - 16 * SCALE;
+  const toggle2W = 100 * SCALE;
+  const toggle2H = 32 * SCALE;
+  const toggle2X = rowX + rowW - toggle2W - 14 * SCALE;
   const toggle2Y = row2Y + (rowH - toggle2H) / 2;
   uiButtons.toggleMagnet = { x: toggle2X, y: toggle2Y, w: toggle2W, h: toggle2H };
 
   ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle2X, toggle2Y, toggle2W, toggle2H, 18 * SCALE);
+  ctx.roundRect(toggle2X, toggle2Y, toggle2W, toggle2H, 16 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, toggle2Y + toggle2H / 2);
 
+  // 3. OYUN REHBERİ BUTONU (AYARLAR İÇİNDE ŞIK BUTON)
+  const row3Y = row2Y + rowH + 10 * SCALE;
+  const btnTutorialW = rowW;
+  const btnTutorialH = 46 * SCALE;
+
+  uiButtons.modalTutorialBtn = { x: rowX, y: row3Y, w: btnTutorialW, h: btnTutorialH };
+
+  ctx.fillStyle = "rgba(147, 51, 234, 0.2)";
+  ctx.strokeStyle = "rgba(192, 132, 252, 0.6)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(rowX, row3Y, btnTutorialW, btnTutorialH, 18 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#e879f9";
+  ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("📖 OYUN REHBERİ & BÖCEK KARTLARI", rowX + btnTutorialW / 2, row3Y + btnTutorialH / 2 + 1 * SCALE);
+
+  // 4. Bölüm Seçim Tablosu Butonu
   const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
-  const btnLvlH = 44 * SCALE;
+  const btnLvlH = 42 * SCALE;
   const btnLvlX = (W - btnLvlW) / 2;
-  const btnLvlY = row2Y + rowH + 16 * SCALE;
+  const btnLvlY = row3Y + btnTutorialH + 12 * SCALE;
 
   uiButtons.modalLevelSelect = { x: btnLvlX, y: btnLvlY, w: btnLvlW, h: btnLvlH };
 
@@ -2479,21 +2550,22 @@ function drawSettingsModal() {
   ctx.strokeStyle = "rgba(96, 165, 250, 0.6)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(btnLvlX, btnLvlY, btnLvlW, btnLvlH, 22 * SCALE);
+  ctx.roundRect(btnLvlX, btnLvlY, btnLvlW, btnLvlH, 20 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#93c5fd";
-  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BÖLÜM SEÇİM TABLOSU (10 LEVEL)", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
 
+  // 5. Devam Et & Baştan Başla Butonları
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
-  const btnH = 46 * SCALE;
+  const btnH = 44 * SCALE;
   const btnX = (W - btnW) / 2;
 
-  const btn1Y = cardY + cardH - 118 * SCALE;
+  const btn1Y = cardY + cardH - 110 * SCALE;
   uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
   const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -2501,26 +2573,26 @@ function drawSettingsModal() {
   g1.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn1Y, btnW, btnH, 23 * SCALE);
+  ctx.roundRect(btnX, btn1Y, btnW, btnH, 22 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `900 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("DEVAM ET", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
-  const btn2Y = cardY + cardH - 62 * SCALE;
+  const btn2Y = cardY + cardH - 58 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
   ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
   ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn2Y, btnW, btnH, 23 * SCALE);
+  ctx.roundRect(btnX, btn2Y, btnW, btnH, 22 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "#fca5a5";
-  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
@@ -2593,7 +2665,7 @@ function draw() {
   } else if (state === "campaignwon") {
     drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
   } else if (state === "gameover") {
-    drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "ATEŞBÖCEKLERİ KAÇTI", "TEKRAR DENE", false);
+    drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "TÜM CANLAR TÜKENDİ", "TEKRAR DENE", false);
   } else if (state === "tutorial") {
     drawTutorialModal();
   } else if (state === "settings") {
