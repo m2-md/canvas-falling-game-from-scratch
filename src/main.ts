@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Gece bahçesinde yukarıdan süzülen ateşböceklerini çekim gücüyle yakala!
-// Özellikler: Yukarıdan süzülen böcekler, Manyetik Çekim Gücü (Suction Beam Kovalama), 2D Dokunmatik Takip, 3 Kaçırma Hakkı, Canlı Kronometre.
+// ATEŞBÖCEKLERİ — Gece Bahçesi & Büyülü Çekim Gücü
+// Üst Düzey Güncelleme: Büyülü Ay ve Bulut Atmosferi, Etkileşimli Çimler, Vortex Çekim Girdabı, Özel Böcek Tipleri & Fiziksel Yaylanma.
 
 import {
   type Shake,
@@ -36,22 +36,27 @@ const ctx = canvas.getContext("2d")!;
 canvas.width = W;
 canvas.height = H;
 
-// --- Oyun durumu -------------------------------------------------------------
+// --- Oyun Durumu & Tipler ---------------------------------------------------
 const TARGET = 6;
 const MAX_MISSED = 3;
+
+type FireflyType = "gold" | "emerald" | "azure";
 
 interface Critter {
   id: number;
   kind: "firefly" | "wasp";
+  subType?: FireflyType;
   baseX: number;
   y: number;
-  offsetX: number; // Mıknatıs çekimiyle oluşan bağıl X kayması
+  offsetX: number;
+  offsetY: number;
   t: number;
   amp: number;
   freq: number;
   r: number;
   dead?: boolean;
-  beingPulled?: boolean; // Mıknatıs alanında mı?
+  beingPulled?: boolean;
+  pullAngle?: number;
 }
 
 interface Particle {
@@ -63,6 +68,7 @@ interface Particle {
   max: number;
   color: string;
   size: number;
+  spin?: number;
 }
 
 interface FloatingText {
@@ -80,6 +86,7 @@ interface JarFirefly {
   vx: number;
   vy: number;
   t: number;
+  color: string;
 }
 
 let state: "playing" | "won" | "gameover" = "playing";
@@ -95,8 +102,9 @@ let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
 
-// Kavanoz Fizik & Kovalama Değişkenleri
+// Kavanoz Gelişmiş Fizik Değişkenleri
 let jarSquash = 0;
+let jarWobble = 0; // Yaylanma sarsıntısı
 let jarTilt = 0;
 let jarVx = 0;
 let jarVy = 0;
@@ -104,42 +112,59 @@ let waspHitFlash = 0;
 
 const jar = { x: 0, y: 0, w: 0, h: 0 };
 
-// Dekorasyon
+// Atmosferik Ögeler (Ay, Bulutlar, Bokeh, Etkileşimli Çimler)
 let stars: { x: number; y: number; r: number; a: number; speed: number }[] = [];
-let ambientSpecks: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number }[] = [];
-let grassBlades: { x: number; height: number; swayOffset: number; width: number }[] = [];
+let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
+let clouds: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
+let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
   jar.w = 100 * SCALE;
   jar.h = 116 * SCALE;
-  jar.y = Math.max(H * 0.2, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
+  jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
-  stars = Array.from({ length: 80 }, () => ({
+  // Yıldızlar
+  stars = Array.from({ length: 90 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H * 0.85,
-    r: (0.6 + Math.random() * 1.4) * SCALE,
+    r: (0.6 + Math.random() * 1.5) * SCALE,
     a: 0.15 + Math.random() * 0.45,
     speed: 0.8 + Math.random() * 2,
   }));
 
-  ambientSpecks = Array.from({ length: 30 }, () => ({
+  // Bokeh Işık Küreleri
+  const colors = ["hsl(52 100% 70%)", "hsl(160 100% 65%)", "hsl(200 100% 70%)"];
+  bokehOrbs = Array.from({ length: 24 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
-    r: (1 + Math.random() * 2) * SCALE,
-    vy: (5 + Math.random() * 15) * SCALE,
-    vx: (Math.random() - 0.5) * 15 * SCALE,
-    alpha: 0.1 + Math.random() * 0.4,
+    r: (4 + Math.random() * 10) * SCALE,
+    vy: (8 + Math.random() * 16) * SCALE,
+    vx: (Math.random() - 0.5) * 12 * SCALE,
+    alpha: 0.08 + Math.random() * 0.22,
     t: Math.random() * 10,
+    color: colors[Math.floor(Math.random() * colors.length)],
   }));
 
-  const grassCount = Math.floor(W / (12 * SCALE));
+  // Bulutlar
+  clouds = Array.from({ length: 4 }, (_, i) => ({
+    x: (i * W) / 3 - 50 * SCALE,
+    y: (40 + Math.random() * 60) * SCALE,
+    w: (180 + Math.random() * 120) * SCALE,
+    h: (45 + Math.random() * 25) * SCALE,
+    speed: (4 + Math.random() * 6) * SCALE,
+    alpha: 0.12 + Math.random() * 0.12,
+  }));
+
+  // Çimler (Kavanoza göre bükülen)
+  const grassCount = Math.floor(W / (10 * SCALE));
   grassBlades = Array.from({ length: grassCount }, (_, i) => ({
-    x: i * (12 * SCALE) + Math.random() * 4 * SCALE,
-    height: (32 + Math.random() * 28) * SCALE,
+    x: i * (10 * SCALE) + Math.random() * 3 * SCALE,
+    height: (34 + Math.random() * 30) * SCALE,
     swayOffset: Math.random() * Math.PI * 2,
     width: (4 + Math.random() * 3) * SCALE,
+    bend: 0,
   }));
 }
 
@@ -176,6 +201,7 @@ function resetGame() {
   spawnTimer = createSpawnTimer();
   shake.power = 0;
   jarSquash = 0;
+  jarWobble = 0;
   jarTilt = 0;
   jarVx = 0;
   jarVy = 0;
@@ -187,6 +213,7 @@ function resetGame() {
 }
 
 function syncJarFireflies() {
+  const colors = ["hsl(52 100% 75%)", "hsl(150 100% 70%)", "hsl(200 100% 75%)"];
   while (jarFireflies.length < caught) {
     jarFireflies.push({
       rx: (Math.random() - 0.5) * 0.5,
@@ -194,6 +221,7 @@ function syncJarFireflies() {
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       t: Math.random() * 10,
+      color: colors[Math.floor(Math.random() * colors.length)],
     });
   }
   while (jarFireflies.length > caught) {
@@ -204,22 +232,33 @@ function syncJarFireflies() {
 function spawnCritter() {
   const wasp = Math.random() < 0.28;
   const amp = wasp
-    ? (38 + Math.random() * 30) * SCALE
-    : (12 + Math.random() * 18) * SCALE;
+    ? (40 + Math.random() * 32) * SCALE
+    : (14 + Math.random() * 20) * SCALE;
+
+  let subType: FireflyType = "gold";
+  if (!wasp) {
+    const r = Math.random();
+    if (r < 0.25) subType = "emerald";
+    else if (r < 0.45) subType = "azure";
+  }
+
   critters.push({
     id: nextCritterId++,
     kind: wasp ? "wasp" : "firefly",
+    subType,
     baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
-    y: -35 * SCALE, // YUKARIDAN DÜŞER / SÜZÜLÜR!
+    y: -35 * SCALE,
     offsetX: 0,
+    offsetY: 0,
     t: Math.random() * 10,
     amp,
-    freq: wasp ? 0.25 + Math.random() * 0.18 : 0.7 + Math.random() * 0.7,
-    r: wasp ? 13 * SCALE : 10 * SCALE,
+    freq: wasp ? 0.26 + Math.random() * 0.2 : 0.65 + Math.random() * 0.75,
+    r: wasp ? 14 * SCALE : 10 * SCALE,
+    pullAngle: Math.random() * Math.PI * 2,
   });
 }
 
-// --- Girdi & Hassas Dokunmatik Kovalama Kontrolleri ------------------------
+// --- Girdi & Duyarlı 2D Kontroller ----------------------------------------
 let pointerTarget: { x: number; y: number } | null = null;
 
 function setPointerTarget(clientX: number, clientY: number) {
@@ -229,7 +268,7 @@ function setPointerTarget(clientX: number, clientY: number) {
 
   pointerTarget = {
     x: Math.max(0, Math.min(W - jar.w, canvasX - jar.w / 2)),
-    y: Math.max(H * 0.15, Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.5)),
+    y: Math.max(H * 0.12, Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.5)),
   };
 }
 
@@ -297,7 +336,7 @@ window.addEventListener(
 );
 
 function updateJar(dt: number) {
-  const speed = 700 * SCALE;
+  const speed = 720 * SCALE;
   let targetVx = 0;
   let targetVy = 0;
 
@@ -322,33 +361,44 @@ function updateJar(dt: number) {
     const diffX = pointerTarget.x - jar.x;
     const diffY = pointerTarget.y - jar.y;
     
-    // Süper hassas 2D kovalama takibi
-    jar.x += diffX * Math.min(1, dt * 26);
-    jar.y += diffY * Math.min(1, dt * 26);
+    jar.x += diffX * Math.min(1, dt * 28);
+    jar.y += diffY * Math.min(1, dt * 28);
 
     jarVx = diffX * 14;
     jarVy = diffY * 14;
   } else {
-    jarVx += (targetVx - jarVx) * Math.min(1, dt * 20);
-    jarVy += (targetVy - jarVy) * Math.min(1, dt * 20);
+    jarVx += (targetVx - jarVx) * Math.min(1, dt * 22);
+    jarVy += (targetVy - jarVy) * Math.min(1, dt * 22);
 
     jar.x += jarVx * dt;
     jar.y += jarVy * dt;
   }
 
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x));
-  jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 15 * SCALE, jar.y));
+  jar.y = Math.max(H * 0.12, Math.min(H - jar.h - 15 * SCALE, jar.y));
 
-  const targetTilt = (jarVx / speed) * 0.18;
-  jarTilt += (targetTilt - jarTilt) * Math.min(1, dt * 15);
+  const targetTilt = (jarVx / speed) * 0.2;
+  jarTilt += (targetTilt - jarTilt) * Math.min(1, dt * 16);
+
+  // Çimlerin bükülme fiziği (Kavanoz yakınındakiler yana yatar)
+  const jarCenterX = jar.x + jar.w / 2;
+  for (const b of grassBlades) {
+    const dist = Math.abs(b.x - jarCenterX);
+    if (dist < jar.w * 0.8 && jar.y + jar.h > H - b.height * 1.2) {
+      const dir = Math.sign(b.x - jarCenterX) || 1;
+      b.bend += (dir * 18 * SCALE - b.bend) * Math.min(1, dt * 10);
+    } else {
+      b.bend += (0 - b.bend) * Math.min(1, dt * 4);
+    }
+  }
 }
 
 // --- Efektler ---------------------------------------------------------------
-function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
+function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 20) {
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
-    const speed = (50 + Math.random() * 180) * SCALE;
-    const life = 0.4 + Math.random() * 0.4;
+    const speed = (60 + Math.random() * 200) * SCALE;
+    const life = 0.4 + Math.random() * 0.45;
     particles.push({
       x,
       y,
@@ -357,7 +407,8 @@ function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
       life,
       max: life,
       color,
-      size: (2 + Math.random() * 3.5) * SCALE,
+      size: (2 + Math.random() * 4) * SCALE,
+      spin: (Math.random() - 0.5) * 8,
     });
   }
 }
@@ -368,8 +419,8 @@ function addFloatingText(x: number, y: number, text: string, color = "#fef08a") 
     y,
     text,
     color,
-    life: 0.8,
-    max: 0.8,
+    life: 0.85,
+    max: 0.85,
   });
 }
 
@@ -384,39 +435,51 @@ function update(dt: number) {
     updateJar(dt);
 
     const jarMouthX = jar.x + jar.w / 2;
-    const jarMouthY = jar.y - 6 * SCALE; // Kavanoz ağzı
-    const MAGNET_RADIUS = 130 * SCALE; // Çekim Alanı Yarıçapı
+    const jarMouthY = jar.y - 8 * SCALE;
+    const MAGNET_RADIUS = 140 * SCALE; // Çekim yarıçapı
 
     for (const c of critters) {
       c.t += dt;
-      c.y += fallSpeed * SCALE * dt; // YUKARIDAN AŞAĞIYA DÜŞER/SÜZÜLÜR
+
+      // Arıların süzülüş sırasında tehlikeli mikrosaniyelik hamle yapması
+      if (c.kind === "wasp") {
+        c.y += fallSpeed * SCALE * dt * 1.1;
+      } else {
+        c.y += fallSpeed * SCALE * dt;
+      }
 
       const currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
 
-      // --- MANYTİK ÇEKİM GÜCÜ (Suction Magnet Pull) ---
+      // --- VORTEX ÇEKİM GİRDABI (Spiral Suction Pull) ---
       if (c.kind === "firefly" && !c.dead) {
         const dx = jarMouthX - currentX;
-        const dy = jarMouthY - c.y;
+        const dy = jarMouthY - (c.y + c.offsetY);
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < MAGNET_RADIUS) {
           c.beingPulled = true;
-          // Kavanoza doğru çekim kuvveti
-          const pullForce = (1 - dist / MAGNET_RADIUS) * 320 * SCALE * dt;
-          c.offsetX += (dx / dist) * pullForce;
-          c.y += (dy / dist) * pullForce;
+          c.pullAngle = (c.pullAngle || 0) + dt * 10;
 
-          // Çekim parıltı parçacıkları
-          if (Math.random() < 0.4) {
+          // Spiral çekim vektörü
+          const pullForce = (1 - dist / MAGNET_RADIUS) * 360 * SCALE * dt;
+          const spiralX = Math.cos(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
+          const spiralY = Math.sin(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
+
+          c.offsetX += (dx / dist) * pullForce + spiralX * dt * 3;
+          c.offsetY += (dy / dist) * pullForce + spiralY * dt * 3;
+
+          // Spiral toz parçacıkları
+          if (Math.random() < 0.45) {
+            const pColor = c.subType === "emerald" ? "hsl(150 100% 75%)" : c.subType === "azure" ? "hsl(200 100% 80%)" : "hsl(52 100% 80%)";
             particles.push({
               x: currentX,
-              y: c.y,
-              vx: (dx / dist) * 120 * SCALE,
-              vy: (dy / dist) * 120 * SCALE,
+              y: c.y + c.offsetY,
+              vx: (dx / dist) * 140 * SCALE + spiralX * 4,
+              vy: (dy / dist) * 140 * SCALE + spiralY * 4,
               life: 0.25,
               max: 0.25,
-              color: "hsl(52 100% 80%)",
-              size: (1.5 + Math.random() * 2) * SCALE,
+              color: pColor,
+              size: (1.5 + Math.random() * 2.5) * SCALE,
             });
           }
         } else {
@@ -424,27 +487,28 @@ function update(dt: number) {
         }
       }
 
-      // Mikro ışık izi
-      if (c.kind === "firefly" && Math.random() < 0.35) {
+      // Mikro ışık izleri
+      if (c.kind === "firefly" && Math.random() < 0.38) {
+        const pColor = c.subType === "emerald" ? "hsl(150 100% 70%)" : c.subType === "azure" ? "hsl(200 100% 75%)" : "hsl(54 100% 75%)";
         particles.push({
           x: currentX + (Math.random() - 0.5) * 6 * SCALE,
-          y: c.y - 6 * SCALE + (Math.random() - 0.5) * 6 * SCALE,
-          vx: (Math.random() - 0.5) * 10 * SCALE,
+          y: c.y + c.offsetY - 6 * SCALE,
+          vx: (Math.random() - 0.5) * 12 * SCALE,
           vy: -15 * SCALE - Math.random() * 20 * SCALE,
           life: 0.3 + Math.random() * 0.25,
           max: 0.55,
-          color: "hsl(54 100% 75%)",
-          size: (1 + Math.random() * 1.5) * SCALE,
+          color: pColor,
+          size: (1 + Math.random() * 1.8) * SCALE,
         });
       }
 
       // Ekranın ALTINDAN kaçış kontrolü
-      if (c.y > H + 40 * SCALE && !c.dead) {
+      if (c.y + c.offsetY > H + 40 * SCALE && !c.dead) {
         c.dead = true;
         if (c.kind === "firefly") {
           missed++;
-          burst(currentX, H - 20 * SCALE, "hsl(0 100% 65%)", 14);
-          addShake(shake, 10 * SCALE);
+          burst(currentX, H - 20 * SCALE, "hsl(0 100% 65%)", 16);
+          addShake(shake, 12 * SCALE);
           addFloatingText(currentX, H - 40 * SCALE, "KAÇTI!", "#f87171");
           if (missed >= MAX_MISSED) {
             finalTime = elapsed;
@@ -458,34 +522,43 @@ function update(dt: number) {
     for (const c of critters) {
       if (c.dead) continue;
       const x = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
-      if (!hitCircleRect(x, c.y, c.r, jar.x, jar.y, jar.w, jar.h)) continue;
+      const y = c.y + c.offsetY;
+
+      if (!hitCircleRect(x, y, c.r, jar.x, jar.y, jar.w, jar.h)) continue;
       c.dead = true;
+
       if (c.kind === "firefly") {
         caught = Math.min(caught + 1, TARGET);
         syncJarFireflies();
-        burst(x, c.y, "hsl(52 100% 75%)", 22);
-        burst(x, c.y, "hsl(80 100% 70%)", 8);
-        addFloatingText(x, c.y - 15 * SCALE, "+1", "#fef08a");
-        jarSquash = 0.28;
+
+        const pColor = c.subType === "emerald" ? "hsl(150 100% 70%)" : c.subType === "azure" ? "hsl(200 100% 75%)" : "hsl(52 100% 75%)";
+        burst(x, y, pColor, 24);
+        burst(x, y, "#ffffff", 8);
+
+        addFloatingText(x, y - 15 * SCALE, "+1", c.subType === "emerald" ? "#6ee7b7" : c.subType === "azure" ? "#7dd3fc" : "#fef08a");
+        jarSquash = 0.32;
+        jarWobble = 0.15;
+
         if (caught === TARGET) {
           finalTime = elapsed;
           state = "won";
-          burst(W / 2, H * 0.4, "hsl(52 100% 70%)", 60);
-          burst(W / 2, H * 0.4, "hsl(180 100% 75%)", 40);
+          burst(W / 2, H * 0.4, "hsl(52 100% 70%)", 70);
+          burst(W / 2, H * 0.4, "hsl(180 100% 75%)", 50);
+          burst(W / 2, H * 0.4, "hsl(150 100% 75%)", 30);
         }
       } else {
         caught = Math.max(caught - 1, 0);
         syncJarFireflies();
-        waspHitFlash = 0.38;
-        addShake(shake, 18 * SCALE);
-        addFloatingText(x, c.y - 15 * SCALE, "-1", "#f87171");
-        burst(x, c.y, "hsl(15 100% 60%)", 16);
+        waspHitFlash = 0.42;
+        addShake(shake, 20 * SCALE);
+        addFloatingText(x, y - 15 * SCALE, "-1", "#f87171");
+        burst(x, y, "hsl(15 100% 60%)", 18);
       }
     }
-    critters = critters.filter((c) => !c.dead && c.y < H + 50 * SCALE);
+    critters = critters.filter((c) => !c.dead && c.y + c.offsetY < H + 50 * SCALE);
   }
 
-  // İç ateşböceklerinin hareketi
+  // İç ateşböceklerinin fiziği
   for (const jf of jarFireflies) {
     jf.t += dt;
     jf.rx += jf.vx * dt;
@@ -499,9 +572,11 @@ function update(dt: number) {
   }
 
   updateShake(shake, dt);
-  jarSquash = Math.max(0, jarSquash - dt * 1.8);
+  jarSquash = Math.max(0, jarSquash - dt * 2.0);
+  jarWobble = Math.max(0, jarWobble - dt * 1.5);
   waspHitFlash = Math.max(0, waspHitFlash - dt * 2.5);
 
+  // Parçacıklar
   for (const p of particles) {
     p.life -= dt;
     p.x += p.vx * dt;
@@ -509,34 +584,94 @@ function update(dt: number) {
   }
   particles = particles.filter((p) => p.life > 0);
 
+  // Yükselen Metinler
   for (const ft of floatingTexts) {
     ft.life -= dt;
-    ft.y -= 30 * SCALE * dt;
+    ft.y -= 32 * SCALE * dt;
   }
   floatingTexts = floatingTexts.filter((ft) => ft.life > 0);
 
-  for (const s of ambientSpecks) {
+  // Bokeh Işık Küreleri
+  for (const s of bokehOrbs) {
     s.t += dt;
     s.y += s.vy * dt;
-    s.x += s.vx * dt + Math.sin(s.t * 1.5) * 8 * SCALE * dt;
-    if (s.y > H + 20 * SCALE) {
-      s.y = -20 * SCALE;
+    s.x += s.vx * dt + Math.sin(s.t * 1.2) * 6 * SCALE * dt;
+    if (s.y > H + 30 * SCALE) {
+      s.y = -30 * SCALE;
       s.x = Math.random() * W;
+    }
+  }
+
+  // Bulutlar
+  for (const cl of clouds) {
+    cl.x += cl.speed * dt;
+    if (cl.x > W + cl.w) {
+      cl.x = -cl.w * 1.5;
+      cl.y = (30 + Math.random() * 80) * SCALE;
     }
   }
 }
 
-// --- Çizim Fonksiyonları ------------------------------------------------------
+// --- Görsel Çizim Fonksiyonları ----------------------------------------------
 
 function drawBackground() {
+  // Gökyüzü Gradiyenti
   const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, "#060918");
-  g.addColorStop(0.5, "#0a1128");
-  g.addColorStop(0.9, "#050816");
-  g.addColorStop(1, "#020308");
+  g.addColorStop(0, "#050816");
+  g.addColorStop(0.4, "#091026");
+  g.addColorStop(0.85, "#050814");
+  g.addColorStop(1, "#020307");
   ctx.fillStyle = g;
   ctx.fillRect(-40, -40, W + 80, H + 80);
 
+  // Parlak Dolunay & Aurası (Büyülü Ay)
+  const moonX = W * 0.82;
+  const moonY = H * 0.18;
+  const moonR = 36 * SCALE;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 3.5);
+  moonGlow.addColorStop(0, "rgba(230, 242, 255, 0.4)");
+  moonGlow.addColorStop(0.4, "rgba(180, 215, 255, 0.15)");
+  moonGlow.addColorStop(1, "rgba(180, 215, 255, 0)");
+  ctx.fillStyle = moonGlow;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Ay Gövdesi & Kraterler
+  const moonGrad = ctx.createLinearGradient(moonX - moonR, moonY - moonR, moonX + moonR, moonY + moonR);
+  moonGrad.addColorStop(0, "#f8fafc");
+  moonGrad.addColorStop(0.7, "#e2e8f0");
+  moonGrad.addColorStop(1, "#cbd5e1");
+  ctx.fillStyle = moonGrad;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Kraterler
+  ctx.fillStyle = "rgba(148, 163, 184, 0.25)";
+  ctx.beginPath();
+  ctx.arc(moonX - 10 * SCALE, moonY - 8 * SCALE, 7 * SCALE, 0, Math.PI * 2);
+  ctx.arc(moonX + 12 * SCALE, moonY + 6 * SCALE, 9 * SCALE, 0, Math.PI * 2);
+  ctx.arc(moonX - 4 * SCALE, moonY + 14 * SCALE, 5 * SCALE, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Gece Bulutları
+  for (const cl of clouds) {
+    ctx.save();
+    ctx.fillStyle = `rgba(148, 163, 184, ${cl.alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(cl.x, cl.y, cl.w / 2, cl.h / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cl.x - cl.w * 0.25, cl.y + 6 * SCALE, cl.w * 0.35, cl.h * 0.4, 0, 0, Math.PI * 2);
+    ctx.ellipse(cl.x + cl.w * 0.25, cl.y + 4 * SCALE, cl.w * 0.35, cl.h * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Yıldızlar
   for (const s of stars) {
     const alpha = s.a + Math.sin(elapsed * s.speed + s.x) * 0.15;
     ctx.globalAlpha = Math.max(0.05, Math.min(1, alpha));
@@ -546,21 +681,23 @@ function drawBackground() {
     ctx.fill();
   }
 
+  // Bokeh Odak Dışı Işıklar
   ctx.globalCompositeOperation = "lighter";
-  for (const s of ambientSpecks) {
-    const a = s.alpha * (0.6 + 0.4 * Math.sin(s.t * 2));
+  for (const b of bokehOrbs) {
+    const a = b.alpha * (0.6 + 0.4 * Math.sin(b.t * 2));
     ctx.globalAlpha = Math.max(0, Math.min(1, a));
-    ctx.fillStyle = "hsl(52 100% 70%)";
+    ctx.fillStyle = b.color;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalCompositeOperation = "source-over";
   ctx.globalAlpha = 1;
 
+  // Etkileşimli Çimler & Işıldayan Çiçekler
   ctx.fillStyle = "#07121c";
   for (const b of grassBlades) {
-    const swayX = Math.sin(elapsed * 2 + b.swayOffset) * 6 * SCALE;
+    const swayX = Math.sin(elapsed * 2 + b.swayOffset) * 6 * SCALE + b.bend;
     ctx.beginPath();
     ctx.moveTo(b.x - b.width / 2, H);
     ctx.quadraticCurveTo(b.x, H - b.height * 0.6, b.x + swayX, H - b.height);
@@ -569,10 +706,10 @@ function drawBackground() {
   }
 }
 
-// MANYTİK ÇEKİM IŞINI (Suction Beam Visual)
+// BÜYÜLÜ VORTEX ÇEKİM IŞINI
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
-  const jarMouthY = jar.y - 6 * SCALE;
+  const jarMouthY = jar.y - 8 * SCALE;
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -580,58 +717,78 @@ function drawSuctionBeams() {
   for (const c of critters) {
     if (c.kind === "firefly" && c.beingPulled && !c.dead) {
       const cx = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
-      
-      // Işık Çekim Konisi / Çizgisi
-      const g = ctx.createLinearGradient(jarMouthX, jarMouthY, cx, c.y);
-      g.addColorStop(0, "hsl(52 100% 75% / 0.6)");
-      g.addColorStop(0.7, "hsl(52 100% 60% / 0.25)");
-      g.addColorStop(1, "hsl(52 100% 60% / 0)");
+      const cy = c.y + c.offsetY;
+
+      const beamColor = c.subType === "emerald" ? "150 100% 75%" : c.subType === "azure" ? "200 100% 80%" : "52 100% 75%";
+
+      // Girdap Konisi
+      const g = ctx.createLinearGradient(jarMouthX, jarMouthY, cx, cy);
+      g.addColorStop(0, `hsl(${beamColor} / 0.7)`);
+      g.addColorStop(0.6, `hsl(${beamColor} / 0.3)`);
+      g.addColorStop(1, `hsl(${beamColor} / 0)`);
 
       ctx.strokeStyle = g;
-      ctx.lineWidth = 6 * SCALE;
+      ctx.lineWidth = 8 * SCALE;
       ctx.beginPath();
       ctx.moveTo(jarMouthX, jarMouthY);
-      ctx.lineTo(cx, c.y);
+      ctx.lineTo(cx, cy);
       ctx.stroke();
 
-      // Halka Dalgaları
-      const pulse = (elapsed * 8) % 1;
-      const hx = jarMouthX + (cx - jarMouthX) * pulse;
-      const hy = jarMouthY + (c.y - jarMouthY) * pulse;
+      // Dönen Spiral Halkaları
+      for (let i = 0; i < 3; i++) {
+        const pulse = ((elapsed * 5 + i * 0.33) % 1);
+        const hx = jarMouthX + (cx - jarMouthX) * pulse;
+        const hy = jarMouthY + (cy - jarMouthY) * pulse;
+        const hr = (4 + pulse * 14) * SCALE;
 
-      ctx.strokeStyle = "hsl(54 100% 85% / 0.5)";
-      ctx.lineWidth = 1.5 * SCALE;
-      ctx.beginPath();
-      ctx.arc(hx, hy, (6 + pulse * 12) * SCALE, 0, Math.PI * 2);
-      ctx.stroke();
+        ctx.strokeStyle = `hsl(${beamColor} / ${0.7 - pulse * 0.5})`;
+        ctx.lineWidth = (2 - pulse * 1) * SCALE;
+        ctx.beginPath();
+        ctx.ellipse(hx, hy, hr, hr * 0.4, c.pullAngle || 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
   }
 
   ctx.restore();
 }
 
-// YUKARIDAN DÜŞEN / SÜZÜLEN Ateşböceği Çizimi
-function drawFirefly(x: number, y: number, r: number, t: number, amp: number, freq: number) {
+// Ateşböceği Çizimi (Renk Tipleri: Gold, Emerald, Azure)
+function drawFirefly(x: number, y: number, r: number, t: number, amp: number, freq: number, subType: FireflyType = "gold") {
   ctx.save();
 
   const vx = swayVel(t, amp, freq);
-  // Aşağıya uçarken eğim açısı
   const tilt = Math.atan2(vx, 140 * SCALE);
 
   ctx.translate(x, y);
   ctx.rotate(tilt * 0.4);
 
-  // 1. Parlama Aurası
+  // Renk Paleti
+  let coreColor = "hsl(54 100% 82%)";
+  let auraHue = "52 100% 80%";
+  let outerHue = "50 100% 60%";
+
+  if (subType === "emerald") {
+    coreColor = "hsl(154 100% 82%)";
+    auraHue = "150 100% 75%";
+    outerHue = "140 100% 55%";
+  } else if (subType === "azure") {
+    coreColor = "hsl(198 100% 85%)";
+    auraHue = "200 100% 80%";
+    outerHue = "190 100% 60%";
+  }
+
+  // 1. Nabız Atan Aura
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const pulse = 0.85 + 0.25 * Math.sin(t * 9);
-  const auraR = r * 3.8 * pulse;
+  const auraR = r * 4.0 * pulse;
 
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, auraR);
-  g.addColorStop(0, "hsl(52 100% 80% / 0.9)");
-  g.addColorStop(0.3, "hsl(50 100% 60% / 0.4)");
-  g.addColorStop(0.7, "hsl(70 100% 50% / 0.12)");
-  g.addColorStop(1, "hsl(52 100% 50% / 0)");
+  g.addColorStop(0, `hsl(${auraHue} / 0.95)`);
+  g.addColorStop(0.35, `hsl(${outerHue} / 0.4)`);
+  g.addColorStop(0.75, `hsl(${outerHue} / 0.12)`);
+  g.addColorStop(1, `hsl(${outerHue} / 0)`);
 
   ctx.fillStyle = g;
   ctx.beginPath();
@@ -639,11 +796,11 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.fill();
   ctx.restore();
 
-  // 2. Kanatlar
+  // 2. Transparan Kanatlar
   const wingAngle = Math.sin(t * 38) * 0.45;
-  ctx.fillStyle = "rgba(230, 245, 255, 0.65)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.lineWidth = 0.8 * SCALE;
+  ctx.fillStyle = "rgba(235, 248, 255, 0.7)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.lineWidth = 0.85 * SCALE;
 
   ctx.save();
   ctx.rotate(-0.3 - wingAngle);
@@ -661,9 +818,8 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.stroke();
   ctx.restore();
 
-  // 3. Aşağı Yönlü Gövde (Baş aşağıda +y, Karın yukarıda -y)
-  // Işıldayan Karın (Üst kısım)
-  ctx.fillStyle = "hsl(54 100% 82%)";
+  // 3. Gövde
+  ctx.fillStyle = coreColor;
   ctx.beginPath();
   ctx.ellipse(0, -r * 0.4, r * 0.52, r * 0.68, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -673,13 +829,11 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.ellipse(0, -r * 0.35, r * 0.28, r * 0.38, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Göğüs
   ctx.fillStyle = "#1e1b18";
   ctx.beginPath();
   ctx.arc(0, r * 0.2, r * 0.45, 0, Math.PI * 2);
   ctx.fill();
 
-  // Baş & Gözler (Alt kısım)
   ctx.fillStyle = "#0f0d0b";
   ctx.beginPath();
   ctx.arc(0, r * 0.65, r * 0.32, 0, Math.PI * 2);
@@ -694,7 +848,7 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.restore();
 }
 
-// YUKARIDAN DÜŞEN / SÜZÜLEN Eşek Arısı Çizimi
+// Eşek Arısı Çizimi
 function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq: number) {
   ctx.save();
 
@@ -704,7 +858,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.translate(x, y);
   ctx.rotate(tilt * 0.45);
 
-  // 1. Tehlike Aurası
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const hazardGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.8);
@@ -717,7 +870,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.fill();
   ctx.restore();
 
-  // 2. Kanatlar
   const wingFlutter = Math.sin(t * 48) * 0.5;
   ctx.fillStyle = "rgba(200, 230, 255, 0.45)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
@@ -739,8 +891,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.stroke();
   ctx.restore();
 
-  // 3. Aşağı Uçan Gövde (İğne üstte -y, Baş altta +y)
-  // İğne
   ctx.fillStyle = "#0f0d0a";
   ctx.beginPath();
   ctx.moveTo(-r * 0.25, -r * 1.35);
@@ -749,7 +899,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.closePath();
   ctx.fill();
 
-  // Çizgili Karın
   ctx.save();
   ctx.beginPath();
   ctx.ellipse(0, -r * 0.35, r * 0.92, r * 1.1, 0, 0, Math.PI * 2);
@@ -764,13 +913,11 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.fillRect(-r * 1.2, r * 0.6, r * 2.4, bH);
   ctx.restore();
 
-  // Göğüs
   ctx.fillStyle = "#26201a";
   ctx.beginPath();
   ctx.arc(0, r * 0.35, r * 0.68, 0, Math.PI * 2);
   ctx.fill();
 
-  // Baş & Gözler
   ctx.fillStyle = "#14110f";
   ctx.beginPath();
   ctx.arc(0, r * 0.75, r * 0.45, 0, Math.PI * 2);
@@ -788,7 +935,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.arc(r * 0.2, r * 0.86, r * 0.06, 0, Math.PI * 2);
   ctx.fill();
 
-  // Antenler
   ctx.strokeStyle = "#14110f";
   ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
@@ -801,7 +947,7 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.restore();
 }
 
-// --- Cam Kavanoz Çizimi ------------------------------------------------------
+// Cam Kavanoz Çizimi
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
@@ -897,7 +1043,7 @@ function drawJar() {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, 16 * SCALE * pulse);
-    g.addColorStop(0, "hsl(54 100% 85% / 0.9)");
+    g.addColorStop(0, jf.color || "hsl(54 100% 85% / 0.9)");
     g.addColorStop(0.4, "hsl(50 100% 65% / 0.4)");
     g.addColorStop(1, "hsl(50 100% 60% / 0)");
     ctx.fillStyle = g;
@@ -933,7 +1079,7 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD: Skor, Haklar & Kronometre ----------------------------------------
+// --- HUD ---------------------------------------------------------------------
 function drawHUD() {
   ctx.save();
 
@@ -952,7 +1098,7 @@ function drawHUD() {
 
   const iconX = barX + 22 * SCALE;
   const iconY = barY + barH / 2;
-  drawFirefly(iconX, iconY, 6 * SCALE, elapsed, 0, 0);
+  drawFirefly(iconX, iconY, 6 * SCALE, elapsed, 0, 0, "gold");
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
@@ -1018,7 +1164,7 @@ function drawHUD() {
   ctx.restore();
 }
 
-// --- Oyun Sonu Ekranı --------------------------------------------------------
+// --- Oyun Sonu Modal --------------------------------------------------------
 function drawModal(title: string, subtitle: string, btnText: string, isWin: boolean) {
   ctx.save();
   ctx.fillStyle = "rgba(3, 5, 14, 0.82)";
@@ -1089,22 +1235,20 @@ function draw() {
 
   drawBackground();
 
-  // Magnet Çekim Işınları
   if (state === "playing") {
     drawSuctionBeams();
   }
 
-  // Düşen Böcekler
   for (const c of critters) {
     const x = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
+    const y = c.y + c.offsetY;
     if (c.kind === "firefly") {
-      drawFirefly(x, c.y, c.r, c.t, c.amp, c.freq);
+      drawFirefly(x, y, c.r, c.t, c.amp, c.freq, c.subType);
     } else {
-      drawWasp(x, c.y, c.r, c.t, c.amp, c.freq);
+      drawWasp(x, y, c.r, c.t, c.amp, c.freq);
     }
   }
 
-  // Parçacıklar
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const p of particles) {
@@ -1116,7 +1260,6 @@ function draw() {
   }
   ctx.restore();
 
-  // Uçuşan Skor Metinleri (+1 / -1 / KAÇTI!)
   for (const ft of floatingTexts) {
     ctx.save();
     ctx.globalAlpha = ft.life / ft.max;
@@ -1127,10 +1270,10 @@ function draw() {
     ctx.restore();
   }
 
-  // Kavanoz
+  // Kavanoz (Squash & Wobble)
   ctx.save();
   ctx.translate(jar.x + jar.w / 2, jar.y + jar.h);
-  ctx.rotate(jarTilt);
+  ctx.rotate(jarTilt + Math.sin(elapsed * 18) * jarWobble);
   ctx.scale(1 + jarSquash, 1 - jarSquash);
   drawJar();
   ctx.restore();
