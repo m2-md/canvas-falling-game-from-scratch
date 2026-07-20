@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Gerçekçi 3D Cam Fanus Boynu & Dribbble Karakter Sanatı
-// Özellikler: Fiziksel Doğru Cam Fanus Boynu, Kıvrımlı Dudak (Glass Lip), Mantar Tıpa & Kusursuz Geometri.
+// ATEŞBÖCEKLERİ — 3D Cam Kavanoz & Mantar Kapak (Gerçekçi Düz Taban, Yuvarlak Omuzlar & Boğaz)
+// Özellikler: Düz Tabanlı 3D Cam Kavanoz, Yuvarlak Gövde Omuzları, Belirgin Cam Boğaz & Ahşap Mantar Kapak.
 
 import {
   type FireflySubtype,
@@ -125,7 +125,7 @@ const shake: Shake = { power: 0, t: 0 };
 let soundEnabled = true;
 let highMagnet = false;
 
-// Yuvarlak Fanus Fizik & Kovalama Değişkenleri
+// 3D Cam Kavanoz Fizik & Kovalama Değişkenleri
 let jarSquash = 0;
 let jarWobble = 0;
 let jarTilt = 0;
@@ -156,8 +156,8 @@ const levelGridButtons: { level: number; x: number; y: number; w: number; h: num
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
-  jar.w = 110 * SCALE;
-  jar.h = 110 * SCALE;
+  jar.w = 105 * SCALE; // Kavanoz Genişliği
+  jar.h = 120 * SCALE; // Kavanoz Yüksekliği
   jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
@@ -1563,11 +1563,10 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// 100% FİZİKSEL DOĞRU GERÇEKÇİ 3D CAM FANUS BOYNU (Realistic Glass Fishbowl Neck)
+// 3D REALISTIC APOTHECARY GLASS JAR WITH FLAT BOTTOM, BULBOUS SHOULDERS & CORK STOPPER
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
-  const r = w / 2; // Fanus Küre Yarıçapı (r = 55px * SCALE)
   const glow = caught / levelCfg.target;
 
   ctx.save();
@@ -1576,14 +1575,14 @@ function drawJar() {
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const glowR = r * 1.45;
-    const fillGlow = ctx.createRadialGradient(0, -r, 0, 0, -r, glowR);
+    const glowR = w * 0.8;
+    const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
     fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
     fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
     fillGlow.addColorStop(1, "hsl(52 100% 60% / 0)");
     ctx.fillStyle = fillGlow;
     ctx.beginPath();
-    ctx.arc(0, -r, glowR, 0, Math.PI * 2);
+    ctx.arc(0, -h * 0.45, glowR, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -1593,69 +1592,48 @@ function drawJar() {
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.7})`;
     ctx.beginPath();
-    ctx.arc(0, -r, r + 8 * SCALE, 0, Math.PI * 2);
+    ctx.roundRect(-w / 2 - 6 * SCALE, -h - 10 * SCALE, w + 12 * SCALE, h + 14 * SCALE, 18 * SCALE);
     ctx.fill();
     ctx.restore();
   }
 
-  // 2. Cam Fanus Ana Gövdesi (Kusursuz Cam Küre)
-  ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
-  ctx.beginPath();
-  ctx.arc(0, -r, r, 0, Math.PI * 2);
+  // Kavanoz Yolu (Path Definition for Apothecary Jar: Flat Bottom, Bulging Body, Curved Shoulders, Vertical Neck)
+  const neckW = w * 0.52;
+  const neckTopY = -h * 0.94;
+  const neckBaseY = -h * 0.78;
+  const baseW = w * 0.74;
+
+  const createJarPath = () => {
+    ctx.beginPath();
+    // Sağ Boyun Rim Jantı
+    ctx.moveTo(neckW / 2, neckTopY);
+    // Sağ Omuz Eğrisi
+    ctx.quadraticCurveTo(w / 2, neckBaseY, w / 2, -h * 0.42);
+    // Sağ Gövde Şişkinliği & Alt Köşe
+    ctx.quadraticCurveTo(w / 2, 0, baseW / 2, 0);
+    // Düz Taban
+    ctx.lineTo(-baseW / 2, 0);
+    // Sol Gövde Şişkinliği
+    ctx.quadraticCurveTo(-w / 2, 0, -w / 2, -h * 0.42);
+    // Sol Omuz Eğrisi
+    ctx.quadraticCurveTo(-w / 2, neckBaseY, -neckW / 2, neckBaseY);
+    // Sol Boyun Dikey Yükselişi
+    ctx.lineTo(-neckW / 2, neckTopY);
+    ctx.closePath();
+  };
+
+  // 2. Cam Gövde İç Gölge / Hacim
+  ctx.fillStyle = "rgba(10, 22, 40, 0.48)";
+  createJarPath();
   ctx.fill();
 
-  // 3. FİZİKSEL DOĞRU CAM FANUS BOYNU (Seamless Glass Neck & Curved Rim Lip)
-  // Boyun başlangıcı kürenin üst kısmından doğal olarak yükselir (y: -r * 1.5 - r * 0.35)
-  const neckBaseY = -r * 1.62;
-  const neckTopY = -r * 1.95;
-  const neckRadiusX = r * 0.42;
-
-  // Dikey Silindirik Cam Boyun Gövdesi
-  const glassNeckGrad = ctx.createLinearGradient(-neckRadiusX, 0, neckRadiusX, 0);
-  glassNeckGrad.addColorStop(0, "rgba(215, 240, 255, 0.55)");
-  glassNeckGrad.addColorStop(0.3, "rgba(180, 225, 255, 0.18)");
-  glassNeckGrad.addColorStop(0.7, "rgba(180, 225, 255, 0.18)");
-  glassNeckGrad.addColorStop(1, "rgba(215, 240, 255, 0.55)");
-
-  ctx.fillStyle = glassNeckGrad;
-  ctx.beginPath();
-  ctx.moveTo(-neckRadiusX - 3 * SCALE, neckBaseY);
-  ctx.lineTo(-neckRadiusX, neckTopY);
-  ctx.lineTo(neckRadiusX, neckTopY);
-  ctx.lineTo(neckRadiusX + 3 * SCALE, neckBaseY);
-  ctx.closePath();
-  ctx.fill();
-
-  // Doğal Ahşap Mantar Tıpa (Snug Fit Inside Cork Stopper)
-  const corkY = neckTopY - 4 * SCALE;
-  const corkG = ctx.createLinearGradient(-neckRadiusX, 0, neckRadiusX, 0);
-  corkG.addColorStop(0, "#734828");
-  corkG.addColorStop(0.5, "#a67043");
-  corkG.addColorStop(1, "#59361c");
-
-  ctx.fillStyle = corkG;
-  ctx.beginPath();
-  ctx.ellipse(0, corkY, neckRadiusX * 0.88, 5.5 * SCALE, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Cam Fanus Kıvrımlı Dudak (Flared Glass Lip / Rim Ring)
-  ctx.strokeStyle = "rgba(235, 248, 255, 0.85)";
-  ctx.lineWidth = 2.4 * SCALE;
-  ctx.fillStyle = "rgba(215, 240, 255, 0.28)";
-
-  ctx.beginPath();
-  ctx.ellipse(0, neckTopY, neckRadiusX + 1.5 * SCALE, 6.5 * SCALE, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // 4. Sıvı Işık Dolgusu (Yuvarlak Fanusa Kırpılmış Liquid)
+  // 3. Sıvı Işık Dolgusu (Düz Tabandan Yukarı Yuvarlatılarak Dolan Liquid)
   if (glow > 0) {
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, -r, r - 3 * SCALE, 0, Math.PI * 2);
+    createJarPath();
     ctx.clip();
 
-    const liquidH = h * 0.7 * glow;
+    const liquidH = h * 0.78 * glow;
     const liquidY = -liquidH;
     const sloshing = Math.sin(elapsed * 4 + jar.x * 0.02) * 4 * SCALE;
 
@@ -1665,19 +1643,19 @@ function drawJar() {
 
     ctx.fillStyle = liqG;
     ctx.beginPath();
-    ctx.moveTo(-r, 0);
-    ctx.lineTo(-r, liquidY + sloshing);
-    ctx.quadraticCurveTo(0, liquidY - sloshing, r, liquidY + sloshing);
-    ctx.lineTo(r, 0);
+    ctx.moveTo(-w / 2 - 10 * SCALE, 0);
+    ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + sloshing);
+    ctx.quadraticCurveTo(0, liquidY - sloshing, w / 2 + 10 * SCALE, liquidY + sloshing);
+    ctx.lineTo(w / 2 + 10 * SCALE, 0);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
   }
 
-  // 5. İçeride Süzülen Ateşböcekleri
+  // 4. İçeride Süzülen Ateşböcekleri
   for (const jf of jarFireflies) {
-    const fx = jf.rx * (r * 1.3);
-    const fy = -r + jf.ry * (r * 1.3);
+    const fx = jf.rx * (w * 0.65);
+    const fy = -h * 0.45 + jf.ry * (h * 0.45);
     const pulse = 0.8 + 0.2 * Math.sin(jf.t * 8);
 
     ctx.save();
@@ -1698,19 +1676,60 @@ function drawJar() {
     ctx.fill();
   }
 
-  // 6. 3D Cam Yansımaları ve Yuvarlak Çerçeve
-  ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
-  ctx.lineWidth = 3 * SCALE;
-  ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
+  // 5. Ahşap Mantar Kapak (Doğal Ahşap Mantar Tıpa - Sitting Atop the Neck)
+  const corkW = neckW * 1.12;
+  const corkH = 14 * SCALE;
+  const corkY = neckTopY - corkH * 0.65;
+
+  const corkG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
+  corkG.addColorStop(0, "#6e4324");
+  corkG.addColorStop(0.3, "#b87d4b");
+  corkG.addColorStop(0.7, "#a67043");
+  corkG.addColorStop(1, "#59361c");
+
+  ctx.fillStyle = corkG;
+  ctx.strokeStyle = "#40230f";
+  ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
-  ctx.arc(0, -r, r, 0, Math.PI * 2);
+  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
-  ctx.lineWidth = 4 * SCALE;
+  // Mantar Üst Bevel Vurgusu
+  ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
   ctx.beginPath();
-  ctx.arc(0, -r, r - 6 * SCALE, Math.PI * 0.75, Math.PI * 1.25);
+  ctx.roundRect(-corkW / 2 + 2 * SCALE, corkY + 1.5 * SCALE, corkW - 4 * SCALE, 3.5 * SCALE, 2 * SCALE);
+  ctx.fill();
+
+  // Cam Boyun Çerçevesi & Dudak (Flared Glass Neck Rim)
+  ctx.strokeStyle = "rgba(235, 248, 255, 0.85)";
+  ctx.lineWidth = 2.2 * SCALE;
+  ctx.beginPath();
+  ctx.ellipse(0, neckTopY, neckW / 2 + 2 * SCALE, 5 * SCALE, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 6. 3D Cam Kavanoz Çerçevesi ve Işık Yansımaları
+  ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
+  ctx.lineWidth = 3 * SCALE;
+  ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
+  createJarPath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Cam Sol Omuz Işık Yansıması (Curved Shoulder Highlight)
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.lineWidth = 3.5 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 + 6 * SCALE, -h * 0.38);
+  ctx.quadraticCurveTo(-w / 2 + 6 * SCALE, -h * 0.72, -neckW / 2 + 3 * SCALE, neckBaseY);
+  ctx.stroke();
+
+  // Düz Taban Alt Cam Yansıması
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-baseW / 2 + 8 * SCALE, -3 * SCALE);
+  ctx.lineTo(baseW / 2 - 8 * SCALE, -3 * SCALE);
   ctx.stroke();
 
   ctx.restore();
@@ -2173,9 +2192,9 @@ function drawTutorialModal() {
   const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK AĞI", desc: "Fanusa ipek ağ atarak seni yavaşça çeker. Karşı yöne asılarak ağdan kurtul!" },
+    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK AĞI", desc: "Kavanoza ipek ağ atarak seni yavaşça çeker. Karşı yöne asılarak ağdan kurtul!" },
     { drawIcon: (x: number, y: number) => drawLadybug(x, y, 10 * SCALE, elapsed), title: "GEZGİN UĞUR BÖCEĞİ", desc: "Ekrandan hiç çıkmaz, sürekli yumuşak yörüngede uçar. Çarpmamaya dikkat et!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta fanusa tam +2 ışık kazandırır." },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
     { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Yakalandığında Örümceğin bağlı olduğu ağı anında yakarak yok eder!" },
   ];
 
