@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Infografik & Dribbble Dashboard Tasarımlı Lüks Modallar
-// Özellikler: İnfografik Stat Kartları, 2x2 Grid Tablolar, Rozetler (Pill Badges), Emojisiz Özel Vektör İkonlar, Sıfır Taşma.
+// ATEŞBÖCEKLERİ — Canlı Oyun Görselli & Sıralı Animasyonlu İnfografik Modallar
+// Özellikler: Canlı Oyun Karakterleri (Animasyonlu Kavanoz & Böcekler), Ardışık Sayı Sayacı (Staggered Ticker Animation), Dribbble Dashboard Stili.
 
 import {
   type Shake,
@@ -99,6 +99,7 @@ let caught = 0;
 let missed = 0;
 let elapsed = 0;
 let finalTime = 0;
+let modalAnimTime = 0; // Modal içi sıralı animasyon süresi
 let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
@@ -209,6 +210,7 @@ function resetGame() {
   caught = 0;
   missed = 0;
   elapsed = 0;
+  modalAnimTime = 0;
   spawnTimer = createSpawnTimer();
   shake.power = 0;
   jarSquash = 0;
@@ -295,10 +297,12 @@ function handlePointerClick(clientX: number, clientY: number) {
   if (state === "playing") {
     if (isInsideRect(cx, cy, uiButtons.help)) {
       state = "tutorial";
+      modalAnimTime = 0;
       return true;
     }
     if (isInsideRect(cx, cy, uiButtons.settings)) {
       state = "settings";
+      modalAnimTime = 0;
       return true;
     }
   } else if (state === "tutorial") {
@@ -394,8 +398,12 @@ window.addEventListener(
   (e) => {
     if ((state === "won" || state === "gameover") && e.key === "Enter") resetGame();
     if (e.key === "Escape") {
-      if (state === "playing") state = "settings";
-      else if (state === "settings" || state === "tutorial") state = "playing";
+      if (state === "playing") {
+        state = "settings";
+        modalAnimTime = 0;
+      } else if (state === "settings" || state === "tutorial") {
+        state = "playing";
+      }
     }
   },
   on,
@@ -692,6 +700,7 @@ function update(dt: number) {
           if (missed >= MAX_MISSED) {
             finalTime = elapsed;
             state = "gameover";
+            modalAnimTime = 0;
           }
         }
       }
@@ -720,6 +729,7 @@ function update(dt: number) {
         if (caught === TARGET) {
           finalTime = elapsed;
           state = "won";
+          modalAnimTime = 0;
           burst(W / 2, H * 0.4, "hsl(52 100% 70%)", 70);
           burst(W / 2, H * 0.4, "hsl(180 100% 75%)", 50);
           burst(W / 2, H * 0.4, "hsl(150 100% 75%)", 30);
@@ -734,6 +744,9 @@ function update(dt: number) {
       }
     }
     critters = critters.filter((c) => !c.dead && c.y + c.offsetY < H + 50 * SCALE);
+  } else {
+    // Modal açıkken sıralı animasyon sayacını ilerlet
+    modalAnimTime += dt;
   }
 
   for (const jf of jarFireflies) {
@@ -1351,7 +1364,7 @@ function drawHUD() {
   ctx.restore();
 }
 
-// --- DRIBBBLE INFOGRAPHIC DASHBOARD MODAL SİSTEMİ --------------------------
+// --- SIRALI ANİMASYONLU & CANLI GÖRSELLİ MODAL SİSTEMİ ---------------------
 function drawModalCard(
   statusBadge: string,
   title: string,
@@ -1363,7 +1376,7 @@ function drawModalCard(
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 520 * SCALE);
+  const cardH = Math.min(H * 0.90, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
@@ -1380,11 +1393,27 @@ function drawModalCard(
   ctx.fill();
   ctx.stroke();
 
-  // 1. Dribbble Status Pill Badge
+  // Canlı Oyundaki Uçan Karakter Görselleri (Header Dekoru)
+  const heroJarX = cardX + 54 * SCALE;
+  const heroJarY = cardY + 65 * SCALE;
+  ctx.save();
+  ctx.translate(heroJarX, heroJarY);
+  ctx.scale(0.55, 0.55);
+  drawJar();
+  ctx.restore();
+
+  drawFirefly(cardX + cardW - 60 * SCALE, cardY + 55 * SCALE, 9 * SCALE, elapsed, 0, 0, "gold");
+  if (!isWin) {
+    drawWasp(cardX + cardW - 110 * SCALE, cardY + 80 * SCALE, 10 * SCALE, elapsed, 0, 0);
+  } else {
+    drawFirefly(cardX + cardW - 115 * SCALE, cardY + 80 * SCALE, 9 * SCALE, elapsed + 1, 0, 0, "emerald");
+  }
+
+  // 1. Status Pill Badge
   const badgeW = 180 * SCALE;
   const badgeH = 32 * SCALE;
   const badgeX = (W - badgeW) / 2;
-  const badgeY = cardY + 28 * SCALE;
+  const badgeY = cardY + 24 * SCALE;
 
   ctx.fillStyle = isWin ? "rgba(250, 204, 21, 0.15)" : "rgba(239, 68, 68, 0.15)";
   ctx.strokeStyle = isWin ? "rgba(250, 204, 21, 0.5)" : "rgba(239, 68, 68, 0.5)";
@@ -1406,29 +1435,37 @@ function drawModalCard(
   ctx.font = `800 ${Math.min(cardW * 0.055, 30 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
-  // 3. İNFOGRAFİK STAT KARTLARI (3 Kolonlu Dashboard İstatistik Tablosu)
+  // 3. İNFOGRAFİK STAT KARTLARI (Sıralı Animasyonlu Ticker / Counter)
   const gridW = cardW - 64 * SCALE;
   const gridX = cardX + 32 * SCALE;
-  const gridY = cardY + 124 * SCALE;
+  const gridY = cardY + 128 * SCALE;
   const gridH = 150 * SCALE;
 
   const colW = (gridW - 24 * SCALE) / 3;
 
   const stats = isWin
     ? [
-        { label: "TOPLANAN IŞIK", val: `${caught}/${TARGET}`, unit: "100% Tamam", color: "#fef08a" },
-        { label: "TAMAMLAMA SÜRESİ", val: `${finalTime.toFixed(1)}s`, unit: "Saniye", color: "#60a5fa" },
-        { label: "BAŞARI DERECESİ", val: "S-SINIFI", unit: "Mükemmel!", color: "#34d399" },
+        { label: "TOPLANAN IŞIK", targetVal: caught, total: TARGET, unit: "100% Tamam", color: "#fef08a", type: "ratio" },
+        { label: "TAMAMLAMA SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
+        { label: "BAŞARI DERECESİ", targetVal: 100, total: 0, unit: "Mükemmel!", color: "#34d399", type: "rank" },
       ]
     : [
-        { label: "TOPLANAN IŞIK", val: `${caught}/${TARGET}`, unit: "Ateşböceği", color: "#fef08a" },
-        { label: "GEÇEN SÜRE", val: `${finalTime.toFixed(1)}s`, unit: "Saniye", color: "#60a5fa" },
-        { label: "KAÇAN IŞIKLAR", val: `${missed}/${MAX_MISSED}`, unit: "Geceye Karıştı", color: "#f87171" },
+        { label: "TOPLANAN IŞIK", targetVal: caught, total: TARGET, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
+        { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
+        { label: "KAÇAN IŞIKLAR", targetVal: missed, total: MAX_MISSED, unit: "Geceye Karıştı", color: "#f87171", type: "ratio" },
       ];
 
   for (let i = 0; i < 3; i++) {
     const cx = gridX + i * (colW + 12 * SCALE);
     const s = stats[i];
+
+    // SIRALI ANİMASYON MANUEL HESAPLAMA (Staggered Animation)
+    const cardDelay = i * 0.20; // 200ms gecikme
+    const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.35));
+    const cardScale = 0.7 + 0.3 * Math.sin(cardProgress * Math.PI / 2); // Easing
+
+    ctx.save();
+    ctx.globalAlpha = cardProgress;
 
     ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
     ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
@@ -1444,13 +1481,27 @@ function drawModalCard(
     ctx.font = `700 ${11 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(s.label, cx + colW / 2, gridY + 20 * SCALE);
 
+    // Animasyonlu Sayı Sayacı (Animated Ticker)
+    let displayVal = "";
+    if (s.type === "ratio") {
+      const cur = Math.round(s.targetVal * cardProgress);
+      displayVal = `${cur}/${s.total}`;
+    } else if (s.type === "time") {
+      const curT = (s.targetVal * cardProgress).toFixed(1);
+      displayVal = `${curT}s`;
+    } else if (s.type === "rank") {
+      displayVal = cardProgress > 0.8 ? "S-SINIFI" : "...";
+    }
+
     ctx.fillStyle = s.color;
-    ctx.font = `800 ${28 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(s.val, cx + colW / 2, gridY + 48 * SCALE);
+    ctx.font = `800 ${28 * SCALE * cardScale}px 'Outfit', sans-serif`;
+    ctx.fillText(displayVal, cx + colW / 2, gridY + 48 * SCALE);
 
     ctx.fillStyle = "#cbd5e1";
     ctx.font = `500 ${12 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(s.unit, cx + colW / 2, gridY + 98 * SCALE);
+
+    ctx.restore();
   }
 
   // 4. Özet Bilgi Çubuğu
@@ -1500,7 +1551,7 @@ function drawModalCard(
   ctx.restore();
 }
 
-// --- İNFOGRAFİK REHBER (2x2 Grid Dribbble Dashboard) -----------------------
+// --- İNFOGRAFİK REHBER (Canlı Görselli 2x2 Grid) ----------------------------
 function drawTutorialModal() {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
@@ -1575,6 +1626,13 @@ function drawTutorialModal() {
     const cy = gridY + row * (rowH + 16 * SCALE);
     const r = rules[i];
 
+    // Sıralı Animasyon Geçişi
+    const cardDelay = i * 0.15;
+    const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.3));
+
+    ctx.save();
+    ctx.globalAlpha = cardProgress;
+
     ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
     ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
     ctx.lineWidth = 1.2 * SCALE;
@@ -1594,6 +1652,8 @@ function drawTutorialModal() {
     ctx.fillStyle = "#94a3b8";
     ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
     drawWrappedText(ctx, r.desc, cx + 22 * SCALE, cy + 62 * SCALE, colW - 44 * SCALE, 18 * SCALE);
+
+    ctx.restore();
   }
 
   // Buton
@@ -1669,7 +1729,7 @@ function drawSettingsModal() {
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 62 * SCALE);
 
-  // Tablo Satırları (Glassmorphic Option Rows)
+  // Tablo Satırları
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
 
