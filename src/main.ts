@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Tam Sayfa Boyutlu Lüks Modal Arayüzü
-// Özellikler: Ekranı Kaplayan Esnek Modal Çerçeveleri, Sıfır Metin Taşması, Dribbble/Awwwards Lüks Stil, Özel Vektör İkonlar.
+// ATEŞBÖCEKLERİ — Infografik & Dribbble Dashboard Tasarımlı Lüks Modallar
+// Özellikler: İnfografik Stat Kartları, 2x2 Grid Tablolar, Rozetler (Pill Badges), Emojisiz Özel Vektör İkonlar, Sıfır Taşma.
 
 import {
   type Shake,
@@ -1351,28 +1351,23 @@ function drawHUD() {
   ctx.restore();
 }
 
-// --- TAM SAYFA BOYUTLU RESPOSIVE MODAL SİSTEMİ (SIFIR TAŞMA) ----------------
+// --- DRIBBBLE INFOGRAPHIC DASHBOARD MODAL SİSTEMİ --------------------------
 function drawModalCard(
+  statusBadge: string,
   title: string,
-  subtitle: string,
   primaryBtnText: string,
-  secondaryBtnText: string | null,
-  isWinOrLoss: boolean | null = null,
+  isWin: boolean,
 ) {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
   ctx.fillRect(0, 0, W, H);
 
-  // TAM EKRAN ÇERÇEVE (Sayfanın genişliğini ve yüksekliğini doldurur)
   const cardW = Math.min(W * 0.94, 680 * SCALE);
   const cardH = Math.min(H * 0.90, 520 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  let borderColor = "rgba(255, 255, 255, 0.18)";
-  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.45)";
-  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.45)";
-
+  const borderColor = isWin ? "rgba(250, 204, 21, 0.45)" : "rgba(239, 68, 68, 0.45)";
   const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
   cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
   cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
@@ -1385,85 +1380,127 @@ function drawModalCard(
   ctx.fill();
   ctx.stroke();
 
+  // 1. Dribbble Status Pill Badge
+  const badgeW = 180 * SCALE;
+  const badgeH = 32 * SCALE;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = cardY + 28 * SCALE;
+
+  ctx.fillStyle = isWin ? "rgba(250, 204, 21, 0.15)" : "rgba(239, 68, 68, 0.15)";
+  ctx.strokeStyle = isWin ? "rgba(250, 204, 21, 0.5)" : "rgba(239, 68, 68, 0.5)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 16 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = isWin ? "#fef08a" : "#fca5a5";
+  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(statusBadge, W / 2, badgeY + badgeH / 2 + 1 * SCALE);
+
+  // 2. Ana Başlık
   ctx.textBaseline = "top";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `800 ${Math.min(cardW * 0.055, 30 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
-  let titleColor = "#fef08a";
-  if (isWinOrLoss === false) titleColor = "#fca5a5";
-  else if (isWinOrLoss === null) titleColor = "#38bdf8";
+  // 3. İNFOGRAFİK STAT KARTLARI (3 Kolonlu Dashboard İstatistik Tablosu)
+  const gridW = cardW - 64 * SCALE;
+  const gridX = cardX + 32 * SCALE;
+  const gridY = cardY + 124 * SCALE;
+  const gridH = 150 * SCALE;
 
-  ctx.fillStyle = titleColor;
-  ctx.font = `800 ${Math.min(cardW * 0.065, 34 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(title, W / 2, cardY + 36 * SCALE);
+  const colW = (gridW - 24 * SCALE) / 3;
 
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = `500 ${Math.min(cardW * 0.038, 17 * SCALE)}px 'Outfit', sans-serif`;
-  const textMaxW = cardW - 64 * SCALE;
-  drawWrappedText(ctx, subtitle, W / 2, cardY + 95 * SCALE, textMaxW, 26 * SCALE);
+  const stats = isWin
+    ? [
+        { label: "TOPLANAN IŞIK", val: `${caught}/${TARGET}`, unit: "100% Tamam", color: "#fef08a" },
+        { label: "TAMAMLAMA SÜRESİ", val: `${finalTime.toFixed(1)}s`, unit: "Saniye", color: "#60a5fa" },
+        { label: "BAŞARI DERECESİ", val: "S-SINIFI", unit: "Mükemmel!", color: "#34d399" },
+      ]
+    : [
+        { label: "TOPLANAN IŞIK", val: `${caught}/${TARGET}`, unit: "Ateşböceği", color: "#fef08a" },
+        { label: "GEÇEN SÜRE", val: `${finalTime.toFixed(1)}s`, unit: "Saniye", color: "#60a5fa" },
+        { label: "KAÇAN IŞIKLAR", val: `${missed}/${MAX_MISSED}`, unit: "Geceye Karıştı", color: "#f87171" },
+      ];
 
-  const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
-  const btnH = 52 * SCALE;
-  const btnX = (W - btnW) / 2;
+  for (let i = 0; i < 3; i++) {
+    const cx = gridX + i * (colW + 12 * SCALE);
+    const s = stats[i];
 
-  if (secondaryBtnText) {
-    const btn1Y = cardY + cardH - 135 * SCALE;
-    uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
-
-    const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-    g1.addColorStop(0, "#2563eb");
-    g1.addColorStop(1, "#1d4ed8");
-    ctx.fillStyle = g1;
+    ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1.2 * SCALE;
     ctx.beginPath();
-    ctx.roundRect(btnX, btn1Y, btnW, btnH, 26 * SCALE);
-    ctx.fill();
-
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(primaryBtnText, W / 2, btn1Y + btnH / 2 + 1 * SCALE);
-
-    const btn2Y = cardY + cardH - 70 * SCALE;
-    uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
-
-    ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
-    ctx.lineWidth = 1.5 * SCALE;
-    ctx.beginPath();
-    ctx.roundRect(btnX, btn2Y, btnW, btnH, 26 * SCALE);
+    ctx.roundRect(cx, gridY, colW, gridH, 18 * SCALE);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#fca5a5";
-    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(secondaryBtnText, W / 2, btn2Y + btnH / 2 + 1 * SCALE);
-  } else {
-    const btnY = cardY + cardH - 84 * SCALE;
-    uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `700 ${11 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(s.label, cx + colW / 2, gridY + 20 * SCALE);
 
-    const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-    if (isWinOrLoss === false) {
-      g.addColorStop(0, "#dc2626");
-      g.addColorStop(1, "#b91c1c");
-    } else {
-      g.addColorStop(0, "#eab308");
-      g.addColorStop(1, "#ca8a04");
-    }
+    ctx.fillStyle = s.color;
+    ctx.font = `800 ${28 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(s.val, cx + colW / 2, gridY + 48 * SCALE);
 
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.roundRect(btnX, btnY, btnW, btnH, 26 * SCALE);
-    ctx.fill();
-
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = isWinOrLoss === false ? "#ffffff" : "#0f172a";
-    ctx.font = `800 ${18 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = `500 ${12 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(s.unit, cx + colW / 2, gridY + 98 * SCALE);
   }
+
+  // 4. Özet Bilgi Çubuğu
+  const descY = gridY + gridH + 20 * SCALE;
+  const descText = isWin
+    ? "Tüm ateşböceklerini başardın ve gece bahçesini aydınlattın!"
+    : "3 ateşböceği geceye karıştı. Tekrar deneyerek tüm ışıkları topla!";
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+  ctx.beginPath();
+  ctx.roundRect(gridX, descY, gridW, 44 * SCALE, 12 * SCALE);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(descText, W / 2, descY + 22 * SCALE);
+
+  // 5. Ana Buton
+  const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
+  const btnH = 50 * SCALE;
+  const btnX = (W - btnW) / 2;
+  const btnY = cardY + cardH - 74 * SCALE;
+
+  uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+  const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
+  if (!isWin) {
+    g.addColorStop(0, "#dc2626");
+    g.addColorStop(1, "#b91c1c");
+  } else {
+    g.addColorStop(0, "#eab308");
+    g.addColorStop(1, "#ca8a04");
+  }
+
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 25 * SCALE);
+  ctx.fill();
+
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = !isWin ? "#ffffff" : "#0f172a";
+  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- TAM EKRAN YÖNLENDİRME MODALI -------------------------------------------
+// --- İNFOGRAFİK REHBER (2x2 Grid Dribbble Dashboard) -----------------------
 function drawTutorialModal() {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
@@ -1486,47 +1523,84 @@ function drawTutorialModal() {
   ctx.fill();
   ctx.stroke();
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
+  // Header Badge
+  const badgeW = 160 * SCALE;
+  const badgeH = 30 * SCALE;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = cardY + 24 * SCALE;
 
+  ctx.fillStyle = "rgba(96, 165, 250, 0.15)";
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 15 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
+  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("OYUN REHBERİ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
+
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 30 * SCALE);
+  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 62 * SCALE);
+
+  // 2x2 İnfografik Grid Kartları
+  const gridW = cardW - 56 * SCALE;
+  const gridX = cardX + 28 * SCALE;
+  const gridY = cardY + 110 * SCALE;
+
+  const colW = (gridW - 20 * SCALE) / 2;
+  const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 22 * SCALE, "#38bdf8"), title: "Kavanozu Hareket Ettir", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönet." },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 6 * SCALE, elapsed, 0, 0, "gold"), title: "Ateşböceklerini Çek", desc: "Yaklaştığında vakum gücü böcekleri kavanoza çeker." },
-    { drawIcon: (x: number, y: number) => drawWasp(x, y, 7 * SCALE, elapsed, 0, 0), title: "Arılardan Kaç", desc: "Arıya çarparsan kavanozdaki 1 ışığı kaybedersin!" },
+    { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 24 * SCALE, "#38bdf8"), title: "KONTROL & HAREKET", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu 2D serbest yönet." },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 7 * SCALE, elapsed, 0, 0, "gold"), title: "VAKUM ÇEKİM GÜCÜ", desc: "Ateşböceklerine yaklaştığında çekim gücü onları kavanoza çeker." },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 8 * SCALE, elapsed, 0, 0), title: "ARILARDAN KAÇIN", desc: "Arıya çarparsan kavanozdan 1 ışık kaybedersin. Arılardan uzak dur!" },
     { drawIcon: (x: number, y: number) => {
       ctx.fillStyle = "#ef4444";
       ctx.beginPath();
-      ctx.arc(x, y, 6 * SCALE, 0, Math.PI * 2);
+      ctx.arc(x, y, 7 * SCALE, 0, Math.PI * 2);
       ctx.fill();
-    }, title: "3 Kaçırma Hakkı", desc: "3 ateşböceği ekranın altından kaçarsa oyun biter." },
+    }, title: "3 KAÇIRMA HAKKI", desc: "3 ateşböceği ekranın altından kaçarsa gece kararır ve oyun biter." },
   ];
 
-  ctx.textAlign = "left";
-  const rowHeight = (cardH - 170 * SCALE) / 4;
-  let itemY = cardY + 76 * SCALE;
+  for (let i = 0; i < 4; i++) {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const cx = gridX + col * (colW + 20 * SCALE);
+    const cy = gridY + row * (rowH + 16 * SCALE);
+    const r = rules[i];
 
-  for (const r of rules) {
-    r.drawIcon(cardX + 44 * SCALE, itemY + 12 * SCALE);
+    ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1.2 * SCALE;
+    ctx.beginPath();
+    ctx.roundRect(cx, cy, colW, rowH, 18 * SCALE);
+    ctx.fill();
+    ctx.stroke();
 
+    r.drawIcon(cx + 30 * SCALE, cy + 30 * SCALE);
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
     ctx.fillStyle = "#fef08a";
-    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(r.title, cardX + 72 * SCALE, itemY);
+    ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(r.title, cx + 58 * SCALE, cy + 22 * SCALE);
 
     ctx.fillStyle = "#94a3b8";
-    ctx.font = `400 ${14 * SCALE}px 'Outfit', sans-serif`;
-    drawWrappedText(ctx, r.desc, cardX + 72 * SCALE, itemY + 20 * SCALE, cardW - 110 * SCALE, 18 * SCALE);
-
-    itemY += rowHeight;
+    ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
+    drawWrappedText(ctx, r.desc, cx + 22 * SCALE, cy + 62 * SCALE, colW - 44 * SCALE, 18 * SCALE);
   }
 
+  // Buton
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
-  const btnY = cardY + cardH - 75 * SCALE;
+  const btnY = cardY + cardH - 74 * SCALE;
 
   uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
 
@@ -1547,7 +1621,7 @@ function drawTutorialModal() {
   ctx.restore();
 }
 
-// --- TAM EKRAN AYARLAR MODALI -----------------------------------------------
+// --- İNFOGRAFİK AYARLAR MODALI -----------------------------------------------
 function drawSettingsModal() {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
@@ -1570,59 +1644,111 @@ function drawSettingsModal() {
   ctx.fill();
   ctx.stroke();
 
+  // Header Badge
+  const badgeW = 160 * SCALE;
+  const badgeH = 30 * SCALE;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = cardY + 24 * SCALE;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 15 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = `800 ${12 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("SİSTEM MENÜSÜ", W / 2, badgeY + badgeH / 2 + 1 * SCALE);
+
   ctx.textBaseline = "top";
-
-  ctx.fillStyle = "#fef08a";
+  ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 32 * SCALE);
+  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 62 * SCALE);
 
-  // Toggle 1
-  const row1Y = cardY + 95 * SCALE;
+  // Tablo Satırları (Glassmorphic Option Rows)
+  const rowW = cardW - 64 * SCALE;
+  const rowX = cardX + 32 * SCALE;
+
+  // Row 1: Ses Efektleri
+  const row1Y = cardY + 115 * SCALE;
+  const rowH = 68 * SCALE;
+
+  ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(rowX, row1Y, rowW, rowH, 18 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
   ctx.textAlign = "left";
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Ses Efektleri", cardX + 44 * SCALE, row1Y + 8 * SCALE);
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("SES EFEKTLERİ", rowX + 24 * SCALE, row1Y + 16 * SCALE);
+
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 24 * SCALE, row1Y + 38 * SCALE);
 
   const toggle1W = 110 * SCALE;
   const toggle1H = 38 * SCALE;
-  const toggle1X = cardX + cardW - toggle1W - 44 * SCALE;
-  uiButtons.toggleSound = { x: toggle1X, y: row1Y, w: toggle1W, h: toggle1H };
+  const toggle1X = rowX + rowW - toggle1W - 20 * SCALE;
+  const toggle1Y = row1Y + (rowH - toggle1H) / 2;
+  uiButtons.toggleSound = { x: toggle1X, y: toggle1Y, w: toggle1W, h: toggle1H };
 
   ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 19 * SCALE);
+  ctx.roundRect(toggle1X, toggle1Y, toggle1W, toggle1H, 19 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, row1Y + toggle1H / 2);
+  ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, toggle1Y + toggle1H / 2);
 
-  // Toggle 2
-  const row2Y = cardY + 160 * SCALE;
+  // Row 2: Vakum Gücü
+  const row2Y = row1Y + rowH + 16 * SCALE;
+
+  ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(rowX, row2Y, rowW, rowH, 18 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Vakum Çekim Gücü", cardX + 44 * SCALE, row2Y + 8 * SCALE);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 24 * SCALE, row2Y + 16 * SCALE);
+
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 24 * SCALE, row2Y + 38 * SCALE);
 
   const toggle2W = 110 * SCALE;
   const toggle2H = 38 * SCALE;
-  const toggle2X = cardX + cardW - toggle2W - 44 * SCALE;
-  uiButtons.toggleMagnet = { x: toggle2X, y: row2Y, w: toggle2W, h: toggle2H };
+  const toggle2X = rowX + rowW - toggle2W - 20 * SCALE;
+  const toggle2Y = row2Y + (rowH - toggle2H) / 2;
+  uiButtons.toggleMagnet = { x: toggle2X, y: toggle2Y, w: toggle2W, h: toggle2H };
 
   ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 19 * SCALE);
+  ctx.roundRect(toggle2X, toggle2Y, toggle2W, toggle2H, 19 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, row2Y + toggle2H / 2);
+  ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, toggle2Y + toggle2H / 2);
 
   // Butonlar
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
@@ -1719,21 +1845,9 @@ function draw() {
   ctx.restore();
 
   if (state === "won") {
-    drawModalCard(
-      "KAVANOZ DOLDU",
-      `${TARGET} ateşböceğinin hepsini ${finalTime.toFixed(1)} saniyede başarıyla topladın!`,
-      "TEKRAR OYNA",
-      null,
-      true,
-    );
+    drawModalCard("ZAFER • TEBRİKLER", "KAVANOZ DOLDU", "TEKRAR OYNA", true);
   } else if (state === "gameover") {
-    drawModalCard(
-      "ATEŞBÖCEKLERİ KAÇTI",
-      `3 ateşböceği geceye karışarak kaçtı. Toplanan: ${caught}/${TARGET} (${finalTime.toFixed(1)} sn)`,
-      "TEKRAR DENE",
-      null,
-      false,
-    );
+    drawModalCard("SONUÇ • OYUN BİTTİ", "ATEŞBÖCEKLERİ KAÇTI", "TEKRAR DENE", false);
   } else if (state === "tutorial") {
     drawTutorialModal();
   } else if (state === "settings") {
