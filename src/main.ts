@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Gece bahçesinde uçan ateşböceklerini yakala, arılardan kaç!
-// Güncelleme: Yükselen uçuş mantığı, Kavanoz ile kovalama (2D Dokunmatik & Klavye), 3 Kaçırma Hakkı, Canlı Kronometre.
+// ATEŞBÖCEKLERİ — Gece bahçesinde yukarıdan süzülen ateşböceklerini çekim gücüyle yakala!
+// Özellikler: Yukarıdan süzülen böcekler, Manyetik Çekim Gücü (Suction Beam Kovalama), 2D Dokunmatik Takip, 3 Kaçırma Hakkı, Canlı Kronometre.
 
 import {
   type Shake,
@@ -41,14 +41,17 @@ const TARGET = 6;
 const MAX_MISSED = 3;
 
 interface Critter {
+  id: number;
   kind: "firefly" | "wasp";
   baseX: number;
   y: number;
+  offsetX: number; // Mıknatıs çekimiyle oluşan bağıl X kayması
   t: number;
   amp: number;
   freq: number;
   r: number;
   dead?: boolean;
+  beingPulled?: boolean; // Mıknatıs alanında mı?
 }
 
 interface Particle {
@@ -62,6 +65,15 @@ interface Particle {
   size: number;
 }
 
+interface FloatingText {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  life: number;
+  max: number;
+}
+
 interface JarFirefly {
   rx: number;
   ry: number;
@@ -73,15 +85,17 @@ interface JarFirefly {
 let state: "playing" | "won" | "gameover" = "playing";
 let critters: Critter[] = [];
 let particles: Particle[] = [];
+let floatingTexts: FloatingText[] = [];
 let jarFireflies: JarFirefly[] = [];
 let caught = 0;
 let missed = 0;
 let elapsed = 0;
 let finalTime = 0;
+let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
 
-// Kavanoz fizik & animasyon değişkenleri
+// Kavanoz Fizik & Kovalama Değişkenleri
 let jarSquash = 0;
 let jarTilt = 0;
 let jarVx = 0;
@@ -90,7 +104,7 @@ let waspHitFlash = 0;
 
 const jar = { x: 0, y: 0, w: 0, h: 0 };
 
-// Ortam ögeleri
+// Dekorasyon
 let stars: { x: number; y: number; r: number; a: number; speed: number }[] = [];
 let ambientSpecks: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number }[] = [];
 let grassBlades: { x: number; height: number; swayOffset: number; width: number }[] = [];
@@ -99,7 +113,7 @@ function layout() {
   SCALE = Math.min(W, H) / 600;
   jar.w = 100 * SCALE;
   jar.h = 116 * SCALE;
-  jar.y = Math.max(H * 0.3, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
+  jar.y = Math.max(H * 0.2, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
   stars = Array.from({ length: 80 }, () => ({
@@ -114,7 +128,7 @@ function layout() {
     x: Math.random() * W,
     y: Math.random() * H,
     r: (1 + Math.random() * 2) * SCALE,
-    vy: (-15 - Math.random() * 25) * SCALE, // Yukarı süzülen ışıltı tozları
+    vy: (5 + Math.random() * 15) * SCALE,
     vx: (Math.random() - 0.5) * 15 * SCALE,
     alpha: 0.1 + Math.random() * 0.4,
     t: Math.random() * 10,
@@ -146,7 +160,7 @@ window.addEventListener(
     jar.x = relX * W - jar.w / 2;
     jar.y = relY * H - jar.h / 2;
     jar.x = Math.max(0, Math.min(W - jar.w, jar.x));
-    jar.y = Math.max(H * 0.25, Math.min(H - jar.h - 20 * SCALE, jar.y));
+    jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 20 * SCALE, jar.y));
   },
   on,
 );
@@ -154,6 +168,7 @@ window.addEventListener(
 function resetGame() {
   critters = [];
   particles = [];
+  floatingTexts = [];
   jarFireflies = [];
   caught = 0;
   missed = 0;
@@ -192,9 +207,11 @@ function spawnCritter() {
     ? (38 + Math.random() * 30) * SCALE
     : (12 + Math.random() * 18) * SCALE;
   critters.push({
+    id: nextCritterId++,
     kind: wasp ? "wasp" : "firefly",
     baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
-    y: H + 35 * SCALE, // Ekranın ALTINDAN doğar ve YUKARI uçarlar!
+    y: -35 * SCALE, // YUKARIDAN DÜŞER / SÜZÜLÜR!
+    offsetX: 0,
     t: Math.random() * 10,
     amp,
     freq: wasp ? 0.25 + Math.random() * 0.18 : 0.7 + Math.random() * 0.7,
@@ -202,7 +219,7 @@ function spawnCritter() {
   });
 }
 
-// --- Girdi & Mobil Kontroller -----------------------------------------------
+// --- Girdi & Hassas Dokunmatik Kovalama Kontrolleri ------------------------
 let pointerTarget: { x: number; y: number } | null = null;
 
 function setPointerTarget(clientX: number, clientY: number) {
@@ -210,10 +227,9 @@ function setPointerTarget(clientX: number, clientY: number) {
   const canvasX = ((clientX - rect.left) / rect.width) * W;
   const canvasY = ((clientY - rect.top) / rect.height) * H;
 
-  // Kavanozun merkezini parmağın olduğu konuma yumuşakça getir
   pointerTarget = {
     x: Math.max(0, Math.min(W - jar.w, canvasX - jar.w / 2)),
-    y: Math.max(H * 0.25, Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.6)),
+    y: Math.max(H * 0.15, Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.5)),
   };
 }
 
@@ -221,7 +237,6 @@ const keys = new Set<string>();
 window.addEventListener("keydown", (e) => keys.add(e.key), on);
 window.addEventListener("keyup", (e) => keys.delete(e.key), on);
 
-// Dokunmatik ve Fare Kontrolleri
 canvas.addEventListener(
   "pointerdown",
   (e) => {
@@ -247,7 +262,6 @@ window.addEventListener(
 window.addEventListener("pointerup", () => (pointerTarget = null), on);
 window.addEventListener("pointercancel", () => (pointerTarget = null), on);
 
-// Mobil Scroll ve Çimlenme Engelleme
 canvas.addEventListener(
   "touchstart",
   (e) => {
@@ -283,7 +297,7 @@ window.addEventListener(
 );
 
 function updateJar(dt: number) {
-  const speed = 620 * SCALE;
+  const speed = 700 * SCALE;
   let targetVx = 0;
   let targetVy = 0;
 
@@ -308,30 +322,28 @@ function updateJar(dt: number) {
     const diffX = pointerTarget.x - jar.x;
     const diffY = pointerTarget.y - jar.y;
     
-    // Mobil dokunma ile seri ve pürüzsüz takip
-    jar.x += diffX * Math.min(1, dt * 22);
-    jar.y += diffY * Math.min(1, dt * 22);
+    // Süper hassas 2D kovalama takibi
+    jar.x += diffX * Math.min(1, dt * 26);
+    jar.y += diffY * Math.min(1, dt * 26);
 
-    jarVx = diffX * 12;
-    jarVy = diffY * 12;
+    jarVx = diffX * 14;
+    jarVy = diffY * 14;
   } else {
-    jarVx += (targetVx - jarVx) * Math.min(1, dt * 18);
-    jarVy += (targetVy - jarVy) * Math.min(1, dt * 18);
+    jarVx += (targetVx - jarVx) * Math.min(1, dt * 20);
+    jarVy += (targetVy - jarVy) * Math.min(1, dt * 20);
 
     jar.x += jarVx * dt;
     jar.y += jarVy * dt;
   }
 
-  // Sınırlar
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x));
-  jar.y = Math.max(H * 0.25, Math.min(H - jar.h - 15 * SCALE, jar.y));
+  jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 15 * SCALE, jar.y));
 
-  // Eğim (tilt)
-  const targetTilt = (jarVx / speed) * 0.16;
-  jarTilt += (targetTilt - jarTilt) * Math.min(1, dt * 14);
+  const targetTilt = (jarVx / speed) * 0.18;
+  jarTilt += (targetTilt - jarTilt) * Math.min(1, dt * 15);
 }
 
-// --- Parçacık Patlaması -----------------------------------------------------
+// --- Efektler ---------------------------------------------------------------
 function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -350,6 +362,17 @@ function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
   }
 }
 
+function addFloatingText(x: number, y: number, text: string, color = "#fef08a") {
+  floatingTexts.push({
+    x,
+    y,
+    text,
+    color,
+    life: 0.8,
+    max: 0.8,
+  });
+}
+
 // --- Güncelleme --------------------------------------------------------------
 function update(dt: number) {
   if (state === "playing") {
@@ -360,18 +383,54 @@ function update(dt: number) {
 
     updateJar(dt);
 
+    const jarMouthX = jar.x + jar.w / 2;
+    const jarMouthY = jar.y - 6 * SCALE; // Kavanoz ağzı
+    const MAGNET_RADIUS = 130 * SCALE; // Çekim Alanı Yarıçapı
+
     for (const c of critters) {
       c.t += dt;
-      c.y -= fallSpeed * SCALE * dt; // YUKARI DOĞRU UÇUŞ (-y)
+      c.y += fallSpeed * SCALE * dt; // YUKARIDAN AŞAĞIYA DÜŞER/SÜZÜLÜR
 
-      // Ateşböceği ışık tozu (uçarken arkasında/aşağısında kalır)
+      const currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
+
+      // --- MANYTİK ÇEKİM GÜCÜ (Suction Magnet Pull) ---
+      if (c.kind === "firefly" && !c.dead) {
+        const dx = jarMouthX - currentX;
+        const dy = jarMouthY - c.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < MAGNET_RADIUS) {
+          c.beingPulled = true;
+          // Kavanoza doğru çekim kuvveti
+          const pullForce = (1 - dist / MAGNET_RADIUS) * 320 * SCALE * dt;
+          c.offsetX += (dx / dist) * pullForce;
+          c.y += (dy / dist) * pullForce;
+
+          // Çekim parıltı parçacıkları
+          if (Math.random() < 0.4) {
+            particles.push({
+              x: currentX,
+              y: c.y,
+              vx: (dx / dist) * 120 * SCALE,
+              vy: (dy / dist) * 120 * SCALE,
+              life: 0.25,
+              max: 0.25,
+              color: "hsl(52 100% 80%)",
+              size: (1.5 + Math.random() * 2) * SCALE,
+            });
+          }
+        } else {
+          c.beingPulled = false;
+        }
+      }
+
+      // Mikro ışık izi
       if (c.kind === "firefly" && Math.random() < 0.35) {
-        const cx = sway(c.t, c.baseX, c.amp, c.freq);
         particles.push({
-          x: cx + (Math.random() - 0.5) * 6 * SCALE,
-          y: c.y + 8 * SCALE + (Math.random() - 0.5) * 6 * SCALE,
+          x: currentX + (Math.random() - 0.5) * 6 * SCALE,
+          y: c.y - 6 * SCALE + (Math.random() - 0.5) * 6 * SCALE,
           vx: (Math.random() - 0.5) * 10 * SCALE,
-          vy: 20 * SCALE + Math.random() * 30 * SCALE,
+          vy: -15 * SCALE - Math.random() * 20 * SCALE,
           life: 0.3 + Math.random() * 0.25,
           max: 0.55,
           color: "hsl(54 100% 75%)",
@@ -379,14 +438,14 @@ function update(dt: number) {
         });
       }
 
-      // Ekranın ÜSTÜNDEN kaçış kontrolü
-      if (c.y < -40 * SCALE && !c.dead) {
+      // Ekranın ALTINDAN kaçış kontrolü
+      if (c.y > H + 40 * SCALE && !c.dead) {
         c.dead = true;
         if (c.kind === "firefly") {
           missed++;
-          const cx = sway(c.t, c.baseX, c.amp, c.freq);
-          burst(cx, 15 * SCALE, "hsl(0 100% 65%)", 14);
+          burst(currentX, H - 20 * SCALE, "hsl(0 100% 65%)", 14);
           addShake(shake, 10 * SCALE);
+          addFloatingText(currentX, H - 40 * SCALE, "KAÇTI!", "#f87171");
           if (missed >= MAX_MISSED) {
             finalTime = elapsed;
             state = "gameover";
@@ -398,7 +457,7 @@ function update(dt: number) {
     // Çarpışma kontrolü
     for (const c of critters) {
       if (c.dead) continue;
-      const x = sway(c.t, c.baseX, c.amp, c.freq);
+      const x = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
       if (!hitCircleRect(x, c.y, c.r, jar.x, jar.y, jar.w, jar.h)) continue;
       c.dead = true;
       if (c.kind === "firefly") {
@@ -406,6 +465,7 @@ function update(dt: number) {
         syncJarFireflies();
         burst(x, c.y, "hsl(52 100% 75%)", 22);
         burst(x, c.y, "hsl(80 100% 70%)", 8);
+        addFloatingText(x, c.y - 15 * SCALE, "+1", "#fef08a");
         jarSquash = 0.28;
         if (caught === TARGET) {
           finalTime = elapsed;
@@ -418,10 +478,11 @@ function update(dt: number) {
         syncJarFireflies();
         waspHitFlash = 0.38;
         addShake(shake, 18 * SCALE);
+        addFloatingText(x, c.y - 15 * SCALE, "-1", "#f87171");
         burst(x, c.y, "hsl(15 100% 60%)", 16);
       }
     }
-    critters = critters.filter((c) => !c.dead && c.y > -50 * SCALE);
+    critters = critters.filter((c) => !c.dead && c.y < H + 50 * SCALE);
   }
 
   // İç ateşböceklerinin hareketi
@@ -448,12 +509,18 @@ function update(dt: number) {
   }
   particles = particles.filter((p) => p.life > 0);
 
+  for (const ft of floatingTexts) {
+    ft.life -= dt;
+    ft.y -= 30 * SCALE * dt;
+  }
+  floatingTexts = floatingTexts.filter((ft) => ft.life > 0);
+
   for (const s of ambientSpecks) {
     s.t += dt;
     s.y += s.vy * dt;
     s.x += s.vx * dt + Math.sin(s.t * 1.5) * 8 * SCALE * dt;
-    if (s.y < -20 * SCALE) {
-      s.y = H + 20 * SCALE;
+    if (s.y > H + 20 * SCALE) {
+      s.y = -20 * SCALE;
       s.x = Math.random() * W;
     }
   }
@@ -502,12 +569,53 @@ function drawBackground() {
   }
 }
 
-// YUKARI UÇAN Ateşböceği Çizimi
+// MANYTİK ÇEKİM IŞINI (Suction Beam Visual)
+function drawSuctionBeams() {
+  const jarMouthX = jar.x + jar.w / 2;
+  const jarMouthY = jar.y - 6 * SCALE;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+
+  for (const c of critters) {
+    if (c.kind === "firefly" && c.beingPulled && !c.dead) {
+      const cx = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
+      
+      // Işık Çekim Konisi / Çizgisi
+      const g = ctx.createLinearGradient(jarMouthX, jarMouthY, cx, c.y);
+      g.addColorStop(0, "hsl(52 100% 75% / 0.6)");
+      g.addColorStop(0.7, "hsl(52 100% 60% / 0.25)");
+      g.addColorStop(1, "hsl(52 100% 60% / 0)");
+
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 6 * SCALE;
+      ctx.beginPath();
+      ctx.moveTo(jarMouthX, jarMouthY);
+      ctx.lineTo(cx, c.y);
+      ctx.stroke();
+
+      // Halka Dalgaları
+      const pulse = (elapsed * 8) % 1;
+      const hx = jarMouthX + (cx - jarMouthX) * pulse;
+      const hy = jarMouthY + (c.y - jarMouthY) * pulse;
+
+      ctx.strokeStyle = "hsl(54 100% 85% / 0.5)";
+      ctx.lineWidth = 1.5 * SCALE;
+      ctx.beginPath();
+      ctx.arc(hx, hy, (6 + pulse * 12) * SCALE, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+// YUKARIDAN DÜŞEN / SÜZÜLEN Ateşböceği Çizimi
 function drawFirefly(x: number, y: number, r: number, t: number, amp: number, freq: number) {
   ctx.save();
 
   const vx = swayVel(t, amp, freq);
-  // Yukarı doğru uçarken eğim açısı
+  // Aşağıya uçarken eğim açısı
   const tilt = Math.atan2(vx, 140 * SCALE);
 
   ctx.translate(x, y);
@@ -553,40 +661,40 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.stroke();
   ctx.restore();
 
-  // 3. Yukarı Yönlü Gövde (Baş yukarıda -y, Karın aşağıda +y)
-  // Baş & Gözler
-  ctx.fillStyle = "#0f0d0b";
+  // 3. Aşağı Yönlü Gövde (Baş aşağıda +y, Karın yukarıda -y)
+  // Işıldayan Karın (Üst kısım)
+  ctx.fillStyle = "hsl(54 100% 82%)";
   ctx.beginPath();
-  ctx.arc(0, -r * 0.65, r * 0.32, 0, Math.PI * 2);
+  ctx.ellipse(0, -r * 0.4, r * 0.52, r * 0.68, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(-r * 0.12, -r * 0.72, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(r * 0.12, -r * 0.72, r * 0.09, 0, Math.PI * 2);
+  ctx.ellipse(0, -r * 0.35, r * 0.28, r * 0.38, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Göğüs
   ctx.fillStyle = "#1e1b18";
   ctx.beginPath();
-  ctx.arc(0, -r * 0.2, r * 0.45, 0, Math.PI * 2);
+  ctx.arc(0, r * 0.2, r * 0.45, 0, Math.PI * 2);
   ctx.fill();
 
-  // Işıldayan Karın
-  ctx.fillStyle = "hsl(54 100% 82%)";
+  // Baş & Gözler (Alt kısım)
+  ctx.fillStyle = "#0f0d0b";
   ctx.beginPath();
-  ctx.ellipse(0, r * 0.4, r * 0.52, r * 0.68, 0, 0, Math.PI * 2);
+  ctx.arc(0, r * 0.65, r * 0.32, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.ellipse(0, r * 0.35, r * 0.28, r * 0.38, 0, 0, Math.PI * 2);
+  ctx.arc(-r * 0.12, r * 0.72, r * 0.09, 0, Math.PI * 2);
+  ctx.arc(r * 0.12, r * 0.72, r * 0.09, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 }
 
-// YUKARI UÇAN Eşek Arısı Çizimi
+// YUKARIDAN DÜŞEN / SÜZÜLEN Eşek Arısı Çizimi
 function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq: number) {
   ctx.save();
 
@@ -631,64 +739,64 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.stroke();
   ctx.restore();
 
-  // 3. Yukarı Uçan Gövde (Baş yukarıda -y, İğne altta +y)
-  // Antenler
-  ctx.strokeStyle = "#14110f";
-  ctx.lineWidth = 1.8 * SCALE;
+  // 3. Aşağı Uçan Gövde (İğne üstte -y, Baş altta +y)
+  // İğne
+  ctx.fillStyle = "#0f0d0a";
   ctx.beginPath();
-  ctx.moveTo(-r * 0.2, -r * 0.8);
-  ctx.quadraticCurveTo(-r * 0.6, -r * 1.4, -r * 0.75, -r * 1.6);
-  ctx.moveTo(r * 0.2, -r * 0.8);
-  ctx.quadraticCurveTo(r * 0.6, -r * 1.4, r * 0.75, -r * 1.6);
-  ctx.stroke();
-
-  // Baş & Gözler
-  ctx.fillStyle = "#14110f";
-  ctx.beginPath();
-  ctx.arc(0, -r * 0.75, r * 0.45, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#ef4444";
-  ctx.beginPath();
-  ctx.arc(-r * 0.22, -r * 0.82, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(r * 0.22, -r * 0.82, r * 0.16, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(-r * 0.24, -r * 0.86, r * 0.06, 0, Math.PI * 2);
-  ctx.arc(r * 0.2, -r * 0.86, r * 0.06, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Göğüs
-  ctx.fillStyle = "#26201a";
-  ctx.beginPath();
-  ctx.arc(0, -r * 0.35, r * 0.68, 0, Math.PI * 2);
+  ctx.moveTo(-r * 0.25, -r * 1.35);
+  ctx.lineTo(r * 0.25, -r * 1.35);
+  ctx.lineTo(0, -r * 1.9);
+  ctx.closePath();
   ctx.fill();
 
   // Çizgili Karın
   ctx.save();
   ctx.beginPath();
-  ctx.ellipse(0, r * 0.35, r * 0.92, r * 1.1, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -r * 0.35, r * 0.92, r * 1.1, 0, 0, Math.PI * 2);
   ctx.fillStyle = "#facc15";
   ctx.fill();
   ctx.clip();
 
   ctx.fillStyle = "#14110f";
   const bH = r * 0.42;
-  ctx.fillRect(-r * 1.2, -r * 0.6, r * 2.4, bH);
-  ctx.fillRect(-r * 1.2, r * 0.15, r * 2.4, bH);
-  ctx.fillRect(-r * 1.2, r * 0.8, r * 2.4, bH);
+  ctx.fillRect(-r * 1.2, -r * 0.8, r * 2.4, bH);
+  ctx.fillRect(-r * 1.2, -r * 0.15, r * 2.4, bH);
+  ctx.fillRect(-r * 1.2, r * 0.6, r * 2.4, bH);
   ctx.restore();
 
-  // İğne
-  ctx.fillStyle = "#0f0d0a";
+  // Göğüs
+  ctx.fillStyle = "#26201a";
   ctx.beginPath();
-  ctx.moveTo(-r * 0.25, r * 1.35);
-  ctx.lineTo(r * 0.25, r * 1.35);
-  ctx.lineTo(0, r * 1.9);
-  ctx.closePath();
+  ctx.arc(0, r * 0.35, r * 0.68, 0, Math.PI * 2);
   ctx.fill();
+
+  // Baş & Gözler
+  ctx.fillStyle = "#14110f";
+  ctx.beginPath();
+  ctx.arc(0, r * 0.75, r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath();
+  ctx.arc(-r * 0.22, r * 0.82, r * 0.16, 0, Math.PI * 2);
+  ctx.arc(r * 0.22, r * 0.82, r * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(-r * 0.24, r * 0.86, r * 0.06, 0, Math.PI * 2);
+  ctx.arc(r * 0.2, r * 0.86, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Antenler
+  ctx.strokeStyle = "#14110f";
+  ctx.lineWidth = 1.8 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.2, r * 0.8);
+  ctx.quadraticCurveTo(-r * 0.6, r * 1.4, -r * 0.75, r * 1.6);
+  ctx.moveTo(r * 0.2, r * 0.8);
+  ctx.quadraticCurveTo(r * 0.6, r * 1.4, r * 0.75, r * 1.6);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -825,11 +933,10 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD: Skor, Kaçırma Hakları ve Canlı Kronometre ------------------------
+// --- HUD: Skor, Haklar & Kronometre ----------------------------------------
 function drawHUD() {
   ctx.save();
 
-  // 1. Sol Üst: Yakalama & Kaçırma Hakları Kartı
   const barW = Math.min(W * 0.58, 260 * SCALE);
   const barH = 48 * SCALE;
   const barX = 16 * SCALE;
@@ -843,7 +950,6 @@ function drawHUD() {
   ctx.fill();
   ctx.stroke();
 
-  // Yakalama İkonu & Skor
   const iconX = barX + 22 * SCALE;
   const iconY = barY + barH / 2;
   drawFirefly(iconX, iconY, 6 * SCALE, elapsed, 0, 0);
@@ -854,7 +960,6 @@ function drawHUD() {
   ctx.font = `700 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${caught}/${TARGET}`, barX + 38 * SCALE, barY + barH / 2);
 
-  // 3 Kaçırma Hakkı Simgeleri
   const heartsX = barX + 115 * SCALE;
   const remainingLives = MAX_MISSED - missed;
 
@@ -862,7 +967,6 @@ function drawHUD() {
     const hx = heartsX + i * 22 * SCALE;
     const hy = barY + barH / 2;
     if (i < remainingLives) {
-      // Aktif can (parlayan sarı ışık)
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = "hsl(52 100% 70%)";
@@ -876,7 +980,6 @@ function drawHUD() {
       ctx.arc(hx, hy, 2.5 * SCALE, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // Kaçırılmış can (sönük kırmızı x)
       ctx.fillStyle = "rgba(239, 68, 68, 0.3)";
       ctx.beginPath();
       ctx.arc(hx, hy, 6.5 * SCALE, 0, Math.PI * 2);
@@ -893,7 +996,6 @@ function drawHUD() {
     }
   }
 
-  // 2. Sağ Üst: Canlı Kronometre
   const timerW = Math.min(W * 0.32, 120 * SCALE);
   const timerH = 48 * SCALE;
   const timerX = W - timerW - 16 * SCALE;
@@ -916,7 +1018,7 @@ function drawHUD() {
   ctx.restore();
 }
 
-// --- Oyun Sonu / Zafer Ekranları -------------------------------------------
+// --- Oyun Sonu Ekranı --------------------------------------------------------
 function drawModal(title: string, subtitle: string, btnText: string, isWin: boolean) {
   ctx.save();
   ctx.fillStyle = "rgba(3, 5, 14, 0.82)";
@@ -937,22 +1039,18 @@ function drawModal(title: string, subtitle: string, btnText: string, isWin: bool
 
   ctx.textAlign = "center";
 
-  // Başlık
   ctx.fillStyle = isWin ? "#fef08a" : "#fca5a5";
   ctx.font = `800 ${Math.min(W * 0.08, 36 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 70 * SCALE);
 
-  // Açıklama
   ctx.fillStyle = "#e2e8f0";
   ctx.font = `600 ${Math.min(W * 0.042, 19 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(subtitle, W / 2, cardY + 125 * SCALE);
 
-  // Süre Bilgisi
   ctx.fillStyle = "#94a3b8";
   ctx.font = `500 ${Math.min(W * 0.038, 16 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(`Geçen Süre: ${finalTime.toFixed(1)} saniye`, W / 2, cardY + 160 * SCALE);
 
-  // Buton
   const btnW = cardW * 0.68;
   const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -991,9 +1089,14 @@ function draw() {
 
   drawBackground();
 
-  // Uçan Canlılar
+  // Magnet Çekim Işınları
+  if (state === "playing") {
+    drawSuctionBeams();
+  }
+
+  // Düşen Böcekler
   for (const c of critters) {
-    const x = sway(c.t, c.baseX, c.amp, c.freq);
+    const x = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
     if (c.kind === "firefly") {
       drawFirefly(x, c.y, c.r, c.t, c.amp, c.freq);
     } else {
@@ -1013,7 +1116,18 @@ function draw() {
   }
   ctx.restore();
 
-  // Kavanoz (Kovalama Fiziği)
+  // Uçuşan Skor Metinleri (+1 / -1 / KAÇTI!)
+  for (const ft of floatingTexts) {
+    ctx.save();
+    ctx.globalAlpha = ft.life / ft.max;
+    ctx.fillStyle = ft.color;
+    ctx.font = `800 ${22 * SCALE}px 'Outfit', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.restore();
+  }
+
+  // Kavanoz
   ctx.save();
   ctx.translate(jar.x + jar.w / 2, jar.y + jar.h);
   ctx.rotate(jarTilt);
