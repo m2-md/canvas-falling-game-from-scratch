@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Gece Bahçesi & Büyülü Çekim Gücü
-// Üst Düzey Güncelleme: Büyülü Ay ve Bulut Atmosferi, Etkileşimli Çimler, Vortex Çekim Girdabı, Özel Böcek Tipleri & Fiziksel Yaylanma.
+// ATEŞBÖCEKLERİ — Profesyonel Arayüz, Ayarlar ve Yönlendirmeler
+// Özellikler: Tam Dokunmatik UI, Ayarlar & Duraklat Modalı, Nasıl Oynanır Yönlendirmesi, Taşmayan Dinamik Metin Hizalaması, Ses & Hassasiyet Ayarları.
 
 import {
   type Shake,
@@ -40,6 +40,7 @@ canvas.height = H;
 const TARGET = 6;
 const MAX_MISSED = 3;
 
+type GameState = "playing" | "paused" | "tutorial" | "settings" | "won" | "gameover";
 type FireflyType = "gold" | "emerald" | "azure";
 
 interface Critter {
@@ -89,7 +90,7 @@ interface JarFirefly {
   color: string;
 }
 
-let state: "playing" | "won" | "gameover" = "playing";
+let state: GameState = "playing";
 let critters: Critter[] = [];
 let particles: Particle[] = [];
 let floatingTexts: FloatingText[] = [];
@@ -102,9 +103,13 @@ let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
 
-// Kavanoz Gelişmiş Fizik Değişkenleri
+// Ayarlar
+let soundEnabled = true;
+let highMagnet = false;
+
+// Kavanoz Fizik & Kovalama Değişkenleri
 let jarSquash = 0;
-let jarWobble = 0; // Yaylanma sarsıntısı
+let jarWobble = 0;
 let jarTilt = 0;
 let jarVx = 0;
 let jarVy = 0;
@@ -112,11 +117,21 @@ let waspHitFlash = 0;
 
 const jar = { x: 0, y: 0, w: 0, h: 0 };
 
-// Atmosferik Ögeler (Ay, Bulutlar, Bokeh, Etkileşimli Çimler)
+// Atmosferik Ögeler
 let stars: { x: number; y: number; r: number; a: number; speed: number }[] = [];
 let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
 let clouds: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
 let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
+
+// UI Buton Yerleşimleri (Tıklama Tespiti İçin)
+const uiButtons = {
+  help: { x: 0, y: 0, w: 0, h: 0 },
+  settings: { x: 0, y: 0, w: 0, h: 0 },
+  modalAction: { x: 0, y: 0, w: 0, h: 0 },
+  modalSecondary: { x: 0, y: 0, w: 0, h: 0 },
+  toggleSound: { x: 0, y: 0, w: 0, h: 0 },
+  toggleMagnet: { x: 0, y: 0, w: 0, h: 0 },
+};
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
@@ -125,7 +140,6 @@ function layout() {
   jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
-  // Yıldızlar
   stars = Array.from({ length: 90 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H * 0.85,
@@ -134,7 +148,6 @@ function layout() {
     speed: 0.8 + Math.random() * 2,
   }));
 
-  // Bokeh Işık Küreleri
   const colors = ["hsl(52 100% 70%)", "hsl(160 100% 65%)", "hsl(200 100% 70%)"];
   bokehOrbs = Array.from({ length: 24 }, () => ({
     x: Math.random() * W,
@@ -147,7 +160,6 @@ function layout() {
     color: colors[Math.floor(Math.random() * colors.length)],
   }));
 
-  // Bulutlar
   clouds = Array.from({ length: 4 }, (_, i) => ({
     x: (i * W) / 3 - 50 * SCALE,
     y: (40 + Math.random() * 60) * SCALE,
@@ -157,7 +169,6 @@ function layout() {
     alpha: 0.12 + Math.random() * 0.12,
   }));
 
-  // Çimler (Kavanoza göre bükülen)
   const grassCount = Math.floor(W / (10 * SCALE));
   grassBlades = Array.from({ length: grassCount }, (_, i) => ({
     x: i * (10 * SCALE) + Math.random() * 3 * SCALE,
@@ -258,7 +269,7 @@ function spawnCritter() {
   });
 }
 
-// --- Girdi & Duyarlı 2D Kontroller ----------------------------------------
+// --- Girdi & Dokunmatik Etkileşim Yönetimi ----------------------------------
 let pointerTarget: { x: number; y: number } | null = null;
 
 function setPointerTarget(clientX: number, clientY: number) {
@@ -272,6 +283,55 @@ function setPointerTarget(clientX: number, clientY: number) {
   };
 }
 
+function isInsideRect(x: number, y: number, rect: { x: number; y: number; w: number; h: number }) {
+  return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+}
+
+function handlePointerClick(clientX: number, clientY: number) {
+  const rect = canvas.getBoundingClientRect();
+  const cx = ((clientX - rect.left) / rect.width) * W;
+  const cy = ((clientY - rect.top) / rect.height) * H;
+
+  if (state === "playing") {
+    if (isInsideRect(cx, cy, uiButtons.help)) {
+      state = "tutorial";
+      return true;
+    }
+    if (isInsideRect(cx, cy, uiButtons.settings)) {
+      state = "settings";
+      return true;
+    }
+  } else if (state === "tutorial") {
+    if (isInsideRect(cx, cy, uiButtons.modalAction)) {
+      state = "playing";
+      return true;
+    }
+  } else if (state === "settings") {
+    if (isInsideRect(cx, cy, uiButtons.toggleSound)) {
+      soundEnabled = !soundEnabled;
+      return true;
+    }
+    if (isInsideRect(cx, cy, uiButtons.toggleMagnet)) {
+      highMagnet = !highMagnet;
+      return true;
+    }
+    if (isInsideRect(cx, cy, uiButtons.modalAction)) {
+      state = "playing";
+      return true;
+    }
+    if (isInsideRect(cx, cy, uiButtons.modalSecondary)) {
+      resetGame();
+      return true;
+    }
+  } else if (state === "won" || state === "gameover") {
+    if (isInsideRect(cx, cy, uiButtons.modalAction)) {
+      resetGame();
+      return true;
+    }
+  }
+  return false;
+}
+
 const keys = new Set<string>();
 window.addEventListener("keydown", (e) => keys.add(e.key), on);
 window.addEventListener("keyup", (e) => keys.delete(e.key), on);
@@ -279,10 +339,9 @@ window.addEventListener("keyup", (e) => keys.delete(e.key), on);
 canvas.addEventListener(
   "pointerdown",
   (e) => {
+    if (handlePointerClick(e.clientX, e.clientY)) return;
     if (state === "playing") {
       setPointerTarget(e.clientX, e.clientY);
-    } else {
-      resetGame();
     }
   },
   on,
@@ -305,10 +364,13 @@ canvas.addEventListener(
   "touchstart",
   (e) => {
     if (e.touches.length > 0) {
+      const t = e.touches[0];
+      if (handlePointerClick(t.clientX, t.clientY)) {
+        e.preventDefault();
+        return;
+      }
       if (state === "playing") {
-        setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
-      } else {
-        resetGame();
+        setPointerTarget(t.clientX, t.clientY);
       }
     }
     e.preventDefault();
@@ -331,6 +393,10 @@ window.addEventListener(
   "keydown",
   (e) => {
     if ((state === "won" || state === "gameover") && e.key === "Enter") resetGame();
+    if (e.key === "Escape") {
+      if (state === "playing") state = "settings";
+      else if (state === "settings" || state === "tutorial") state = "playing";
+    }
   },
   on,
 );
@@ -380,7 +446,6 @@ function updateJar(dt: number) {
   const targetTilt = (jarVx / speed) * 0.2;
   jarTilt += (targetTilt - jarTilt) * Math.min(1, dt * 16);
 
-  // Çimlerin bükülme fiziği (Kavanoz yakınındakiler yana yatar)
   const jarCenterX = jar.x + jar.w / 2;
   for (const b of grassBlades) {
     const dist = Math.abs(b.x - jarCenterX);
@@ -424,6 +489,34 @@ function addFloatingText(x: number, y: number, text: string, color = "#fef08a") 
   });
 }
 
+// --- Metin Kaydırma & Kırma Yardımcısı (Dışa Taşma Engelleyici) ------------
+function drawWrappedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+): number {
+  const words = text.split(" ");
+  let line = "";
+  let currentY = y;
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const metrics = context.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
+      context.fillText(line.trim(), x, currentY);
+      line = words[n] + " ";
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  context.fillText(line.trim(), x, currentY);
+  return currentY;
+}
+
 // --- Güncelleme --------------------------------------------------------------
 function update(dt: number) {
   if (state === "playing") {
@@ -436,12 +529,11 @@ function update(dt: number) {
 
     const jarMouthX = jar.x + jar.w / 2;
     const jarMouthY = jar.y - 8 * SCALE;
-    const MAGNET_RADIUS = 140 * SCALE; // Çekim yarıçapı
+    const MAGNET_RADIUS = (highMagnet ? 175 : 140) * SCALE;
 
     for (const c of critters) {
       c.t += dt;
 
-      // Arıların süzülüş sırasında tehlikeli mikrosaniyelik hamle yapması
       if (c.kind === "wasp") {
         c.y += fallSpeed * SCALE * dt * 1.1;
       } else {
@@ -450,7 +542,6 @@ function update(dt: number) {
 
       const currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
 
-      // --- VORTEX ÇEKİM GİRDABI (Spiral Suction Pull) ---
       if (c.kind === "firefly" && !c.dead) {
         const dx = jarMouthX - currentX;
         const dy = jarMouthY - (c.y + c.offsetY);
@@ -460,15 +551,13 @@ function update(dt: number) {
           c.beingPulled = true;
           c.pullAngle = (c.pullAngle || 0) + dt * 10;
 
-          // Spiral çekim vektörü
-          const pullForce = (1 - dist / MAGNET_RADIUS) * 360 * SCALE * dt;
+          const pullForce = (1 - dist / MAGNET_RADIUS) * (highMagnet ? 450 : 360) * SCALE * dt;
           const spiralX = Math.cos(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
           const spiralY = Math.sin(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
 
           c.offsetX += (dx / dist) * pullForce + spiralX * dt * 3;
           c.offsetY += (dy / dist) * pullForce + spiralY * dt * 3;
 
-          // Spiral toz parçacıkları
           if (Math.random() < 0.45) {
             const pColor = c.subType === "emerald" ? "hsl(150 100% 75%)" : c.subType === "azure" ? "hsl(200 100% 80%)" : "hsl(52 100% 80%)";
             particles.push({
@@ -487,7 +576,6 @@ function update(dt: number) {
         }
       }
 
-      // Mikro ışık izleri
       if (c.kind === "firefly" && Math.random() < 0.38) {
         const pColor = c.subType === "emerald" ? "hsl(150 100% 70%)" : c.subType === "azure" ? "hsl(200 100% 75%)" : "hsl(54 100% 75%)";
         particles.push({
@@ -502,7 +590,6 @@ function update(dt: number) {
         });
       }
 
-      // Ekranın ALTINDAN kaçış kontrolü
       if (c.y + c.offsetY > H + 40 * SCALE && !c.dead) {
         c.dead = true;
         if (c.kind === "firefly") {
@@ -518,7 +605,6 @@ function update(dt: number) {
       }
     }
 
-    // Çarpışma kontrolü
     for (const c of critters) {
       if (c.dead) continue;
       const x = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
@@ -558,7 +644,6 @@ function update(dt: number) {
     critters = critters.filter((c) => !c.dead && c.y + c.offsetY < H + 50 * SCALE);
   }
 
-  // İç ateşböceklerinin fiziği
   for (const jf of jarFireflies) {
     jf.t += dt;
     jf.rx += jf.vx * dt;
@@ -576,7 +661,6 @@ function update(dt: number) {
   jarWobble = Math.max(0, jarWobble - dt * 1.5);
   waspHitFlash = Math.max(0, waspHitFlash - dt * 2.5);
 
-  // Parçacıklar
   for (const p of particles) {
     p.life -= dt;
     p.x += p.vx * dt;
@@ -584,14 +668,12 @@ function update(dt: number) {
   }
   particles = particles.filter((p) => p.life > 0);
 
-  // Yükselen Metinler
   for (const ft of floatingTexts) {
     ft.life -= dt;
     ft.y -= 32 * SCALE * dt;
   }
   floatingTexts = floatingTexts.filter((ft) => ft.life > 0);
 
-  // Bokeh Işık Küreleri
   for (const s of bokehOrbs) {
     s.t += dt;
     s.y += s.vy * dt;
@@ -602,7 +684,6 @@ function update(dt: number) {
     }
   }
 
-  // Bulutlar
   for (const cl of clouds) {
     cl.x += cl.speed * dt;
     if (cl.x > W + cl.w) {
@@ -612,10 +693,9 @@ function update(dt: number) {
   }
 }
 
-// --- Görsel Çizim Fonksiyonları ----------------------------------------------
+// --- Çizim Fonksiyonları ------------------------------------------------------
 
 function drawBackground() {
-  // Gökyüzü Gradiyenti
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, "#050816");
   g.addColorStop(0.4, "#091026");
@@ -624,7 +704,6 @@ function drawBackground() {
   ctx.fillStyle = g;
   ctx.fillRect(-40, -40, W + 80, H + 80);
 
-  // Parlak Dolunay & Aurası (Büyülü Ay)
   const moonX = W * 0.82;
   const moonY = H * 0.18;
   const moonR = 36 * SCALE;
@@ -641,7 +720,6 @@ function drawBackground() {
   ctx.fill();
   ctx.restore();
 
-  // Ay Gövdesi & Kraterler
   const moonGrad = ctx.createLinearGradient(moonX - moonR, moonY - moonR, moonX + moonR, moonY + moonR);
   moonGrad.addColorStop(0, "#f8fafc");
   moonGrad.addColorStop(0.7, "#e2e8f0");
@@ -651,7 +729,6 @@ function drawBackground() {
   ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
   ctx.fill();
 
-  // Kraterler
   ctx.fillStyle = "rgba(148, 163, 184, 0.25)";
   ctx.beginPath();
   ctx.arc(moonX - 10 * SCALE, moonY - 8 * SCALE, 7 * SCALE, 0, Math.PI * 2);
@@ -659,7 +736,6 @@ function drawBackground() {
   ctx.arc(moonX - 4 * SCALE, moonY + 14 * SCALE, 5 * SCALE, 0, Math.PI * 2);
   ctx.fill();
 
-  // Gece Bulutları
   for (const cl of clouds) {
     ctx.save();
     ctx.fillStyle = `rgba(148, 163, 184, ${cl.alpha})`;
@@ -671,7 +747,6 @@ function drawBackground() {
     ctx.restore();
   }
 
-  // Yıldızlar
   for (const s of stars) {
     const alpha = s.a + Math.sin(elapsed * s.speed + s.x) * 0.15;
     ctx.globalAlpha = Math.max(0.05, Math.min(1, alpha));
@@ -681,7 +756,6 @@ function drawBackground() {
     ctx.fill();
   }
 
-  // Bokeh Odak Dışı Işıklar
   ctx.globalCompositeOperation = "lighter";
   for (const b of bokehOrbs) {
     const a = b.alpha * (0.6 + 0.4 * Math.sin(b.t * 2));
@@ -694,7 +768,6 @@ function drawBackground() {
   ctx.globalCompositeOperation = "source-over";
   ctx.globalAlpha = 1;
 
-  // Etkileşimli Çimler & Işıldayan Çiçekler
   ctx.fillStyle = "#07121c";
   for (const b of grassBlades) {
     const swayX = Math.sin(elapsed * 2 + b.swayOffset) * 6 * SCALE + b.bend;
@@ -706,7 +779,6 @@ function drawBackground() {
   }
 }
 
-// BÜYÜLÜ VORTEX ÇEKİM IŞINI
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
   const jarMouthY = jar.y - 8 * SCALE;
@@ -721,7 +793,6 @@ function drawSuctionBeams() {
 
       const beamColor = c.subType === "emerald" ? "150 100% 75%" : c.subType === "azure" ? "200 100% 80%" : "52 100% 75%";
 
-      // Girdap Konisi
       const g = ctx.createLinearGradient(jarMouthX, jarMouthY, cx, cy);
       g.addColorStop(0, `hsl(${beamColor} / 0.7)`);
       g.addColorStop(0.6, `hsl(${beamColor} / 0.3)`);
@@ -734,7 +805,6 @@ function drawSuctionBeams() {
       ctx.lineTo(cx, cy);
       ctx.stroke();
 
-      // Dönen Spiral Halkaları
       for (let i = 0; i < 3; i++) {
         const pulse = ((elapsed * 5 + i * 0.33) % 1);
         const hx = jarMouthX + (cx - jarMouthX) * pulse;
@@ -753,7 +823,6 @@ function drawSuctionBeams() {
   ctx.restore();
 }
 
-// Ateşböceği Çizimi (Renk Tipleri: Gold, Emerald, Azure)
 function drawFirefly(x: number, y: number, r: number, t: number, amp: number, freq: number, subType: FireflyType = "gold") {
   ctx.save();
 
@@ -763,7 +832,6 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.translate(x, y);
   ctx.rotate(tilt * 0.4);
 
-  // Renk Paleti
   let coreColor = "hsl(54 100% 82%)";
   let auraHue = "52 100% 80%";
   let outerHue = "50 100% 60%";
@@ -778,7 +846,6 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
     outerHue = "190 100% 60%";
   }
 
-  // 1. Nabız Atan Aura
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const pulse = 0.85 + 0.25 * Math.sin(t * 9);
@@ -796,7 +863,6 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.fill();
   ctx.restore();
 
-  // 2. Transparan Kanatlar
   const wingAngle = Math.sin(t * 38) * 0.45;
   ctx.fillStyle = "rgba(235, 248, 255, 0.7)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
@@ -818,7 +884,6 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.stroke();
   ctx.restore();
 
-  // 3. Gövde
   ctx.fillStyle = coreColor;
   ctx.beginPath();
   ctx.ellipse(0, -r * 0.4, r * 0.52, r * 0.68, 0, 0, Math.PI * 2);
@@ -848,7 +913,6 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.restore();
 }
 
-// Eşek Arısı Çizimi
 function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq: number) {
   ctx.save();
 
@@ -947,7 +1011,6 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.restore();
 }
 
-// Cam Kavanoz Çizimi
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
@@ -1079,56 +1142,57 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD ---------------------------------------------------------------------
+// --- HUD: Üst Bar ve Butonlar -----------------------------------------------
 function drawHUD() {
   ctx.save();
 
-  const barW = Math.min(W * 0.58, 260 * SCALE);
-  const barH = 48 * SCALE;
+  // 1. Sol Üst: Skor & Kaçırma Hakları
+  const barW = Math.min(W * 0.48, 230 * SCALE);
+  const barH = 46 * SCALE;
   const barX = 16 * SCALE;
   const barY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.72)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(barX, barY, barW, barH, 24 * SCALE);
+  ctx.roundRect(barX, barY, barW, barH, 23 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  const iconX = barX + 22 * SCALE;
+  const iconX = barX + 20 * SCALE;
   const iconY = barY + barH / 2;
   drawFirefly(iconX, iconY, 6 * SCALE, elapsed, 0, 0, "gold");
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fef08a";
-  ctx.font = `700 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${caught}/${TARGET}`, barX + 38 * SCALE, barY + barH / 2);
+  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`${caught}/${TARGET}`, barX + 34 * SCALE, barY + barH / 2);
 
-  const heartsX = barX + 115 * SCALE;
+  const heartsX = barX + 105 * SCALE;
   const remainingLives = MAX_MISSED - missed;
 
   for (let i = 0; i < MAX_MISSED; i++) {
-    const hx = heartsX + i * 22 * SCALE;
+    const hx = heartsX + i * 20 * SCALE;
     const hy = barY + barH / 2;
     if (i < remainingLives) {
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = "hsl(52 100% 70%)";
       ctx.beginPath();
-      ctx.arc(hx, hy, 6.5 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 6 * SCALE, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(hx, hy, 2.5 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 2.2 * SCALE, 0, Math.PI * 2);
       ctx.fill();
     } else {
       ctx.fillStyle = "rgba(239, 68, 68, 0.3)";
       ctx.beginPath();
-      ctx.arc(hx, hy, 6.5 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 6 * SCALE, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.strokeStyle = "#ef4444";
@@ -1142,41 +1206,88 @@ function drawHUD() {
     }
   }
 
-  const timerW = Math.min(W * 0.32, 120 * SCALE);
-  const timerH = 48 * SCALE;
-  const timerX = W - timerW - 16 * SCALE;
-  const timerY = 16 * SCALE;
+  // 2. Sağ Üst: Kronometre & Butonlar
+  const btnSize = 46 * SCALE;
+  const btnGap = 10 * SCALE;
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.72)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  // Ayarlar Butonu (⚙️)
+  const setX = W - btnSize - 16 * SCALE;
+  const setY = 16 * SCALE;
+  uiButtons.settings = { x: setX, y: setY, w: btnSize, h: btnSize };
+
+  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(timerX, timerY, timerW, timerH, 24 * SCALE);
+  ctx.roundRect(setX, setY, btnSize, btnSize, 14 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("⚙️", setX + btnSize / 2, setY + btnSize / 2 + 1 * SCALE);
+
+  // Nasıl Oynanır Butonu (❓)
+  const helpX = setX - btnSize - btnGap;
+  const helpY = 16 * SCALE;
+  uiButtons.help = { x: helpX, y: helpY, w: btnSize, h: btnSize };
+
+  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(helpX, helpY, btnSize, btnSize, 14 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("❓", helpX + btnSize / 2, helpY + btnSize / 2 + 1 * SCALE);
+
+  // Canlı Kronometre
+  const timerW = Math.min(W * 0.22, 105 * SCALE);
+  const timerX = helpX - timerW - btnGap;
+  const timerY = 16 * SCALE;
+
+  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(timerX, timerY, timerW, btnSize, 23 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`⏱️ ${elapsed.toFixed(1)}s`, timerX + timerW / 2, timerY + timerH / 2 + 1 * SCALE);
+  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`⏱️ ${elapsed.toFixed(1)}s`, timerX + timerW / 2, timerY + btnSize / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- Oyun Sonu Modal --------------------------------------------------------
-function drawModal(title: string, subtitle: string, btnText: string, isWin: boolean) {
+// --- Profesyonel Modal Çizim Sistemi (Tam Hizalı, Dışa Taşmaz) -------------
+function drawModalCard(
+  title: string,
+  subtitle: string,
+  primaryBtnText: string,
+  secondaryBtnText: string | null,
+  isWinOrLoss: boolean | null = null,
+) {
   ctx.save();
-  ctx.fillStyle = "rgba(3, 5, 14, 0.82)";
+  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
   ctx.fillRect(0, 0, W, H);
 
-  const cardW = Math.min(W * 0.88, 420 * SCALE);
-  const cardH = 320 * SCALE;
+  // Dinamik Kapasiteli Kart
+  const cardW = Math.min(W * 0.9, 440 * SCALE);
+  const cardH = secondaryBtnText ? 380 * SCALE : 320 * SCALE;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-  ctx.strokeStyle = isWin ? "rgba(250, 204, 21, 0.4)" : "rgba(239, 68, 68, 0.4)";
+  let borderColor = "rgba(255, 255, 255, 0.2)";
+  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.5)";
+  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.5)";
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  ctx.strokeStyle = borderColor;
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
   ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
@@ -1184,45 +1295,272 @@ function drawModal(title: string, subtitle: string, btnText: string, isWin: bool
   ctx.stroke();
 
   ctx.textAlign = "center";
+  ctx.textBaseline = "top";
 
-  ctx.fillStyle = isWin ? "#fef08a" : "#fca5a5";
-  ctx.font = `800 ${Math.min(W * 0.08, 36 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(title, W / 2, cardY + 70 * SCALE);
+  // Başlık
+  let titleColor = "#fef08a";
+  if (isWinOrLoss === false) titleColor = "#fca5a5";
+  else if (isWinOrLoss === null) titleColor = "#38bdf8";
 
-  ctx.fillStyle = "#e2e8f0";
-  ctx.font = `600 ${Math.min(W * 0.042, 19 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(subtitle, W / 2, cardY + 125 * SCALE);
+  ctx.fillStyle = titleColor;
+  ctx.font = `800 ${Math.min(W * 0.07, 30 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText(title, W / 2, cardY + 28 * SCALE);
 
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = `500 ${Math.min(W * 0.038, 16 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`Geçen Süre: ${finalTime.toFixed(1)} saniye`, W / 2, cardY + 160 * SCALE);
+  // Alt Metin / Açıklama (Çok Satırlı Otomatik Kaydırma)
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = `500 ${Math.min(W * 0.04, 16 * SCALE)}px 'Outfit', sans-serif`;
+  const textMaxW = cardW - 48 * SCALE;
+  const endY = drawWrappedText(ctx, subtitle, W / 2, cardY + 74 * SCALE, textMaxW, 24 * SCALE);
 
-  const btnW = cardW * 0.68;
-  const btnH = 50 * SCALE;
+  // Butonlar
+  const btnW = cardW - 56 * SCALE;
+  const btnH = 48 * SCALE;
   const btnX = (W - btnW) / 2;
-  const btnY = cardY + cardH - 95 * SCALE;
 
-  const btnG = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  if (isWin) {
-    btnG.addColorStop(0, "#facc15");
-    btnG.addColorStop(1, "#eab308");
+  if (secondaryBtnText) {
+    // Çift Buton (Örn: Devam Et / Sıfırla)
+    const btn1Y = cardY + cardH - 120 * SCALE;
+    uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
+
+    const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
+    g1.addColorStop(0, "#3b82f6");
+    g1.addColorStop(1, "#2563eb");
+    ctx.fillStyle = g1;
+    ctx.beginPath();
+    ctx.roundRect(btnX, btn1Y, btnW, btnH, 24 * SCALE);
+    ctx.fill();
+
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(primaryBtnText, W / 2, btn1Y + btnH / 2 + 1 * SCALE);
+
+    const btn2Y = cardY + cardH - 64 * SCALE;
+    uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
+
+    ctx.fillStyle = "rgba(239, 68, 68, 0.2)";
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
+    ctx.lineWidth = 1.5 * SCALE;
+    ctx.beginPath();
+    ctx.roundRect(btnX, btn2Y, btnW, btnH, 24 * SCALE);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fca5a5";
+    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(secondaryBtnText, W / 2, btn2Y + btnH / 2 + 1 * SCALE);
   } else {
-    btnG.addColorStop(0, "#ef4444");
-    btnG.addColorStop(1, "#dc2626");
+    // Tek Buton (Örn: Tekrar Dene)
+    const btnY = cardY + cardH - 74 * SCALE;
+    uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+    const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
+    if (isWinOrLoss === false) {
+      g.addColorStop(0, "#ef4444");
+      g.addColorStop(1, "#dc2626");
+    } else {
+      g.addColorStop(0, "#facc15");
+      g.addColorStop(1, "#eab308");
+    }
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.roundRect(btnX, btnY, btnW, btnH, 24 * SCALE);
+    ctx.fill();
+
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = isWinOrLoss === false ? "#ffffff" : "#0f172a";
+    ctx.font = `800 ${18 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
   }
 
-  ctx.fillStyle = btnG;
+  ctx.restore();
+}
+
+// --- Özel Yönlendirme (Nasıl Oynanır) Modalı --------------------------------
+function drawTutorialModal() {
+  ctx.save();
+  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
+  ctx.fillRect(0, 0, W, H);
+
+  const cardW = Math.min(W * 0.9, 440 * SCALE);
+  const cardH = 410 * SCALE;
+  const cardX = (W - cardW) / 2;
+  const cardY = (H - cardH) / 2;
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
+  ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(btnX, btnY, btnW, btnH, 25 * SCALE);
+  ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  ctx.fillStyle = "#60a5fa";
+  ctx.font = `800 ${26 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("NASIL OYNANIR? 📖", W / 2, cardY + 24 * SCALE);
+
+  // Kurallar Listesi
+  const rules = [
+    { icon: "🧲", title: "Kavanozu Hareket Ettir", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönet." },
+    { icon: "✨", title: "Ateşböceklerini Çek", desc: "Ateşböceklerine yaklaştığında çekim gücü onları kavanoza çeker." },
+    { icon: "🐝", title: "Arılardan Kaç", desc: "Arıya çarparsan kavanozdaki 1 ışığı kaybedersin!" },
+    { icon: "💔", title: "3 Kaçırma Hakkı", desc: "3 ateşböceği ekranın altından kaçarsa oyun biter." },
+  ];
+
+  ctx.textAlign = "left";
+  let itemY = cardY + 68 * SCALE;
+
+  for (const r of rules) {
+    ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(r.icon, cardX + 24 * SCALE, itemY);
+
+    ctx.fillStyle = "#fef08a";
+    ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(r.title, cardX + 56 * SCALE, itemY);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(r.desc, cardX + 56 * SCALE, itemY + 18 * SCALE);
+
+    itemY += 56 * SCALE;
+  }
+
+  // Buton
+  const btnW = cardW - 48 * SCALE;
+  const btnH = 46 * SCALE;
+  const btnX = (W - btnW) / 2;
+  const btnY = cardY + cardH - 64 * SCALE;
+
+  uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+  const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
+  g.addColorStop(0, "#3b82f6");
+  g.addColorStop(1, "#2563eb");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 23 * SCALE);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("ANLADIM, BAŞLA! 🚀", W / 2, btnY + btnH / 2 + 1 * SCALE);
+
+  ctx.restore();
+}
+
+// --- Ayarlar Modalı --------------------------------------------------------
+function drawSettingsModal() {
+  ctx.save();
+  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
+  ctx.fillRect(0, 0, W, H);
+
+  const cardW = Math.min(W * 0.9, 440 * SCALE);
+  const cardH = 370 * SCALE;
+  const cardX = (W - cardW) / 2;
+  const cardY = (H - cardH) / 2;
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  ctx.fillStyle = "#fef08a";
+  ctx.font = `800 ${26 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("AYARLAR & DURAKLAT ⚙️", W / 2, cardY + 24 * SCALE);
+
+  // Toggle 1: Ses Efektleri
+  const row1Y = cardY + 78 * SCALE;
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = `600 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("🔊 Ses Efektleri", cardX + 28 * SCALE, row1Y + 8 * SCALE);
+
+  const toggle1W = 100 * SCALE;
+  const toggle1H = 36 * SCALE;
+  const toggle1X = cardX + cardW - toggle1W - 28 * SCALE;
+  uiButtons.toggleSound = { x: toggle1X, y: row1Y, w: toggle1W, h: toggle1H };
+
+  ctx.fillStyle = soundEnabled ? "#22c55e" : "#475569";
+  ctx.beginPath();
+  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 18 * SCALE);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, row1Y + toggle1H / 2);
+
+  // Toggle 2: Vakum Çekim Gücü
+  const row2Y = cardY + 130 * SCALE;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = `600 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("🧲 Vakum Gücü", cardX + 28 * SCALE, row2Y + 8 * SCALE);
+
+  const toggle2W = 100 * SCALE;
+  const toggle2H = 36 * SCALE;
+  const toggle2X = cardX + cardW - toggle2W - 28 * SCALE;
+  uiButtons.toggleMagnet = { x: toggle2X, y: row2Y, w: toggle2W, h: toggle2H };
+
+  ctx.fillStyle = highMagnet ? "#3b82f6" : "#475569";
+  ctx.beginPath();
+  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 18 * SCALE);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, row2Y + toggle2H / 2);
+
+  // Butonlar
+  const btnW = cardW - 56 * SCALE;
+  const btnH = 46 * SCALE;
+  const btnX = (W - btnW) / 2;
+
+  const btn1Y = cardY + cardH - 116 * SCALE;
+  uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
+
+  const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
+  g1.addColorStop(0, "#3b82f6");
+  g1.addColorStop(1, "#2563eb");
+  ctx.fillStyle = g1;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btn1Y, btnW, btnH, 23 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${Math.min(W * 0.045, 20 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(btnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
+  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("OYUNA DEVAM ET ▶️", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = `400 ${Math.min(W * 0.035, 14 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("dokun ya da Enter'a bas", W / 2, btnY + btnH + 24 * SCALE);
+  const btn2Y = cardY + cardH - 60 * SCALE;
+  uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
+
+  ctx.fillStyle = "rgba(239, 68, 68, 0.2)";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
+  ctx.lineWidth = 1.5 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btn2Y, btnW, btnH, 23 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#fca5a5";
+  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("OYUNU SIFIRLA 🔄", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
@@ -1270,7 +1608,6 @@ function draw() {
     ctx.restore();
   }
 
-  // Kavanoz (Squash & Wobble)
   ctx.save();
   ctx.translate(jar.x + jar.w / 2, jar.y + jar.h);
   ctx.rotate(jarTilt + Math.sin(elapsed * 18) * jarWobble);
@@ -1284,10 +1621,27 @@ function draw() {
 
   ctx.restore();
 
+  // Modal Yönetimi
   if (state === "won") {
-    drawModal("KAVANOZ DOLDU! ✨", `${TARGET} ateşböceğinin hepsini yakaladın!`, "TEKRAR OYNA", true);
+    drawModalCard(
+      "KAVANOZ DOLDU! ✨",
+      `${TARGET} ateşböceğinin hepsini ${finalTime.toFixed(1)} saniyede başarıyla topladın!`,
+      "TEKRAR OYNA 🔄",
+      null,
+      true,
+    );
   } else if (state === "gameover") {
-    drawModal("ATEŞBÖCEKLERİ KAÇTI! 🌙", "3 ateşböceği geceye karıştı.", "TEKRAR DENE", false);
+    drawModalCard(
+      "ATEŞBÖCEKLERİ KAÇTI! 🌙",
+      `3 ateşböceği geceye karışarak kaçtı. Toplanan: ${caught}/${TARGET} (${finalTime.toFixed(1)} sn)`,
+      "TEKRAR DENE 🔄",
+      null,
+      false,
+    );
+  } else if (state === "tutorial") {
+    drawTutorialModal();
+  } else if (state === "settings") {
+    drawSettingsModal();
   }
 }
 
