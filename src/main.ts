@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Sanatsal Klasik Cam Kavanoz & Akıcı Çift-Dalga Sıvı Animasyonları
-// Özellikler: Dribbble Seviyesinde Şeffaf Cam Estetiği, Çift Katmanlı Dalga Sıvı Yüzeyi, Cam Yansımaları & İç Toz Parıltıları.
+// ATEŞBÖCEKLERİ — Sanatsal Doğal Ahşap Mantar Kapak & Dribbble Cam Estetiği
+// Özellikler: Gerçekçi Ahşap Dokulu Mantar Kapak (Micro-Pores & Grain), 3D Bevel Pahı, Çift Katmanlı Sıvı Yüzeyi.
 
 import {
   type FireflySubtype,
@@ -1572,6 +1572,78 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
+// ULTRA-GERÇEKÇİ SANATSAL DOĞAL AHŞAP MANTAR KAPAK (Realistic Organic Cork Stopper with Wood Grain & Pores)
+function drawArtisticCorkStopper(neckW: number, neckY: number) {
+  const corkW = neckW * 0.88;
+  const corkH = 15 * SCALE;
+  const corkY = neckY - 12 * SCALE;
+
+  ctx.save();
+
+  // 1. Mantar Tıpa Alt Gölge Pahı (3D Cast Shadow onto Glass Neck)
+  ctx.fillStyle = "rgba(15, 10, 5, 0.35)";
+  ctx.beginPath();
+  ctx.roundRect(-corkW / 2, corkY + 3 * SCALE, corkW, corkH, 4 * SCALE);
+  ctx.fill();
+
+  // 2. Çok Tonlu Doğal Meşe Mantarı Gradyanı (Organic Warm Cork Gradient)
+  const corkG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
+  corkG.addColorStop(0, "#5c371d");
+  corkG.addColorStop(0.2, "#87532a");
+  corkG.addColorStop(0.5, "#b87f4c");
+  corkG.addColorStop(0.8, "#9e683b");
+  corkG.addColorStop(1, "#543118");
+
+  ctx.fillStyle = corkG;
+  ctx.strokeStyle = "#3d2210";
+  ctx.lineWidth = 1.4 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  // 3. Doğal Ahşap Dokusu & Gözenek Çizgileri (Organic Wood Grain Specks & Lines)
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
+  ctx.clip();
+
+  // Koyu Ahşap Gözenek Noktaları (Dark Cork Pores)
+  ctx.fillStyle = "rgba(60, 32, 14, 0.55)";
+  const specks = [
+    { x: -corkW * 0.35, y: corkY + 4 * SCALE, r: 1.2 * SCALE },
+    { x: -corkW * 0.18, y: corkY + 9 * SCALE, r: 1.5 * SCALE },
+    { x: 0, y: corkY + 3 * SCALE, r: 1.1 * SCALE },
+    { x: corkW * 0.22, y: corkY + 8 * SCALE, r: 1.4 * SCALE },
+    { x: corkW * 0.38, y: corkY + 5 * SCALE, r: 1.0 * SCALE },
+  ];
+  for (const s of specks) {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Amber Rengi Damar Çizgileri (Warm Amber Grain Streaks)
+  ctx.strokeStyle = "rgba(230, 175, 115, 0.35)";
+  ctx.lineWidth = 1.2 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-corkW * 0.4, corkY + 5 * SCALE);
+  ctx.quadraticCurveTo(-corkW * 0.1, corkY + 7 * SCALE, corkW * 0.35, corkY + 4 * SCALE);
+  ctx.moveTo(-corkW * 0.3, corkY + 11 * SCALE);
+  ctx.quadraticCurveTo(0, corkY + 10 * SCALE, corkW * 0.4, corkY + 12 * SCALE);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // 4. Mantar Üst Kenar Pahı & Speküler Vurgusu (Top Bevel Highlight)
+  ctx.fillStyle = "rgba(255, 240, 215, 0.32)";
+  ctx.beginPath();
+  ctx.roundRect(-corkW / 2 + 2 * SCALE, corkY + 1.2 * SCALE, corkW - 4 * SCALE, 3.2 * SCALE, 2 * SCALE);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 // ULTRA-HIGH END SANATSAL KLASİK CAM KAVANOZ & AKICI ÇİFT KATMANLI SIVI ANİMASYONLARI
 function drawJar() {
   const w = jar.w;
@@ -1624,21 +1696,8 @@ function drawJar() {
   const neckH = 14 * SCALE;
   const neckY = -h - neckH * 0.5;
 
-  // 3. Mantar Tıpa (Sanatsal Ahşap Dokulu Mantar Kapak)
-  const corkG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
-  corkG.addColorStop(0, "#734828");
-  corkG.addColorStop(0.35, "#b87d4b");
-  corkG.addColorStop(0.7, "#a67043");
-  corkG.addColorStop(1, "#59361c");
-  ctx.fillStyle = corkG;
-  ctx.beginPath();
-  ctx.roundRect(-neckW * 0.44, neckY - 12 * SCALE, neckW * 0.88, 14 * SCALE, 4 * SCALE);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
-  ctx.beginPath();
-  ctx.roundRect(-neckW * 0.44 + 2 * SCALE, neckY - 10.5 * SCALE, neckW * 0.88 - 4 * SCALE, 3 * SCALE, 1.5 * SCALE);
-  ctx.fill();
+  // 3. SANATSAL AHŞAP DOKULU MANTAR KAPAK
+  drawArtisticCorkStopper(neckW, neckY);
 
   // Cam Boğaz Çerçevesi & Dudak (Flared Glass Lip Collar)
   ctx.fillStyle = "rgba(195, 230, 255, 0.35)";
