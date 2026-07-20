@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Orijinal Klasik Cam Kavanoz & Fizik Takılma Düzeltmesi
-// Özellikler: Klasik Şık Cam Kavanoz, Uçlarda/Kenarlarda Takılmayı Önleyen Yumuşak Sönümleme Fiziği.
+// ATEŞBÖCEKLERİ — Sanatsal Klasik Cam Kavanoz & Akıcı Çift-Dalga Sıvı Animasyonları
+// Özellikler: Dribbble Seviyesinde Şeffaf Cam Estetiği, Çift Katmanlı Dalga Sıvı Yüzeyi, Cam Yansımaları & İç Toz Parıltıları.
 
 import {
   type FireflySubtype,
@@ -125,7 +125,7 @@ const shake: Shake = { power: 0, t: 0 };
 let soundEnabled = true;
 let highMagnet = false;
 
-// Klasik Kavanoz Fizik Değişkenleri
+// Sanatsal Kavanoz Fizik & Animasyon Değişkenleri
 let jarSquash = 0;
 let jarWobble = 0;
 let jarTilt = 0;
@@ -711,7 +711,7 @@ function drawWrappedText(
   return currentY;
 }
 
-// --- Güncelleme & Fizik Düzeltmesi (Takılmayı Önler) ------------------------
+// --- Güncelleme & Fizik Düzeltmesi ------------------------------------------
 function update(dt: number) {
   if (state === "playing") {
     elapsed += dt;
@@ -768,10 +768,8 @@ function update(dt: number) {
         c.y += fallSpeed * SCALE * dt;
       }
 
-      // TAKILMA BUG FIX: Sway & Offset hesabı ve sönümleme (decay)
       let currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
 
-      // Ekran sol/sağ sınırlarına takılmayı önle:
       if (currentX < 15 * SCALE) {
         c.offsetX += (15 * SCALE - currentX) * Math.min(1, dt * 8);
       } else if (currentX > W - 15 * SCALE) {
@@ -793,8 +791,6 @@ function update(dt: number) {
 
           c.offsetX += (dx / dist) * pullForce + spiralX * dt * 3;
           c.offsetY += (dy / dist) * pullForce + spiralY * dt * 3;
-
-          // Çekim kuvveti yukarı yönde birikip takılma yaratmasın:
           c.offsetY = Math.max(-25 * SCALE, c.offsetY);
 
           if (Math.random() < 0.45) {
@@ -812,7 +808,6 @@ function update(dt: number) {
           }
         } else {
           c.beingPulled = false;
-          // TAKILMA BUG FIX: Çekim alanı dışında kaldığında offset yumuşakça sıfırlanır, düşmeye devam eder!
           c.offsetX += (0 - c.offsetX) * Math.min(1, dt * 5);
           c.offsetY += (0 - c.offsetY) * Math.min(1, dt * 5);
         }
@@ -1577,7 +1572,7 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// ORİJİNAL KLASİK CAM KAVANOZ (SEVİLEN ŞIK KLASİK TASARIM)
+// ULTRA-HIGH END SANATSAL KLASİK CAM KAVANOZ & AKICI ÇİFT KATMANLI SIVI ANİMASYONLARI
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
@@ -1585,15 +1580,17 @@ function drawJar() {
 
   ctx.save();
 
-  // 1. Parlama Efekti
+  // 1. Çok Katmanlı Sanatsal Aura Parlaması (Bioluminescent Soft Radial Ambient Glow)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const glowR = w * 0.72;
+    const pulseGlow = 0.85 + 0.15 * Math.sin(elapsed * 3.5);
+    const glowR = w * 0.85 * pulseGlow;
     const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
-    fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
-    fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
-    fillGlow.addColorStop(1, "hsl(52 100% 60% / 0)");
+    fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.2 + glow * 0.55})`);
+    fillGlow.addColorStop(0.45, `hsl(45 100% 65% / ${glow * 0.25})`);
+    fillGlow.addColorStop(0.8, `hsl(40 100% 55% / ${glow * 0.08})`);
+    fillGlow.addColorStop(1, "hsl(40 100% 50% / 0)");
     ctx.fillStyle = fillGlow;
     ctx.beginPath();
     ctx.arc(0, -h * 0.45, glowR, 0, Math.PI * 2);
@@ -1604,77 +1601,115 @@ function drawJar() {
   if (waspHitFlash > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.7})`;
+    ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.75})`;
     ctx.beginPath();
     ctx.roundRect(-w / 2 - 6 * SCALE, -h - 12 * SCALE, w + 12 * SCALE, h + 16 * SCALE, 16 * SCALE);
     ctx.fill();
     ctx.restore();
   }
 
-  // Kavanoz İç Gövde Gölgesi
-  ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
+  // 2. Cam İç Hacim Gölgesi (Volumetric Dark Glass Tinting)
+  const glassVolumeGrad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+  glassVolumeGrad.addColorStop(0, "rgba(8, 18, 35, 0.65)");
+  glassVolumeGrad.addColorStop(0.3, "rgba(12, 28, 50, 0.35)");
+  glassVolumeGrad.addColorStop(0.7, "rgba(12, 28, 50, 0.35)");
+  glassVolumeGrad.addColorStop(1, "rgba(8, 18, 35, 0.65)");
+
+  ctx.fillStyle = glassVolumeGrad;
   ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
+  ctx.roundRect(-w / 2, -h, w, h, 15 * SCALE);
   ctx.fill();
 
   const neckW = w * 0.82;
   const neckH = 14 * SCALE;
   const neckY = -h - neckH * 0.5;
 
-  // Ahşap Mantar Tıpa
+  // 3. Mantar Tıpa (Sanatsal Ahşap Dokulu Mantar Kapak)
   const corkG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
-  corkG.addColorStop(0, "#8c5a32");
-  corkG.addColorStop(0.5, "#b87d4b");
-  corkG.addColorStop(1, "#6e4324");
+  corkG.addColorStop(0, "#734828");
+  corkG.addColorStop(0.35, "#b87d4b");
+  corkG.addColorStop(0.7, "#a67043");
+  corkG.addColorStop(1, "#59361c");
   ctx.fillStyle = corkG;
   ctx.beginPath();
   ctx.roundRect(-neckW * 0.44, neckY - 12 * SCALE, neckW * 0.88, 14 * SCALE, 4 * SCALE);
   ctx.fill();
 
-  // Cam Boğaz Çerçevesi
-  ctx.fillStyle = "rgba(195, 230, 255, 0.38)";
-  ctx.strokeStyle = "rgba(220, 245, 255, 0.75)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+  ctx.beginPath();
+  ctx.roundRect(-neckW * 0.44 + 2 * SCALE, neckY - 10.5 * SCALE, neckW * 0.88 - 4 * SCALE, 3 * SCALE, 1.5 * SCALE);
+  ctx.fill();
+
+  // Cam Boğaz Çerçevesi & Dudak (Flared Glass Lip Collar)
+  ctx.fillStyle = "rgba(195, 230, 255, 0.35)";
+  ctx.strokeStyle = "rgba(220, 245, 255, 0.85)";
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
   ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 5 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  // Şerit Halka Detayı
-  ctx.strokeStyle = "#d4a373";
+  // Şerit Pirinç/Zümrüt Halka Detayı
+  const ringG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
+  ringG.addColorStop(0, "#d4a373");
+  ringG.addColorStop(0.5, "#fef08a");
+  ringG.addColorStop(1, "#b47b48");
+  ctx.strokeStyle = ringG;
   ctx.lineWidth = 2.5 * SCALE;
   ctx.beginPath();
   ctx.moveTo(-neckW / 2 + 2 * SCALE, neckY + neckH / 2);
   ctx.lineTo(neckW / 2 - 2 * SCALE, neckY + neckH / 2);
   ctx.stroke();
 
-  // Sıvı Işık Dolgusu
+  // 4. Çift-Katmanlı Sıvı Yüzeyi Animasyonu (Dual-Layer Wave Fluid Surface)
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(-w / 2 + 3 * SCALE, -h + 3 * SCALE, w - 6 * SCALE, h - 6 * SCALE, 12 * SCALE);
+    ctx.roundRect(-w / 2 + 3 * SCALE, -h + 3 * SCALE, w - 6 * SCALE, h - 6 * SCALE, 13 * SCALE);
     ctx.clip();
 
-    const liquidH = h * 0.7 * glow;
+    const liquidH = h * 0.72 * glow;
     const liquidY = -liquidH;
-    const sloshing = Math.sin(elapsed * 4 + jar.x * 0.02) * 4 * SCALE;
 
+    const wave1 = Math.sin(elapsed * 4.5 + jar.x * 0.02) * 4.5 * SCALE;
+    const wave2 = Math.cos(elapsed * 6.5 + jar.x * 0.03) * 2.8 * SCALE;
+
+    // Arka Dalga Katmanı
+    ctx.fillStyle = `hsl(45 100% 55% / ${0.2 + glow * 0.35})`;
+    ctx.beginPath();
+    ctx.moveTo(-w / 2 - 10 * SCALE, 0);
+    ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + wave2);
+    ctx.quadraticCurveTo(0, liquidY - wave2, w / 2 + 10 * SCALE, liquidY + wave2);
+    ctx.lineTo(w / 2 + 10 * SCALE, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ön Ana Sıvı Katmanı
     const liqG = ctx.createLinearGradient(0, liquidY, 0, 0);
-    liqG.addColorStop(0, `hsl(52 100% 75% / ${0.3 + glow * 0.4})`);
-    liqG.addColorStop(1, `hsl(48 100% 60% / ${0.15 + glow * 0.3})`);
+    liqG.addColorStop(0, `hsl(54 100% 78% / ${0.35 + glow * 0.45})`);
+    liqG.addColorStop(1, `hsl(48 100% 62% / ${0.2 + glow * 0.35})`);
 
     ctx.fillStyle = liqG;
     ctx.beginPath();
     ctx.moveTo(-w / 2 - 10 * SCALE, 0);
-    ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + sloshing);
-    ctx.quadraticCurveTo(0, liquidY - sloshing, w / 2 + 10 * SCALE, liquidY + sloshing);
+    ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + wave1);
+    ctx.quadraticCurveTo(0, liquidY - wave1, w / 2 + 10 * SCALE, liquidY + wave1);
     ctx.lineTo(w / 2 + 10 * SCALE, 0);
     ctx.closePath();
     ctx.fill();
+
+    // Sıvı Yüzeyi Köpük/Işık Köprüsü (Crest Line Highlight)
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + glow * 0.4})`;
+    ctx.lineWidth = 1.8 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(-w / 2 + 4 * SCALE, liquidY + wave1);
+    ctx.quadraticCurveTo(0, liquidY - wave1, w / 2 - 4 * SCALE, liquidY + wave1);
+    ctx.stroke();
+
     ctx.restore();
   }
 
-  // İçeride Süzülen Ateşböcekleri
+  // 5. İçeride Süzülen Ateşböcekleri & İç Parıltı Tozları
   for (const jf of jarFireflies) {
     const fx = jf.rx * (w * 0.7);
     const fy = -h * 0.5 + jf.ry * (h * 0.7);
@@ -1698,20 +1733,29 @@ function drawJar() {
     ctx.fill();
   }
 
-  // Dış Cam Çerçeve & Yansıma
-  ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
+  // 6. 3D Cam Çerçeve & Canlı Nefes Alan Cam Yansımaları (Breathing Specular Highlights)
+  ctx.strokeStyle = "rgba(215, 240, 255, 0.82)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
   ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
+  ctx.roundRect(-w / 2, -h, w, h, 15 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  // Sol Cam Kavis Yansıması
+  const highlightAlpha = 0.38 + 0.15 * Math.sin(elapsed * 2.5);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${highlightAlpha})`;
   ctx.lineWidth = 3.5 * SCALE;
   ctx.beginPath();
   ctx.moveTo(-w / 2 + 6 * SCALE, -h + 16 * SCALE);
   ctx.lineTo(-w / 2 + 6 * SCALE, -16 * SCALE);
+  ctx.stroke();
+
+  // Sağ Üst Köşe Cam Yansıması Accent
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.arc(w / 2 - 12 * SCALE, -h + 12 * SCALE, 8 * SCALE, -Math.PI * 0.4, 0);
   ctx.stroke();
 
   ctx.restore();
