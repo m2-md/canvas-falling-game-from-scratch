@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Yuvarlak Fanus, Ultra Dribbble/Awwwards Vektör Karakterler & Tipografi
-// Özellikler: 3D Spherical Glass Fanus, Kristal Avcı Örümcek, Lüks Uğur Böceği, Modern 'Outfit' Tipografi.
+// ATEŞBÖCEKLERİ — Kusursuz Fanus Boynu & Dribbble Sanatsal Karakter Detayları
+// Özellikler: Dairesel Enerji Halka Animasyonlu Fanus Boynu, Kristal Dişli Örümcek Yüzü, Organik Yakut Uğur Benekleri.
 
 import {
   type FireflySubtype,
@@ -156,8 +156,8 @@ const levelGridButtons: { level: number; x: number; y: number; w: number; h: num
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
-  jar.w = 110 * SCALE; // Fanus genişliği
-  jar.h = 110 * SCALE; // Yuvarlak Fanus yüksekliği
+  jar.w = 110 * SCALE;
+  jar.h = 110 * SCALE;
   jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
@@ -725,7 +725,7 @@ function update(dt: number) {
     updateJar(dt);
 
     const jarMouthX = jar.x + jar.w / 2;
-    const jarMouthY = jar.y - 8 * SCALE;
+    const jarMouthY = jar.y - 10 * SCALE;
     const baseRadius = highMagnet ? 175 : 140;
     const MAGNET_RADIUS = (magnetBoostTimer > 0 ? baseRadius * 1.35 : baseRadius) * SCALE;
 
@@ -1094,7 +1094,7 @@ function drawBackground() {
 
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
-  const jarMouthY = jar.y + 12 * SCALE; // Yuvarlak fanus ağzı
+  const jarMouthY = jar.y - 12 * SCALE;
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -1351,7 +1351,7 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
   ctx.restore();
 }
 
-// ULTRA-HIGH END KRİSTAL AVCI ÖRÜMCEK (Dribbble/Awwwards Grade)
+// ULTRA-HIGH END SANATSAL KRİSTAL ÖRÜMCEK & YÜZ/DİŞLER
 function drawSpider(x: number, y: number, r: number, t: number, webActive = false) {
   ctx.save();
   ctx.translate(x, y);
@@ -1377,7 +1377,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   for (let i = 0; i < 4; i++) {
     const legAngle = -0.7 + i * 0.45 + Math.sin(t * 4 + i) * 0.08;
     
-    // Sol Bacaklar
     ctx.save();
     ctx.rotate(legAngle);
     ctx.beginPath();
@@ -1392,7 +1391,6 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
     ctx.fill();
     ctx.restore();
 
-    // Sağ Bacaklar
     ctx.save();
     ctx.rotate(-legAngle);
     ctx.beginPath();
@@ -1408,7 +1406,7 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
     ctx.restore();
   }
 
-  // Örümcek Segmentli Gövde (Obsidyen & Violet Kristal)
+  // Örümcek Segmentli Gövde
   const bodyG = ctx.createLinearGradient(-r, -r, r, r);
   bodyG.addColorStop(0, "#581c87");
   bodyG.addColorStop(0.5, "#3b0764");
@@ -1418,38 +1416,59 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
   ctx.strokeStyle = "rgba(232, 121, 249, 0.6)";
   ctx.lineWidth = 1.5 * SCALE;
 
-  // Arka Karın (Abdomen)
   ctx.beginPath();
   ctx.ellipse(0, r * 0.35, r * 0.85, r * 1.15, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Ön Baş (Cephalothorax)
   ctx.beginPath();
   ctx.ellipse(0, -r * 0.5, r * 0.58, r * 0.58, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Parlayan 6 Kristal Göz
+  // SANATSAL KRİSTAL YÜZ & DİŞLER
   ctx.fillStyle = "#f43f5e";
   ctx.beginPath();
-  ctx.arc(-r * 0.24, -r * 0.65, r * 0.14, 0, Math.PI * 2);
-  ctx.arc(r * 0.24, -r * 0.65, r * 0.14, 0, Math.PI * 2);
-  ctx.arc(-r * 0.1, -r * 0.45, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(r * 0.1, -r * 0.45, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(-r * 0.35, -r * 0.48, r * 0.08, 0, Math.PI * 2);
-  ctx.arc(r * 0.35, -r * 0.48, r * 0.08, 0, Math.PI * 2);
+  ctx.arc(-r * 0.25, -r * 0.62, r * 0.13, 0, Math.PI * 2);
+  ctx.arc(r * 0.25, -r * 0.62, r * 0.13, 0, Math.PI * 2);
+  ctx.arc(-r * 0.09, -r * 0.46, r * 0.09, 0, Math.PI * 2);
+  ctx.arc(r * 0.09, -r * 0.46, r * 0.09, 0, Math.PI * 2);
+  ctx.arc(-r * 0.34, -r * 0.46, r * 0.08, 0, Math.PI * 2);
+  ctx.arc(r * 0.34, -r * 0.46, r * 0.08, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(-r * 0.27, -r * 0.65, r * 0.04, 0, Math.PI * 2);
+  ctx.arc(r * 0.23, -r * 0.65, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#e879f9";
+  ctx.strokeStyle = "#a855f7";
+  ctx.lineWidth = 1.2 * SCALE;
+
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.22, -r * 0.28);
+  ctx.quadraticCurveTo(-r * 0.38, -r * 0.08, -r * 0.15, r * 0.08);
+  ctx.quadraticCurveTo(-r * 0.1, -r * 0.1, -r * 0.22, -r * 0.28);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(r * 0.22, -r * 0.28);
+  ctx.quadraticCurveTo(r * 0.38, -r * 0.08, r * 0.15, r * 0.08);
+  ctx.quadraticCurveTo(r * 0.1, -r * 0.1, r * 0.22, -r * 0.28);
+  ctx.fill();
+  ctx.stroke();
 
   ctx.restore();
 }
 
-// ULTRA-HIGH END GEZGİN UĞUR BÖCEĞİ (Dribbble/Awwwards Grade)
+// ULTRA-HIGH END SANATSAL UĞUR BÖCEĞİ & ORGANİK YAKUT BENEKLER
 function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Parlayan Kızıl Parıltı Aurası
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.8);
@@ -1462,7 +1481,6 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.fill();
   ctx.restore();
 
-  // Saydam İç Kanatlar (Iridescent Wing Membrane)
   const wingFlutter = Math.sin(t * 36) * 0.45;
   ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
   ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
@@ -1484,7 +1502,6 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.stroke();
   ctx.restore();
 
-  // 3D Parlak Yakut Kabuk (Elytra)
   const shellG = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r * 1.2);
   shellG.addColorStop(0, "#fb7185");
   shellG.addColorStop(0.4, "#e11d48");
@@ -1495,7 +1512,6 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.ellipse(0, r * 0.1, r * 0.88, r * 0.98, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Kabuk Siyah Bölme Çizgisi
   ctx.strokeStyle = "#0f172a";
   ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
@@ -1503,17 +1519,31 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.lineTo(0, r * 1.05);
   ctx.stroke();
 
-  // Siyah Parlak Benekler
-  ctx.fillStyle = "#090d16";
-  ctx.beginPath();
-  ctx.arc(-r * 0.4, -r * 0.25, r * 0.18, 0, Math.PI * 2);
-  ctx.arc(r * 0.4, -r * 0.25, r * 0.18, 0, Math.PI * 2);
-  ctx.arc(-r * 0.42, r * 0.35, r * 0.18, 0, Math.PI * 2);
-  ctx.arc(r * 0.42, r * 0.35, r * 0.18, 0, Math.PI * 2);
-  ctx.arc(0, r * 0.1, r * 0.2, 0, Math.PI * 2);
-  ctx.fill();
+  const spotPositions = [
+    { x: -r * 0.42, y: -r * 0.25, spotR: r * 0.19 },
+    { x: r * 0.42, y: -r * 0.25, spotR: r * 0.19 },
+    { x: -r * 0.44, y: r * 0.35, spotR: r * 0.18 },
+    { x: r * 0.44, y: r * 0.35, spotR: r * 0.18 },
+    { x: 0, y: r * 0.1, spotR: r * 0.22 },
+  ];
 
-  // Obsidyen Baş & Şirin Gözler
+  for (const sp of spotPositions) {
+    ctx.fillStyle = "rgba(244, 63, 94, 0.4)";
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, sp.spotR * 1.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#090d16";
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, sp.spotR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    ctx.arc(sp.x - sp.spotR * 0.25, sp.y - sp.spotR * 0.25, sp.spotR * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   ctx.fillStyle = "#0f172a";
   ctx.beginPath();
   ctx.arc(0, -r * 0.72, r * 0.38, 0, Math.PI * 2);
@@ -1525,7 +1555,6 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.arc(r * 0.16, -r * 0.82, r * 0.1, 0, Math.PI * 2);
   ctx.fill();
 
-  // Zarif Duyargalar
   ctx.strokeStyle = "#0f172a";
   ctx.lineWidth = 1.6 * SCALE;
   ctx.beginPath();
@@ -1538,16 +1567,15 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// 3D YUVARLAK CAM FANUS (Spherical Glass Bowl Terrarium)
+// PERFECT 3D SPHERICAL GLASS FANUS & ANIMATED ENERGY RING COLLAR
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
-  const r = w / 2; // Fanus yarıçapı
+  const r = w / 2;
   const glow = caught / levelCfg.target;
 
   ctx.save();
 
-  // 1. Dış Dairesel Işık Parıltısı (Pürüzsüz Kesintisiz Arc)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
@@ -1573,35 +1601,43 @@ function drawJar() {
     ctx.restore();
   }
 
-  // 2. Cam Fanus Gövdesi (Yuvarlak Küre)
   ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
   ctx.beginPath();
   ctx.arc(0, -r, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // Fanus Boynu ve Mantar Tıpa (Spherical Neck)
-  const neckW = w * 0.52;
-  const neckH = 14 * SCALE;
-  const neckY = -h - 4 * SCALE;
+  const neckY = -w * 0.95;
+  const neckRadiusX = r * 0.45;
+  const neckRadiusY = 8 * SCALE;
 
-  const corkG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
+  const pulseRing = 1 + Math.sin(elapsed * 4) * 0.12;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = `rgba(250, 204, 21, ${0.4 + 0.3 * Math.sin(elapsed * 4)})`;
+  ctx.lineWidth = 3 * SCALE;
+  ctx.beginPath();
+  ctx.ellipse(0, neckY, neckRadiusX * pulseRing, neckRadiusY * pulseRing, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  const corkG = ctx.createLinearGradient(-neckRadiusX, 0, neckRadiusX, 0);
   corkG.addColorStop(0, "#8c5a32");
   corkG.addColorStop(0.5, "#b87d4b");
   corkG.addColorStop(1, "#6e4324");
   ctx.fillStyle = corkG;
   ctx.beginPath();
-  ctx.roundRect(-neckW * 0.42, neckY - 10 * SCALE, neckW * 0.84, 12 * SCALE, 4 * SCALE);
+  ctx.ellipse(0, neckY - 8 * SCALE, neckRadiusX * 0.85, 6 * SCALE, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  ctx.strokeStyle = "rgba(253, 224, 71, 0.85)";
+  ctx.lineWidth = 2.2 * SCALE;
   ctx.fillStyle = "rgba(195, 230, 255, 0.38)";
-  ctx.strokeStyle = "rgba(220, 245, 255, 0.75)";
-  ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 4 * SCALE);
+  ctx.ellipse(0, neckY, neckRadiusX, neckRadiusY, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 3. Sıvı Işık Dolgusu (Yuvarlak Fanusa Kırpılmış Liquid)
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
@@ -1627,7 +1663,6 @@ function drawJar() {
     ctx.restore();
   }
 
-  // 4. İçeride Süzülen Ateşböcekleri
   for (const jf of jarFireflies) {
     const fx = jf.rx * (r * 1.3);
     const fy = -r + jf.ry * (r * 1.3);
@@ -1651,7 +1686,6 @@ function drawJar() {
     ctx.fill();
   }
 
-  // 5. 3D Cam Yansımaları ve Yuvarlak Çerçeve
   ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
@@ -1660,7 +1694,6 @@ function drawJar() {
   ctx.fill();
   ctx.stroke();
 
-  // Cam Küre Hilal Yansıması (Curved Highlight)
   ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
   ctx.lineWidth = 4 * SCALE;
   ctx.beginPath();
