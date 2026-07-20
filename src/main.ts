@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Dribbble / Awwwards Lüks UI/UX Tasarım Sistemi
-// Özellikler: Emojisiz Özel Vektör İkonlar, Tutarlı Biyolüminesans Renk Paleti, Glassmorphism Kartlar, Yumuşak Geçişler ve Tipografi Hiyerarşisi.
+// ATEŞBÖCEKLERİ — Tam Sayfa Boyutlu Lüks Modal Arayüzü
+// Özellikler: Ekranı Kaplayan Esnek Modal Çerçeveleri, Sıfır Metin Taşması, Dribbble/Awwwards Lüks Stil, Özel Vektör İkonlar.
 
 import {
   type Shake,
@@ -458,8 +458,7 @@ function updateJar(dt: number) {
   }
 }
 
-// --- Özel Vektör İkon Çizim Fonksiyonları (DRIBBBLE / AWWWARDS STYLE) --------
-
+// --- Vektör İkon Çizimleri ---------------------------------------------------
 function drawGearIcon(x: number, y: number, r: number, color = "#94a3b8") {
   ctx.save();
   ctx.translate(x, y);
@@ -545,7 +544,6 @@ function drawMagnetIcon(x: number, y: number, size: number, color = "#38bdf8") {
   ctx.lineTo(-w, h * 0.4);
   ctx.stroke();
 
-  // Mıknatıs Kutup Çizgileri
   ctx.fillStyle = color;
   ctx.fillRect(-w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
   ctx.fillRect(w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
@@ -553,7 +551,7 @@ function drawMagnetIcon(x: number, y: number, size: number, color = "#38bdf8") {
   ctx.restore();
 }
 
-// --- Efektler ---------------------------------------------------------------
+// --- Efektler & Metin Kırma --------------------------------------------------
 function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 20) {
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -1236,11 +1234,10 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD: Emojisiz Dribbble UI -----------------------------------------------
+// --- HUD ---------------------------------------------------------------------
 function drawHUD() {
   ctx.save();
 
-  // 1. Sol Üst: Skor & Kaçırma Hakları Card
   const barW = Math.min(W * 0.48, 230 * SCALE);
   const barH = 46 * SCALE;
   const barX = 16 * SCALE;
@@ -1300,11 +1297,9 @@ function drawHUD() {
     }
   }
 
-  // 2. Sağ Üst: Kronometre & Özel Vektör Butonlar
   const btnSize = 46 * SCALE;
   const btnGap = 10 * SCALE;
 
-  // Ayarlar Butonu (⚙️ Özel Vektör Çizim)
   const setX = W - btnSize - 16 * SCALE;
   const setY = 16 * SCALE;
   uiButtons.settings = { x: setX, y: setY, w: btnSize, h: btnSize };
@@ -1319,7 +1314,6 @@ function drawHUD() {
 
   drawGearIcon(setX + btnSize / 2, setY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  // Nasıl Oynanır Butonu (❓ Özel Vektör Çizim)
   const helpX = setX - btnSize - btnGap;
   const helpY = 16 * SCALE;
   uiButtons.help = { x: helpX, y: helpY, w: btnSize, h: btnSize };
@@ -1334,7 +1328,6 @@ function drawHUD() {
 
   drawHelpIcon(helpX + btnSize / 2, helpY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  // Kronometre (⏱️ Özel Vektör Saat İkonlu)
   const timerW = Math.min(W * 0.22, 110 * SCALE);
   const timerX = helpX - timerW - btnGap;
   const timerY = 16 * SCALE;
@@ -1358,7 +1351,7 @@ function drawHUD() {
   ctx.restore();
 }
 
-// --- Dribbble / Awwwards Modal Çizim Sistemi -------------------------------
+// --- TAM SAYFA BOYUTLU RESPOSIVE MODAL SİSTEMİ (SIFIR TAŞMA) ----------------
 function drawModalCard(
   title: string,
   subtitle: string,
@@ -1367,27 +1360,28 @@ function drawModalCard(
   isWinOrLoss: boolean | null = null,
 ) {
   ctx.save();
-  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
   ctx.fillRect(0, 0, W, H);
 
-  const cardW = Math.min(W * 0.9, 440 * SCALE);
-  const cardH = secondaryBtnText ? 380 * SCALE : 320 * SCALE;
+  // TAM EKRAN ÇERÇEVE (Sayfanın genişliğini ve yüksekliğini doldurur)
+  const cardW = Math.min(W * 0.94, 680 * SCALE);
+  const cardH = Math.min(H * 0.90, 520 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  let borderColor = "rgba(255, 255, 255, 0.15)";
-  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.4)";
-  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.4)";
+  let borderColor = "rgba(255, 255, 255, 0.18)";
+  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.45)";
+  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.45)";
 
   const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
-  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
 
   ctx.fillStyle = cardGrad;
   ctx.strokeStyle = borderColor;
-  ctx.lineWidth = 1.8 * SCALE;
+  ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
+  ctx.roundRect(cardX, cardY, cardW, cardH, 28 * SCALE);
   ctx.fill();
   ctx.stroke();
 
@@ -1399,20 +1393,20 @@ function drawModalCard(
   else if (isWinOrLoss === null) titleColor = "#38bdf8";
 
   ctx.fillStyle = titleColor;
-  ctx.font = `800 ${Math.min(W * 0.07, 28 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(title, W / 2, cardY + 28 * SCALE);
+  ctx.font = `800 ${Math.min(cardW * 0.065, 34 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText(title, W / 2, cardY + 36 * SCALE);
 
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `500 ${Math.min(W * 0.04, 15 * SCALE)}px 'Outfit', sans-serif`;
-  const textMaxW = cardW - 48 * SCALE;
-  drawWrappedText(ctx, subtitle, W / 2, cardY + 74 * SCALE, textMaxW, 23 * SCALE);
+  ctx.font = `500 ${Math.min(cardW * 0.038, 17 * SCALE)}px 'Outfit', sans-serif`;
+  const textMaxW = cardW - 64 * SCALE;
+  drawWrappedText(ctx, subtitle, W / 2, cardY + 95 * SCALE, textMaxW, 26 * SCALE);
 
-  const btnW = cardW - 56 * SCALE;
-  const btnH = 48 * SCALE;
+  const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
+  const btnH = 52 * SCALE;
   const btnX = (W - btnW) / 2;
 
   if (secondaryBtnText) {
-    const btn1Y = cardY + cardH - 120 * SCALE;
+    const btn1Y = cardY + cardH - 135 * SCALE;
     uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
     const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -1420,30 +1414,30 @@ function drawModalCard(
     g1.addColorStop(1, "#1d4ed8");
     ctx.fillStyle = g1;
     ctx.beginPath();
-    ctx.roundRect(btnX, btn1Y, btnW, btnH, 24 * SCALE);
+    ctx.roundRect(btnX, btn1Y, btnW, btnH, 26 * SCALE);
     ctx.fill();
 
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
-    ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(primaryBtnText, W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
-    const btn2Y = cardY + cardH - 64 * SCALE;
+    const btn2Y = cardY + cardH - 70 * SCALE;
     uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
     ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
     ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
     ctx.lineWidth = 1.5 * SCALE;
     ctx.beginPath();
-    ctx.roundRect(btnX, btn2Y, btnW, btnH, 24 * SCALE);
+    ctx.roundRect(btnX, btn2Y, btnW, btnH, 26 * SCALE);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#fca5a5";
-    ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(secondaryBtnText, W / 2, btn2Y + btnH / 2 + 1 * SCALE);
   } else {
-    const btnY = cardY + cardH - 74 * SCALE;
+    const btnY = cardY + cardH - 84 * SCALE;
     uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
 
     const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -1457,38 +1451,38 @@ function drawModalCard(
 
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.roundRect(btnX, btnY, btnW, btnH, 24 * SCALE);
+    ctx.roundRect(btnX, btnY, btnW, btnH, 26 * SCALE);
     ctx.fill();
 
     ctx.textBaseline = "middle";
     ctx.fillStyle = isWinOrLoss === false ? "#ffffff" : "#0f172a";
-    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `800 ${18 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
   }
 
   ctx.restore();
 }
 
-// --- Yönlendirme Modalı ----------------------------------------------------
+// --- TAM EKRAN YÖNLENDİRME MODALI -------------------------------------------
 function drawTutorialModal() {
   ctx.save();
-  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
   ctx.fillRect(0, 0, W, H);
 
-  const cardW = Math.min(W * 0.9, 440 * SCALE);
-  const cardH = 410 * SCALE;
+  const cardW = Math.min(W * 0.94, 680 * SCALE);
+  const cardH = Math.min(H * 0.90, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
   const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
-  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
 
   ctx.fillStyle = cardGrad;
-  ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
-  ctx.lineWidth = 1.8 * SCALE;
+  ctx.strokeStyle = "rgba(96, 165, 250, 0.45)";
+  ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
+  ctx.roundRect(cardX, cardY, cardW, cardH, 28 * SCALE);
   ctx.fill();
   ctx.stroke();
 
@@ -1496,8 +1490,8 @@ function drawTutorialModal() {
   ctx.textBaseline = "top";
 
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${24 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 24 * SCALE);
+  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 30 * SCALE);
 
   const rules = [
     { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 22 * SCALE, "#38bdf8"), title: "Kavanozu Hareket Ettir", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönet." },
@@ -1512,26 +1506,27 @@ function drawTutorialModal() {
   ];
 
   ctx.textAlign = "left";
-  let itemY = cardY + 68 * SCALE;
+  const rowHeight = (cardH - 170 * SCALE) / 4;
+  let itemY = cardY + 76 * SCALE;
 
   for (const r of rules) {
-    r.drawIcon(cardX + 32 * SCALE, itemY + 12 * SCALE);
+    r.drawIcon(cardX + 44 * SCALE, itemY + 12 * SCALE);
 
     ctx.fillStyle = "#fef08a";
-    ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(r.title, cardX + 56 * SCALE, itemY);
+    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+    ctx.fillText(r.title, cardX + 72 * SCALE, itemY);
 
     ctx.fillStyle = "#94a3b8";
-    ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(r.desc, cardX + 56 * SCALE, itemY + 18 * SCALE);
+    ctx.font = `400 ${14 * SCALE}px 'Outfit', sans-serif`;
+    drawWrappedText(ctx, r.desc, cardX + 72 * SCALE, itemY + 20 * SCALE, cardW - 110 * SCALE, 18 * SCALE);
 
-    itemY += 56 * SCALE;
+    itemY += rowHeight;
   }
 
-  const btnW = cardW - 48 * SCALE;
-  const btnH = 46 * SCALE;
+  const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
+  const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
-  const btnY = cardY + cardH - 64 * SCALE;
+  const btnY = cardY + cardH - 75 * SCALE;
 
   uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
 
@@ -1540,38 +1535,38 @@ function drawTutorialModal() {
   g.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.roundRect(btnX, btnY, btnW, btnH, 23 * SCALE);
+  ctx.roundRect(btnX, btnY, btnW, btnH, 25 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("OYUNA BAŞLA", W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- Ayarlar Modalı --------------------------------------------------------
+// --- TAM EKRAN AYARLAR MODALI -----------------------------------------------
 function drawSettingsModal() {
   ctx.save();
-  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
   ctx.fillRect(0, 0, W, H);
 
-  const cardW = Math.min(W * 0.9, 440 * SCALE);
-  const cardH = 370 * SCALE;
+  const cardW = Math.min(W * 0.94, 680 * SCALE);
+  const cardH = Math.min(H * 0.90, 500 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
   const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
-  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
 
   ctx.fillStyle = cardGrad;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-  ctx.lineWidth = 1.8 * SCALE;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
+  ctx.roundRect(cardX, cardY, cardW, cardH, 28 * SCALE);
   ctx.fill();
   ctx.stroke();
 
@@ -1579,62 +1574,62 @@ function drawSettingsModal() {
   ctx.textBaseline = "top";
 
   ctx.fillStyle = "#fef08a";
-  ctx.font = `800 ${24 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 24 * SCALE);
+  ctx.font = `800 ${Math.min(cardW * 0.055, 28 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 32 * SCALE);
 
   // Toggle 1
-  const row1Y = cardY + 78 * SCALE;
+  const row1Y = cardY + 95 * SCALE;
   ctx.textAlign = "left";
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Ses Efektleri", cardX + 28 * SCALE, row1Y + 8 * SCALE);
+  ctx.font = `600 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Ses Efektleri", cardX + 44 * SCALE, row1Y + 8 * SCALE);
 
-  const toggle1W = 96 * SCALE;
-  const toggle1H = 34 * SCALE;
-  const toggle1X = cardX + cardW - toggle1W - 28 * SCALE;
+  const toggle1W = 110 * SCALE;
+  const toggle1H = 38 * SCALE;
+  const toggle1X = cardX + cardW - toggle1W - 44 * SCALE;
   uiButtons.toggleSound = { x: toggle1X, y: row1Y, w: toggle1W, h: toggle1H };
 
   ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 17 * SCALE);
+  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 19 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, row1Y + toggle1H / 2);
 
   // Toggle 2
-  const row2Y = cardY + 130 * SCALE;
+  const row2Y = cardY + 160 * SCALE;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Vakum Çekim Gücü", cardX + 28 * SCALE, row2Y + 8 * SCALE);
+  ctx.font = `600 ${17 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Vakum Çekim Gücü", cardX + 44 * SCALE, row2Y + 8 * SCALE);
 
-  const toggle2W = 96 * SCALE;
-  const toggle2H = 34 * SCALE;
-  const toggle2X = cardX + cardW - toggle2W - 28 * SCALE;
+  const toggle2W = 110 * SCALE;
+  const toggle2H = 38 * SCALE;
+  const toggle2X = cardX + cardW - toggle2W - 44 * SCALE;
   uiButtons.toggleMagnet = { x: toggle2X, y: row2Y, w: toggle2W, h: toggle2H };
 
   ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 17 * SCALE);
+  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 19 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, row2Y + toggle2H / 2);
 
   // Butonlar
-  const btnW = cardW - 56 * SCALE;
-  const btnH = 46 * SCALE;
+  const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
+  const btnH = 50 * SCALE;
   const btnX = (W - btnW) / 2;
 
-  const btn1Y = cardY + cardH - 116 * SCALE;
+  const btn1Y = cardY + cardH - 135 * SCALE;
   uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
   const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -1642,26 +1637,26 @@ function drawSettingsModal() {
   g1.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn1Y, btnW, btnH, 23 * SCALE);
+  ctx.roundRect(btnX, btn1Y, btnW, btnH, 25 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("DEVAM ET", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
-  const btn2Y = cardY + cardH - 60 * SCALE;
+  const btn2Y = cardY + cardH - 70 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
   ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
   ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(btnX, btn2Y, btnW, btnH, 23 * SCALE);
+  ctx.roundRect(btnX, btn2Y, btnW, btnH, 25 * SCALE);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "#fca5a5";
-  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText("OYUNU SIFIRLA", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
