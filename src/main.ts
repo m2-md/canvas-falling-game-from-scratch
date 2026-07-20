@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Profesyonel Arayüz, Ayarlar ve Yönlendirmeler
-// Özellikler: Tam Dokunmatik UI, Ayarlar & Duraklat Modalı, Nasıl Oynanır Yönlendirmesi, Taşmayan Dinamik Metin Hizalaması, Ses & Hassasiyet Ayarları.
+// ATEŞBÖCEKLERİ — Dribbble / Awwwards Lüks UI/UX Tasarım Sistemi
+// Özellikler: Emojisiz Özel Vektör İkonlar, Tutarlı Biyolüminesans Renk Paleti, Glassmorphism Kartlar, Yumuşak Geçişler ve Tipografi Hiyerarşisi.
 
 import {
   type Shake,
@@ -15,7 +15,7 @@ import {
   updateShake,
 } from "./logic";
 
-// --- Çift yükleme koruması ---------------------------------------------------
+// --- Çift Yükleme Koruması ---------------------------------------------------
 const w = window as unknown as { __stopGame?: () => void };
 w.__stopGame?.();
 let running = true;
@@ -26,7 +26,7 @@ w.__stopGame = () => {
 };
 const on = { signal: aborter.signal };
 
-// --- Tam ekran canvas --------------------------------------------------------
+// --- Tam Ekran Canvas --------------------------------------------------------
 let W = window.innerWidth;
 let H = window.innerHeight;
 let SCALE = Math.min(W, H) / 600;
@@ -123,7 +123,7 @@ let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha:
 let clouds: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
 let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
 
-// UI Buton Yerleşimleri (Tıklama Tespiti İçin)
+// UI Buton Yerleşimleri
 const uiButtons = {
   help: { x: 0, y: 0, w: 0, h: 0 },
   settings: { x: 0, y: 0, w: 0, h: 0 },
@@ -269,7 +269,7 @@ function spawnCritter() {
   });
 }
 
-// --- Girdi & Dokunmatik Etkileşim Yönetimi ----------------------------------
+// --- Girdi Yönetimi ---------------------------------------------------------
 let pointerTarget: { x: number; y: number } | null = null;
 
 function setPointerTarget(clientX: number, clientY: number) {
@@ -458,6 +458,101 @@ function updateJar(dt: number) {
   }
 }
 
+// --- Özel Vektör İkon Çizim Fonksiyonları (DRIBBBLE / AWWWARDS STYLE) --------
+
+function drawGearIcon(x: number, y: number, r: number, color = "#94a3b8") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2 * SCALE;
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
+  ctx.stroke();
+
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI) / 3;
+    ctx.save();
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.roundRect(-r * 0.18, -r * 0.95, r * 0.36, r * 0.35, 2 * SCALE);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawHelpIcon(x: number, y: number, r: number, color = "#94a3b8") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.2 * SCALE;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.88, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.22, r * 0.3, -Math.PI * 0.8, Math.PI * 0.25);
+  ctx.lineTo(0, r * 0.15);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, r * 0.45, 1.8 * SCALE, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * SCALE;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, -r * 0.45);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(r * 0.35, -r * 0.15);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMagnetIcon(x: number, y: number, size: number, color = "#38bdf8") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.6 * SCALE;
+  ctx.lineCap = "round";
+
+  const w = size * 0.45;
+  const h = size * 0.55;
+
+  ctx.beginPath();
+  ctx.arc(0, -h * 0.2, w, Math.PI, 0);
+  ctx.lineTo(w, h * 0.4);
+  ctx.moveTo(-w, -h * 0.2);
+  ctx.lineTo(-w, h * 0.4);
+  ctx.stroke();
+
+  // Mıknatıs Kutup Çizgileri
+  ctx.fillStyle = color;
+  ctx.fillRect(-w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
+  ctx.fillRect(w - 1.5 * SCALE, h * 0.15, 3 * SCALE, h * 0.25);
+
+  ctx.restore();
+}
+
 // --- Efektler ---------------------------------------------------------------
 function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 20) {
   for (let i = 0; i < count; i++) {
@@ -489,7 +584,6 @@ function addFloatingText(x: number, y: number, text: string, color = "#fef08a") 
   });
 }
 
-// --- Metin Kaydırma & Kırma Yardımcısı (Dışa Taşma Engelleyici) ------------
 function drawWrappedText(
   context: CanvasRenderingContext2D,
   text: string,
@@ -1142,18 +1236,18 @@ function drawJar() {
   ctx.restore();
 }
 
-// --- HUD: Üst Bar ve Butonlar -----------------------------------------------
+// --- HUD: Emojisiz Dribbble UI -----------------------------------------------
 function drawHUD() {
   ctx.save();
 
-  // 1. Sol Üst: Skor & Kaçırma Hakları
+  // 1. Sol Üst: Skor & Kaçırma Hakları Card
   const barW = Math.min(W * 0.48, 230 * SCALE);
   const barH = 46 * SCALE;
   const barX = 16 * SCALE;
   const barY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(barX, barY, barW, barH, 23 * SCALE);
@@ -1167,7 +1261,7 @@ function drawHUD() {
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fef08a";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(`${caught}/${TARGET}`, barX + 34 * SCALE, barY + barH / 2);
 
   const heartsX = barX + 105 * SCALE;
@@ -1181,18 +1275,18 @@ function drawHUD() {
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = "hsl(52 100% 70%)";
       ctx.beginPath();
-      ctx.arc(hx, hy, 6 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 5.5 * SCALE, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(hx, hy, 2.2 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 2 * SCALE, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      ctx.fillStyle = "rgba(239, 68, 68, 0.3)";
+      ctx.fillStyle = "rgba(239, 68, 68, 0.25)";
       ctx.beginPath();
-      ctx.arc(hx, hy, 6 * SCALE, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 5.5 * SCALE, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.strokeStyle = "#ef4444";
@@ -1206,65 +1300,65 @@ function drawHUD() {
     }
   }
 
-  // 2. Sağ Üst: Kronometre & Butonlar
+  // 2. Sağ Üst: Kronometre & Özel Vektör Butonlar
   const btnSize = 46 * SCALE;
   const btnGap = 10 * SCALE;
 
-  // Ayarlar Butonu (⚙️)
+  // Ayarlar Butonu (⚙️ Özel Vektör Çizim)
   const setX = W - btnSize - 16 * SCALE;
   const setY = 16 * SCALE;
   uiButtons.settings = { x: setX, y: setY, w: btnSize, h: btnSize };
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(setX, setY, btnSize, btnSize, 14 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("⚙️", setX + btnSize / 2, setY + btnSize / 2 + 1 * SCALE);
+  drawGearIcon(setX + btnSize / 2, setY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  // Nasıl Oynanır Butonu (❓)
+  // Nasıl Oynanır Butonu (❓ Özel Vektör Çizim)
   const helpX = setX - btnSize - btnGap;
   const helpY = 16 * SCALE;
   uiButtons.help = { x: helpX, y: helpY, w: btnSize, h: btnSize };
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(helpX, helpY, btnSize, btnSize, 14 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("❓", helpX + btnSize / 2, helpY + btnSize / 2 + 1 * SCALE);
+  drawHelpIcon(helpX + btnSize / 2, helpY + btnSize / 2, 11 * SCALE, "#94a3b8");
 
-  // Canlı Kronometre
-  const timerW = Math.min(W * 0.22, 105 * SCALE);
+  // Kronometre (⏱️ Özel Vektör Saat İkonlu)
+  const timerW = Math.min(W * 0.22, 110 * SCALE);
   const timerX = helpX - timerW - btnGap;
   const timerY = 16 * SCALE;
 
-  ctx.fillStyle = "rgba(12, 18, 38, 0.75)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(timerX, timerY, timerW, btnSize, 23 * SCALE);
   ctx.fill();
   ctx.stroke();
 
+  drawClockIcon(timerX + 20 * SCALE, timerY + btnSize / 2, 8 * SCALE, "#60a5fa");
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`⏱️ ${elapsed.toFixed(1)}s`, timerX + timerW / 2, timerY + btnSize / 2 + 1 * SCALE);
+  ctx.font = `800 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 35 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
 
   ctx.restore();
 }
 
-// --- Profesyonel Modal Çizim Sistemi (Tam Hizalı, Dışa Taşmaz) -------------
+// --- Dribbble / Awwwards Modal Çizim Sistemi -------------------------------
 function drawModalCard(
   title: string,
   subtitle: string,
@@ -1273,22 +1367,25 @@ function drawModalCard(
   isWinOrLoss: boolean | null = null,
 ) {
   ctx.save();
-  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
   ctx.fillRect(0, 0, W, H);
 
-  // Dinamik Kapasiteli Kart
   const cardW = Math.min(W * 0.9, 440 * SCALE);
   const cardH = secondaryBtnText ? 380 * SCALE : 320 * SCALE;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  let borderColor = "rgba(255, 255, 255, 0.2)";
-  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.5)";
-  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.5)";
+  let borderColor = "rgba(255, 255, 255, 0.15)";
+  if (isWinOrLoss === true) borderColor = "rgba(250, 204, 21, 0.4)";
+  else if (isWinOrLoss === false) borderColor = "rgba(239, 68, 68, 0.4)";
 
-  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+
+  ctx.fillStyle = cardGrad;
   ctx.strokeStyle = borderColor;
-  ctx.lineWidth = 2 * SCALE;
+  ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
   ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
   ctx.fill();
@@ -1297,34 +1394,30 @@ function drawModalCard(
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
 
-  // Başlık
   let titleColor = "#fef08a";
   if (isWinOrLoss === false) titleColor = "#fca5a5";
   else if (isWinOrLoss === null) titleColor = "#38bdf8";
 
   ctx.fillStyle = titleColor;
-  ctx.font = `800 ${Math.min(W * 0.07, 30 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${Math.min(W * 0.07, 28 * SCALE)}px 'Outfit', sans-serif`;
   ctx.fillText(title, W / 2, cardY + 28 * SCALE);
 
-  // Alt Metin / Açıklama (Çok Satırlı Otomatik Kaydırma)
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `500 ${Math.min(W * 0.04, 16 * SCALE)}px 'Outfit', sans-serif`;
+  ctx.font = `500 ${Math.min(W * 0.04, 15 * SCALE)}px 'Outfit', sans-serif`;
   const textMaxW = cardW - 48 * SCALE;
-  const endY = drawWrappedText(ctx, subtitle, W / 2, cardY + 74 * SCALE, textMaxW, 24 * SCALE);
+  drawWrappedText(ctx, subtitle, W / 2, cardY + 74 * SCALE, textMaxW, 23 * SCALE);
 
-  // Butonlar
   const btnW = cardW - 56 * SCALE;
   const btnH = 48 * SCALE;
   const btnX = (W - btnW) / 2;
 
   if (secondaryBtnText) {
-    // Çift Buton (Örn: Devam Et / Sıfırla)
     const btn1Y = cardY + cardH - 120 * SCALE;
     uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
     const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-    g1.addColorStop(0, "#3b82f6");
-    g1.addColorStop(1, "#2563eb");
+    g1.addColorStop(0, "#2563eb");
+    g1.addColorStop(1, "#1d4ed8");
     ctx.fillStyle = g1;
     ctx.beginPath();
     ctx.roundRect(btnX, btn1Y, btnW, btnH, 24 * SCALE);
@@ -1332,14 +1425,14 @@ function drawModalCard(
 
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
-    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(primaryBtnText, W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
     const btn2Y = cardY + cardH - 64 * SCALE;
     uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
-    ctx.fillStyle = "rgba(239, 68, 68, 0.2)";
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
+    ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
     ctx.lineWidth = 1.5 * SCALE;
     ctx.beginPath();
     ctx.roundRect(btnX, btn2Y, btnW, btnH, 24 * SCALE);
@@ -1347,20 +1440,19 @@ function drawModalCard(
     ctx.stroke();
 
     ctx.fillStyle = "#fca5a5";
-    ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(secondaryBtnText, W / 2, btn2Y + btnH / 2 + 1 * SCALE);
   } else {
-    // Tek Buton (Örn: Tekrar Dene)
     const btnY = cardY + cardH - 74 * SCALE;
     uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
 
     const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
     if (isWinOrLoss === false) {
-      g.addColorStop(0, "#ef4444");
-      g.addColorStop(1, "#dc2626");
+      g.addColorStop(0, "#dc2626");
+      g.addColorStop(1, "#b91c1c");
     } else {
-      g.addColorStop(0, "#facc15");
-      g.addColorStop(1, "#eab308");
+      g.addColorStop(0, "#eab308");
+      g.addColorStop(1, "#ca8a04");
     }
 
     ctx.fillStyle = g;
@@ -1370,17 +1462,17 @@ function drawModalCard(
 
     ctx.textBaseline = "middle";
     ctx.fillStyle = isWinOrLoss === false ? "#ffffff" : "#0f172a";
-    ctx.font = `800 ${18 * SCALE}px 'Outfit', sans-serif`;
+    ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(primaryBtnText, W / 2, btnY + btnH / 2 + 1 * SCALE);
   }
 
   ctx.restore();
 }
 
-// --- Özel Yönlendirme (Nasıl Oynanır) Modalı --------------------------------
+// --- Yönlendirme Modalı ----------------------------------------------------
 function drawTutorialModal() {
   ctx.save();
-  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.9, 440 * SCALE);
@@ -1388,9 +1480,13 @@ function drawTutorialModal() {
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+
+  ctx.fillStyle = cardGrad;
   ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
-  ctx.lineWidth = 2 * SCALE;
+  ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
   ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
   ctx.fill();
@@ -1400,23 +1496,26 @@ function drawTutorialModal() {
   ctx.textBaseline = "top";
 
   ctx.fillStyle = "#60a5fa";
-  ctx.font = `800 ${26 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("NASIL OYNANIR? 📖", W / 2, cardY + 24 * SCALE);
+  ctx.font = `800 ${24 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("NASIL OYNANIR", W / 2, cardY + 24 * SCALE);
 
-  // Kurallar Listesi
   const rules = [
-    { icon: "🧲", title: "Kavanozu Hareket Ettir", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönet." },
-    { icon: "✨", title: "Ateşböceklerini Çek", desc: "Ateşböceklerine yaklaştığında çekim gücü onları kavanoza çeker." },
-    { icon: "🐝", title: "Arılardan Kaç", desc: "Arıya çarparsan kavanozdaki 1 ışığı kaybedersin!" },
-    { icon: "💔", title: "3 Kaçırma Hakkı", desc: "3 ateşböceği ekranın altından kaçarsa oyun biter." },
+    { drawIcon: (x: number, y: number) => drawMagnetIcon(x, y, 22 * SCALE, "#38bdf8"), title: "Kavanozu Hareket Ettir", desc: "Dokunarak/sürükleyerek veya Yön/WASD tuşlarıyla kavanozu yönet." },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 6 * SCALE, elapsed, 0, 0, "gold"), title: "Ateşböceklerini Çek", desc: "Yaklaştığında vakum gücü böcekleri kavanoza çeker." },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 7 * SCALE, elapsed, 0, 0), title: "Arılardan Kaç", desc: "Arıya çarparsan kavanozdaki 1 ışığı kaybedersin!" },
+    { drawIcon: (x: number, y: number) => {
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.arc(x, y, 6 * SCALE, 0, Math.PI * 2);
+      ctx.fill();
+    }, title: "3 Kaçırma Hakkı", desc: "3 ateşböceği ekranın altından kaçarsa oyun biter." },
   ];
 
   ctx.textAlign = "left";
   let itemY = cardY + 68 * SCALE;
 
   for (const r of rules) {
-    ctx.font = `${20 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(r.icon, cardX + 24 * SCALE, itemY);
+    r.drawIcon(cardX + 32 * SCALE, itemY + 12 * SCALE);
 
     ctx.fillStyle = "#fef08a";
     ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
@@ -1429,7 +1528,6 @@ function drawTutorialModal() {
     itemY += 56 * SCALE;
   }
 
-  // Buton
   const btnW = cardW - 48 * SCALE;
   const btnH = 46 * SCALE;
   const btnX = (W - btnW) / 2;
@@ -1438,8 +1536,8 @@ function drawTutorialModal() {
   uiButtons.modalAction = { x: btnX, y: btnY, w: btnW, h: btnH };
 
   const g = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  g.addColorStop(0, "#3b82f6");
-  g.addColorStop(1, "#2563eb");
+  g.addColorStop(0, "#2563eb");
+  g.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g;
   ctx.beginPath();
   ctx.roundRect(btnX, btnY, btnW, btnH, 23 * SCALE);
@@ -1448,8 +1546,8 @@ function drawTutorialModal() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("ANLADIM, BAŞLA! 🚀", W / 2, btnY + btnH / 2 + 1 * SCALE);
+  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("OYUNA BAŞLA", W / 2, btnY + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
@@ -1457,7 +1555,7 @@ function drawTutorialModal() {
 // --- Ayarlar Modalı --------------------------------------------------------
 function drawSettingsModal() {
   ctx.save();
-  ctx.fillStyle = "rgba(2, 4, 12, 0.84)";
+  ctx.fillStyle = "rgba(3, 6, 16, 0.86)";
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.9, 440 * SCALE);
@@ -1465,9 +1563,13 @@ function drawSettingsModal() {
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-  ctx.lineWidth = 2 * SCALE;
+  const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+  cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.96)");
+  cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.98)");
+
+  ctx.fillStyle = cardGrad;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
   ctx.roundRect(cardX, cardY, cardW, cardH, 24 * SCALE);
   ctx.fill();
@@ -1477,54 +1579,54 @@ function drawSettingsModal() {
   ctx.textBaseline = "top";
 
   ctx.fillStyle = "#fef08a";
-  ctx.font = `800 ${26 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("AYARLAR & DURAKLAT ⚙️", W / 2, cardY + 24 * SCALE);
+  ctx.font = `800 ${24 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("AYARLAR VE DURAKLAT", W / 2, cardY + 24 * SCALE);
 
-  // Toggle 1: Ses Efektleri
+  // Toggle 1
   const row1Y = cardY + 78 * SCALE;
   ctx.textAlign = "left";
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("🔊 Ses Efektleri", cardX + 28 * SCALE, row1Y + 8 * SCALE);
+  ctx.font = `600 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Ses Efektleri", cardX + 28 * SCALE, row1Y + 8 * SCALE);
 
-  const toggle1W = 100 * SCALE;
-  const toggle1H = 36 * SCALE;
+  const toggle1W = 96 * SCALE;
+  const toggle1H = 34 * SCALE;
   const toggle1X = cardX + cardW - toggle1W - 28 * SCALE;
   uiButtons.toggleSound = { x: toggle1X, y: row1Y, w: toggle1W, h: toggle1H };
 
-  ctx.fillStyle = soundEnabled ? "#22c55e" : "#475569";
+  ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 18 * SCALE);
+  ctx.roundRect(toggle1X, row1Y, toggle1W, toggle1H, 17 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, row1Y + toggle1H / 2);
 
-  // Toggle 2: Vakum Çekim Gücü
+  // Toggle 2
   const row2Y = cardY + 130 * SCALE;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = `600 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("🧲 Vakum Gücü", cardX + 28 * SCALE, row2Y + 8 * SCALE);
+  ctx.font = `600 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("Vakum Çekim Gücü", cardX + 28 * SCALE, row2Y + 8 * SCALE);
 
-  const toggle2W = 100 * SCALE;
-  const toggle2H = 36 * SCALE;
+  const toggle2W = 96 * SCALE;
+  const toggle2H = 34 * SCALE;
   const toggle2X = cardX + cardW - toggle2W - 28 * SCALE;
   uiButtons.toggleMagnet = { x: toggle2X, y: row2Y, w: toggle2W, h: toggle2H };
 
-  ctx.fillStyle = highMagnet ? "#3b82f6" : "#475569";
+  ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
-  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 18 * SCALE);
+  ctx.roundRect(toggle2X, row2Y, toggle2W, toggle2H, 17 * SCALE);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.font = `700 ${14 * SCALE}px 'Outfit', sans-serif`;
+  ctx.font = `800 ${13 * SCALE}px 'Outfit', sans-serif`;
   ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, row2Y + toggle2H / 2);
 
   // Butonlar
@@ -1536,22 +1638,22 @@ function drawSettingsModal() {
   uiButtons.modalAction = { x: btnX, y: btn1Y, w: btnW, h: btnH };
 
   const g1 = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  g1.addColorStop(0, "#3b82f6");
-  g1.addColorStop(1, "#2563eb");
+  g1.addColorStop(0, "#2563eb");
+  g1.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = g1;
   ctx.beginPath();
   ctx.roundRect(btnX, btn1Y, btnW, btnH, 23 * SCALE);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `800 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUNA DEVAM ET ▶️", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
+  ctx.font = `800 ${16 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("DEVAM ET", W / 2, btn1Y + btnH / 2 + 1 * SCALE);
 
   const btn2Y = cardY + cardH - 60 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
 
-  ctx.fillStyle = "rgba(239, 68, 68, 0.2)";
-  ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
+  ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
   ctx.lineWidth = 1.5 * SCALE;
   ctx.beginPath();
   ctx.roundRect(btnX, btn2Y, btnW, btnH, 23 * SCALE);
@@ -1559,8 +1661,8 @@ function drawSettingsModal() {
   ctx.stroke();
 
   ctx.fillStyle = "#fca5a5";
-  ctx.font = `700 ${16 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUNU SIFIRLA 🔄", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
+  ctx.font = `700 ${15 * SCALE}px 'Outfit', sans-serif`;
+  ctx.fillText("OYUNU SIFIRLA", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
 
   ctx.restore();
 }
@@ -1621,20 +1723,19 @@ function draw() {
 
   ctx.restore();
 
-  // Modal Yönetimi
   if (state === "won") {
     drawModalCard(
-      "KAVANOZ DOLDU! ✨",
+      "KAVANOZ DOLDU",
       `${TARGET} ateşböceğinin hepsini ${finalTime.toFixed(1)} saniyede başarıyla topladın!`,
-      "TEKRAR OYNA 🔄",
+      "TEKRAR OYNA",
       null,
       true,
     );
   } else if (state === "gameover") {
     drawModalCard(
-      "ATEŞBÖCEKLERİ KAÇTI! 🌙",
+      "ATEŞBÖCEKLERİ KAÇTI",
       `3 ateşböceği geceye karışarak kaçtı. Toplanan: ${caught}/${TARGET} (${finalTime.toFixed(1)} sn)`,
-      "TEKRAR DENE 🔄",
+      "TEKRAR DENE",
       null,
       false,
     );
