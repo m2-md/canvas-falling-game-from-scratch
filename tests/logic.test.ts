@@ -4,6 +4,7 @@ import {
   LEVELS,
   addShake,
   aggressiveSway,
+  calculateSpiderWebPull,
   createSpawnTimer,
   difficulty,
   getLevelConfig,
@@ -42,6 +43,14 @@ describe("tickSpawn: biriktiricili spawner", () => {
       expect(t.next).toBeGreaterThanOrEqual(2 * 0.6);
       expect(t.next).toBeLessThanOrEqual(2 * 1.4);
     }
+  });
+});
+
+describe("calculateSpiderWebPull: Örümcek Ağ Çekim Fiziği", () => {
+  it("kavanozu doğrudan örümcek yönüne çeker", () => {
+    const pull = calculateSpiderWebPull(100, 100, 100, 300, 200);
+    expect(pull.vx).toBeCloseTo(0);
+    expect(pull.vy).toBeCloseTo(-200);
   });
 });
 
@@ -96,21 +105,21 @@ describe("hitCircleRect: daire-dikdörtgen çarpışması", () => {
   });
 });
 
-describe("LEVELS & getLevelConfig: 10 Seviyeli Kurgu & Yeni Türler", () => {
+describe("LEVELS & getLevelConfig: 10 Seviyeli Kurgu & Örümcek/Uğur Böceği", () => {
   it("tam 10 bölüm tanımlıdır", () => {
     expect(LEVELS.length).toBe(10);
   });
 
   it("bölümlerde izin verilen engeller doğru yapılandırılmıştır", () => {
     expect(LEVELS[0].allowedHazards).toContain("wasp");
-    expect(LEVELS[2].allowedHazards).toContain("grasshopper");
-    expect(LEVELS[4].allowedHazards).toContain("giant_beetle");
+    expect(LEVELS[1].allowedHazards).toContain("ladybug");
+    expect(LEVELS[2].allowedHazards).toContain("spider");
   });
 
   it("getLevelConfig aralık dışı bölüm numaralarını güvenle sınırlar", () => {
     expect(getLevelConfig(0).level).toBe(1);
     expect(getLevelConfig(999).level).toBe(10);
-    expect(getLevelConfig(3).name).toBe("Sıçrayan Tepe");
+    expect(getLevelConfig(3).name).toBe("Örümcekli Ağ Vadisi");
   });
 });
 
