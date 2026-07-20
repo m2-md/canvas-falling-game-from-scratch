@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Canlı Oyun Görselli & Sıralı Animasyonlu İnfografik Modallar
-// Özellikler: Canlı Oyun Karakterleri (Animasyonlu Kavanoz & Böcekler), Ardışık Sayı Sayacı (Staggered Ticker Animation), Dribbble Dashboard Stili.
+// ATEŞBÖCEKLERİ — Kesintisiz Pürüzsüz Kavanoz Işık Aurası & Sınırlı Blur
+// Özellikler: Daire Çeperli Sönümlenen Kavanoz Parıltısı (0 Kesilme), Canlı Karakterli İnfografik Modallar, Staggered Ticker.
 
 import {
   type Shake,
@@ -99,7 +99,7 @@ let caught = 0;
 let missed = 0;
 let elapsed = 0;
 let finalTime = 0;
-let modalAnimTime = 0; // Modal içi sıralı animasyon süresi
+let modalAnimTime = 0;
 let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
@@ -745,7 +745,6 @@ function update(dt: number) {
     }
     critters = critters.filter((c) => !c.dead && c.y + c.offsetY < H + 50 * SCALE);
   } else {
-    // Modal açıkken sıralı animasyon sayacını ilerlet
     modalAnimTime += dt;
   }
 
@@ -1123,15 +1122,19 @@ function drawJar() {
 
   ctx.save();
 
+  // 1. Dış Işık Parıltısı (Daire Çeperli - Kesilme Yapmaz)
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const fillGlow = ctx.createRadialGradient(0, -h * 0.4, 0, 0, -h * 0.4, w * 1.4);
-    fillGlow.addColorStop(0, `hsl(52 100% 70% / ${0.15 + glow * 0.55})`);
-    fillGlow.addColorStop(0.6, `hsl(52 100% 60% / ${glow * 0.25})`);
+    const glowR = w * 0.72;
+    const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
+    fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
+    fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
     fillGlow.addColorStop(1, "hsl(52 100% 60% / 0)");
     ctx.fillStyle = fillGlow;
-    ctx.fillRect(-w * 1.5, -h * 1.5, w * 3, h * 1.8);
+    ctx.beginPath();
+    ctx.arc(0, -h * 0.45, glowR, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -1459,10 +1462,9 @@ function drawModalCard(
     const cx = gridX + i * (colW + 12 * SCALE);
     const s = stats[i];
 
-    // SIRALI ANİMASYON MANUEL HESAPLAMA (Staggered Animation)
-    const cardDelay = i * 0.20; // 200ms gecikme
+    const cardDelay = i * 0.20;
     const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.35));
-    const cardScale = 0.7 + 0.3 * Math.sin(cardProgress * Math.PI / 2); // Easing
+    const cardScale = 0.7 + 0.3 * Math.sin(cardProgress * Math.PI / 2);
 
     ctx.save();
     ctx.globalAlpha = cardProgress;
@@ -1481,7 +1483,6 @@ function drawModalCard(
     ctx.font = `700 ${11 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(s.label, cx + colW / 2, gridY + 20 * SCALE);
 
-    // Animasyonlu Sayı Sayacı (Animated Ticker)
     let displayVal = "";
     if (s.type === "ratio") {
       const cur = Math.round(s.targetVal * cardProgress);
@@ -1551,7 +1552,7 @@ function drawModalCard(
   ctx.restore();
 }
 
-// --- İNFOGRAFİK REHBER (Canlı Görselli 2x2 Grid) ----------------------------
+// --- İNFOGRAFİK REHBER ------------------------------------------------------
 function drawTutorialModal() {
   ctx.save();
   ctx.fillStyle = "rgba(3, 6, 16, 0.88)";
@@ -1626,7 +1627,6 @@ function drawTutorialModal() {
     const cy = gridY + row * (rowH + 16 * SCALE);
     const r = rules[i];
 
-    // Sıralı Animasyon Geçişi
     const cardDelay = i * 0.15;
     const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.3));
 
