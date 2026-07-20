@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — 3D Cam Kavanoz & Mantar Kapak (Gerçekçi Düz Taban, Yuvarlak Omuzlar & Boğaz)
-// Özellikler: Düz Tabanlı 3D Cam Kavanoz, Yuvarlak Gövde Omuzları, Belirgin Cam Boğaz & Ahşap Mantar Kapak.
+// ATEŞBÖCEKLERİ — Orijinal Klasik Cam Kavanoz & Fizik Takılma Düzeltmesi
+// Özellikler: Klasik Şık Cam Kavanoz, Uçlarda/Kenarlarda Takılmayı Önleyen Yumuşak Sönümleme Fiziği.
 
 import {
   type FireflySubtype,
@@ -125,7 +125,7 @@ const shake: Shake = { power: 0, t: 0 };
 let soundEnabled = true;
 let highMagnet = false;
 
-// 3D Cam Kavanoz Fizik & Kovalama Değişkenleri
+// Klasik Kavanoz Fizik Değişkenleri
 let jarSquash = 0;
 let jarWobble = 0;
 let jarTilt = 0;
@@ -156,8 +156,8 @@ const levelGridButtons: { level: number; x: number; y: number; w: number; h: num
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
-  jar.w = 105 * SCALE; // Kavanoz Genişliği
-  jar.h = 120 * SCALE; // Kavanoz Yüksekliği
+  jar.w = 110 * SCALE;
+  jar.h = 110 * SCALE;
   jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
@@ -282,7 +282,7 @@ function spawnCritter() {
       id: nextCritterId++,
       kind: "firefly",
       subType,
-      baseX: amp + 25 * SCALE + Math.random() * (W - 2 * (amp + 25 * SCALE)),
+      baseX: amp + 30 * SCALE + Math.random() * (W - 2 * (amp + 30 * SCALE)),
       y: -35 * SCALE,
       offsetX: 0,
       offsetY: 0,
@@ -711,7 +711,7 @@ function drawWrappedText(
   return currentY;
 }
 
-// --- Güncelleme --------------------------------------------------------------
+// --- Güncelleme & Fizik Düzeltmesi (Takılmayı Önler) ------------------------
 function update(dt: number) {
   if (state === "playing") {
     elapsed += dt;
@@ -725,7 +725,7 @@ function update(dt: number) {
     updateJar(dt);
 
     const jarMouthX = jar.x + jar.w / 2;
-    const jarMouthY = jar.y - jar.h * 0.85;
+    const jarMouthY = jar.y - 12 * SCALE;
     const baseRadius = highMagnet ? 175 : 140;
     const MAGNET_RADIUS = (magnetBoostTimer > 0 ? baseRadius * 1.35 : baseRadius) * SCALE;
 
@@ -768,7 +768,15 @@ function update(dt: number) {
         c.y += fallSpeed * SCALE * dt;
       }
 
-      const currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
+      // TAKILMA BUG FIX: Sway & Offset hesabı ve sönümleme (decay)
+      let currentX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
+
+      // Ekran sol/sağ sınırlarına takılmayı önle:
+      if (currentX < 15 * SCALE) {
+        c.offsetX += (15 * SCALE - currentX) * Math.min(1, dt * 8);
+      } else if (currentX > W - 15 * SCALE) {
+        c.offsetX += (W - 15 * SCALE - currentX) * Math.min(1, dt * 8);
+      }
 
       if (c.kind === "firefly" && !c.dead) {
         const dx = jarMouthX - currentX;
@@ -786,6 +794,9 @@ function update(dt: number) {
           c.offsetX += (dx / dist) * pullForce + spiralX * dt * 3;
           c.offsetY += (dy / dist) * pullForce + spiralY * dt * 3;
 
+          // Çekim kuvveti yukarı yönde birikip takılma yaratmasın:
+          c.offsetY = Math.max(-25 * SCALE, c.offsetY);
+
           if (Math.random() < 0.45) {
             const pColor = c.subType === "purple" ? "hsl(280 100% 80%)" : c.subType === "red" ? "hsl(350 100% 75%)" : c.subType === "emerald" ? "hsl(150 100% 75%)" : c.subType === "azure" ? "hsl(200 100% 80%)" : "hsl(52 100% 80%)";
             particles.push({
@@ -801,6 +812,9 @@ function update(dt: number) {
           }
         } else {
           c.beingPulled = false;
+          // TAKILMA BUG FIX: Çekim alanı dışında kaldığında offset yumuşakça sıfırlanır, düşmeye devam eder!
+          c.offsetX += (0 - c.offsetX) * Math.min(1, dt * 5);
+          c.offsetY += (0 - c.offsetY) * Math.min(1, dt * 5);
         }
       }
 
@@ -1094,7 +1108,7 @@ function drawBackground() {
 
 function drawSuctionBeams() {
   const jarMouthX = jar.x + jar.w / 2;
-  const jarMouthY = jar.y - jar.h * 0.85;
+  const jarMouthY = jar.y - 12 * SCALE;
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -1563,7 +1577,7 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
-// 3D REALISTIC APOTHECARY GLASS JAR WITH FLAT BOTTOM, BULBOUS SHOULDERS & CORK STOPPER
+// ORİJİNAL KLASİK CAM KAVANOZ (SEVİLEN ŞIK KLASİK TASARIM)
 function drawJar() {
   const w = jar.w;
   const h = jar.h;
@@ -1571,11 +1585,11 @@ function drawJar() {
 
   ctx.save();
 
-  // 1. Dış Dairesel Işık Parıltısı
+  // 1. Parlama Efekti
   if (glow > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const glowR = w * 0.8;
+    const glowR = w * 0.72;
     const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
     fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.15 + glow * 0.45})`);
     fillGlow.addColorStop(0.5, `hsl(52 100% 65% / ${glow * 0.18})`);
@@ -1592,48 +1606,56 @@ function drawJar() {
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.7})`;
     ctx.beginPath();
-    ctx.roundRect(-w / 2 - 6 * SCALE, -h - 10 * SCALE, w + 12 * SCALE, h + 14 * SCALE, 18 * SCALE);
+    ctx.roundRect(-w / 2 - 6 * SCALE, -h - 12 * SCALE, w + 12 * SCALE, h + 16 * SCALE, 16 * SCALE);
     ctx.fill();
     ctx.restore();
   }
 
-  // Kavanoz Yolu (Path Definition for Apothecary Jar: Flat Bottom, Bulging Body, Curved Shoulders, Vertical Neck)
-  const neckW = w * 0.52;
-  const neckTopY = -h * 0.94;
-  const neckBaseY = -h * 0.78;
-  const baseW = w * 0.74;
-
-  const createJarPath = () => {
-    ctx.beginPath();
-    // Sağ Boyun Rim Jantı
-    ctx.moveTo(neckW / 2, neckTopY);
-    // Sağ Omuz Eğrisi
-    ctx.quadraticCurveTo(w / 2, neckBaseY, w / 2, -h * 0.42);
-    // Sağ Gövde Şişkinliği & Alt Köşe
-    ctx.quadraticCurveTo(w / 2, 0, baseW / 2, 0);
-    // Düz Taban
-    ctx.lineTo(-baseW / 2, 0);
-    // Sol Gövde Şişkinliği
-    ctx.quadraticCurveTo(-w / 2, 0, -w / 2, -h * 0.42);
-    // Sol Omuz Eğrisi
-    ctx.quadraticCurveTo(-w / 2, neckBaseY, -neckW / 2, neckBaseY);
-    // Sol Boyun Dikey Yükselişi
-    ctx.lineTo(-neckW / 2, neckTopY);
-    ctx.closePath();
-  };
-
-  // 2. Cam Gövde İç Gölge / Hacim
-  ctx.fillStyle = "rgba(10, 22, 40, 0.48)";
-  createJarPath();
+  // Kavanoz İç Gövde Gölgesi
+  ctx.fillStyle = "rgba(10, 22, 40, 0.45)";
+  ctx.beginPath();
+  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
   ctx.fill();
 
-  // 3. Sıvı Işık Dolgusu (Düz Tabandan Yukarı Yuvarlatılarak Dolan Liquid)
+  const neckW = w * 0.82;
+  const neckH = 14 * SCALE;
+  const neckY = -h - neckH * 0.5;
+
+  // Ahşap Mantar Tıpa
+  const corkG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
+  corkG.addColorStop(0, "#8c5a32");
+  corkG.addColorStop(0.5, "#b87d4b");
+  corkG.addColorStop(1, "#6e4324");
+  ctx.fillStyle = corkG;
+  ctx.beginPath();
+  ctx.roundRect(-neckW * 0.44, neckY - 12 * SCALE, neckW * 0.88, 14 * SCALE, 4 * SCALE);
+  ctx.fill();
+
+  // Cam Boğaz Çerçevesi
+  ctx.fillStyle = "rgba(195, 230, 255, 0.38)";
+  ctx.strokeStyle = "rgba(220, 245, 255, 0.75)";
+  ctx.lineWidth = 2 * SCALE;
+  ctx.beginPath();
+  ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 5 * SCALE);
+  ctx.fill();
+  ctx.stroke();
+
+  // Şerit Halka Detayı
+  ctx.strokeStyle = "#d4a373";
+  ctx.lineWidth = 2.5 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(-neckW / 2 + 2 * SCALE, neckY + neckH / 2);
+  ctx.lineTo(neckW / 2 - 2 * SCALE, neckY + neckH / 2);
+  ctx.stroke();
+
+  // Sıvı Işık Dolgusu
   if (glow > 0) {
     ctx.save();
-    createJarPath();
+    ctx.beginPath();
+    ctx.roundRect(-w / 2 + 3 * SCALE, -h + 3 * SCALE, w - 6 * SCALE, h - 6 * SCALE, 12 * SCALE);
     ctx.clip();
 
-    const liquidH = h * 0.78 * glow;
+    const liquidH = h * 0.7 * glow;
     const liquidY = -liquidH;
     const sloshing = Math.sin(elapsed * 4 + jar.x * 0.02) * 4 * SCALE;
 
@@ -1652,10 +1674,10 @@ function drawJar() {
     ctx.restore();
   }
 
-  // 4. İçeride Süzülen Ateşböcekleri
+  // İçeride Süzülen Ateşböcekleri
   for (const jf of jarFireflies) {
-    const fx = jf.rx * (w * 0.65);
-    const fy = -h * 0.45 + jf.ry * (h * 0.45);
+    const fx = jf.rx * (w * 0.7);
+    const fy = -h * 0.5 + jf.ry * (h * 0.7);
     const pulse = 0.8 + 0.2 * Math.sin(jf.t * 8);
 
     ctx.save();
@@ -1676,60 +1698,20 @@ function drawJar() {
     ctx.fill();
   }
 
-  // 5. Ahşap Mantar Kapak (Doğal Ahşap Mantar Tıpa - Sitting Atop the Neck)
-  const corkW = neckW * 1.12;
-  const corkH = 14 * SCALE;
-  const corkY = neckTopY - corkH * 0.65;
-
-  const corkG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
-  corkG.addColorStop(0, "#6e4324");
-  corkG.addColorStop(0.3, "#b87d4b");
-  corkG.addColorStop(0.7, "#a67043");
-  corkG.addColorStop(1, "#59361c");
-
-  ctx.fillStyle = corkG;
-  ctx.strokeStyle = "#40230f";
-  ctx.lineWidth = 1.2 * SCALE;
-  ctx.beginPath();
-  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
-  ctx.fill();
-  ctx.stroke();
-
-  // Mantar Üst Bevel Vurgusu
-  ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
-  ctx.beginPath();
-  ctx.roundRect(-corkW / 2 + 2 * SCALE, corkY + 1.5 * SCALE, corkW - 4 * SCALE, 3.5 * SCALE, 2 * SCALE);
-  ctx.fill();
-
-  // Cam Boyun Çerçevesi & Dudak (Flared Glass Neck Rim)
-  ctx.strokeStyle = "rgba(235, 248, 255, 0.85)";
-  ctx.lineWidth = 2.2 * SCALE;
-  ctx.beginPath();
-  ctx.ellipse(0, neckTopY, neckW / 2 + 2 * SCALE, 5 * SCALE, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // 6. 3D Cam Kavanoz Çerçevesi ve Işık Yansımaları
+  // Dış Cam Çerçeve & Yansıma
   ctx.strokeStyle = "rgba(215, 240, 255, 0.75)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
-  createJarPath();
+  ctx.beginPath();
+  ctx.roundRect(-w / 2, -h, w, h, 14 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  // Cam Sol Omuz Işık Yansıması (Curved Shoulder Highlight)
   ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
   ctx.lineWidth = 3.5 * SCALE;
   ctx.beginPath();
-  ctx.moveTo(-w / 2 + 6 * SCALE, -h * 0.38);
-  ctx.quadraticCurveTo(-w / 2 + 6 * SCALE, -h * 0.72, -neckW / 2 + 3 * SCALE, neckBaseY);
-  ctx.stroke();
-
-  // Düz Taban Alt Cam Yansıması
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-  ctx.lineWidth = 2 * SCALE;
-  ctx.beginPath();
-  ctx.moveTo(-baseW / 2 + 8 * SCALE, -3 * SCALE);
-  ctx.lineTo(baseW / 2 - 8 * SCALE, -3 * SCALE);
+  ctx.moveTo(-w / 2 + 6 * SCALE, -h + 16 * SCALE);
+  ctx.lineTo(-w / 2 + 6 * SCALE, -16 * SCALE);
   ctx.stroke();
 
   ctx.restore();
