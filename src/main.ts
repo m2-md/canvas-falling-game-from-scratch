@@ -471,7 +471,7 @@ function spawnCritter() {
         t: Math.random() * 10,
         amp: 30 * SCALE,
         freq: 0.2,
-        r: 17 * SCALE,
+        r: 13.5 * SCALE,
         webActive: false,
         webTimer: 0,
         webCooldown: 1.2 + Math.random() * 2.0,
@@ -1899,12 +1899,12 @@ function drawSpider(
   ctx.translate(0, bodyBob);
   ctx.rotate(bodyTilt);
 
-  // 2. PERFECTLY SYMMETRIC 8 LEGS (Purple with Black Borders)
+  // 2. PERFECTLY SYMMETRIC 8 LEGS (Solid Sleek Black Chitin)
   const legDefs = [
-    { angle: -1.25, femurLen: 1.1, tibiaLen: 1.25, jointY: -r * 0.45, phase: 0 },
-    { angle: -0.55, femurLen: 1.2, tibiaLen: 1.3, jointY: -r * 0.2, phase: Math.PI * 0.5 },
-    { angle: 0.45, femurLen: 1.2, tibiaLen: 1.3, jointY: r * 0.05, phase: Math.PI },
-    { angle: 1.15, femurLen: 1.3, tibiaLen: 1.35, jointY: r * 0.3, phase: Math.PI * 1.5 },
+    { angle: -1.2, femurLen: 0.85, tibiaLen: 0.95, jointY: -r * 0.4, phase: 0 },
+    { angle: -0.5, femurLen: 0.95, tibiaLen: 1.0, jointY: -r * 0.18, phase: Math.PI * 0.5 },
+    { angle: 0.4, femurLen: 0.95, tibiaLen: 1.0, jointY: r * 0.05, phase: Math.PI },
+    { angle: 1.1, femurLen: 1.05, tibiaLen: 1.05, jointY: r * 0.28, phase: Math.PI * 1.5 },
   ];
 
   ctx.lineCap = "round";
@@ -1914,10 +1914,10 @@ function drawSpider(
     for (let i = 0; i < legDefs.length; i++) {
       const leg = legDefs[i];
       const sidePhase = side === 1 ? leg.phase : leg.phase + Math.PI;
-      const swing = Math.sin(t * crawlSpeed + sidePhase) * 0.12;
-      const flex = Math.cos(t * crawlSpeed + sidePhase) * 0.08;
+      const swing = Math.sin(t * crawlSpeed + sidePhase) * 0.1;
+      const flex = Math.cos(t * crawlSpeed + sidePhase) * 0.06;
 
-      const rootX = side * (r * 0.35);
+      const rootX = side * (r * 0.32);
       const rootY = leg.jointY;
 
       // Symmetric angle calculation
@@ -1930,41 +1930,49 @@ function drawSpider(
 
       if (side === 1) {
         kneeX = rootX + Math.cos(baseA) * (r * leg.femurLen);
-        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 2 * SCALE;
-        tipX = kneeX + Math.cos(baseA + 0.5) * (r * leg.tibiaLen);
-        tipY = kneeY + Math.sin(baseA + 0.5) * (r * leg.tibiaLen) + flex * 2 * SCALE;
+        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 1.8 * SCALE;
+        tipX = kneeX + Math.cos(baseA + 0.48) * (r * leg.tibiaLen);
+        tipY = kneeY + Math.sin(baseA + 0.48) * (r * leg.tibiaLen) + flex * 1.8 * SCALE;
       } else {
         baseA = Math.PI - effAngle;
         kneeX = rootX + Math.cos(baseA) * (r * leg.femurLen);
-        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 2 * SCALE;
-        tipX = kneeX + Math.cos(baseA - 0.5) * (r * leg.tibiaLen);
-        tipY = kneeY + Math.sin(baseA - 0.5) * (r * leg.tibiaLen) + flex * 2 * SCALE;
+        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 1.8 * SCALE;
+        tipX = kneeX + Math.cos(baseA - 0.48) * (r * leg.tibiaLen);
+        tipY = kneeY + Math.sin(baseA - 0.48) * (r * leg.tibiaLen) + flex * 1.8 * SCALE;
       }
 
-      // Outer Black Border Stroke
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 3.6 * SCALE;
+      // Outer Black Shadow Stroke
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.lineWidth = 3.2 * SCALE;
+      ctx.beginPath();
+      ctx.moveTo(rootX, rootY + 1 * SCALE);
+      ctx.lineTo(kneeX, kneeY + 1 * SCALE);
+      ctx.lineTo(tipX, tipY + 1 * SCALE);
+      ctx.stroke();
+
+      // Solid Sleek Black Chitin Leg Stroke
+      ctx.strokeStyle = "#09090b";
+      ctx.lineWidth = 2.4 * SCALE;
       ctx.beginPath();
       ctx.moveTo(rootX, rootY);
       ctx.lineTo(kneeX, kneeY);
       ctx.lineTo(tipX, tipY);
       ctx.stroke();
 
-      // Inner Purple Chitin Fill Stroke
-      ctx.strokeStyle = webActive ? "#e879f9" : "#a855f7";
-      ctx.lineWidth = 2.0 * SCALE;
+      // Subtle Chitin Highlight Line
+      ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.7)" : "rgba(161, 161, 170, 0.35)";
+      ctx.lineWidth = 0.9 * SCALE;
       ctx.beginPath();
       ctx.moveTo(rootX, rootY);
       ctx.lineTo(kneeX, kneeY);
-      ctx.lineTo(tipX, tipY);
       ctx.stroke();
 
       // Knee Joint Accent Bulb
-      ctx.fillStyle = "#6b21a8";
+      ctx.fillStyle = "#18181b";
       ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1 * SCALE;
+      ctx.lineWidth = 0.9 * SCALE;
       ctx.beginPath();
-      ctx.arc(kneeX, kneeY, 2 * SCALE, 0, Math.PI * 2);
+      ctx.arc(kneeX, kneeY, 1.6 * SCALE, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
