@@ -48,7 +48,16 @@ canvas.width = W;
 canvas.height = H;
 
 // --- Oyun Durumu & Tipler ---------------------------------------------------
-type GameState = "playing" | "paused" | "tutorial" | "settings" | "levelselect" | "levelcomplete" | "gameover" | "campaignwon" | "levelintro";
+type GameState =
+  | "playing"
+  | "paused"
+  | "tutorial"
+  | "settings"
+  | "levelselect"
+  | "levelcomplete"
+  | "gameover"
+  | "campaignwon"
+  | "levelintro";
 type CritterKind = "firefly" | "wasp" | "spider" | "ladybug";
 
 interface Critter {
@@ -174,9 +183,31 @@ const jar = { x: 0, y: 0, w: 0, h: 0 };
 
 // Atmosferik Ögeler
 let stars: { x: number; y: number; r: number; a: number; speed: number }[] = [];
-let bokehOrbs: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
-let volumetricFog: { x: number; y: number; w: number; h: number; speed: number; alpha: number }[] = [];
-let grassBlades: { x: number; height: number; swayOffset: number; width: number; bend: number }[] = [];
+let bokehOrbs: {
+  x: number;
+  y: number;
+  r: number;
+  vy: number;
+  vx: number;
+  alpha: number;
+  t: number;
+  color: string;
+}[] = [];
+let volumetricFog: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  speed: number;
+  alpha: number;
+}[] = [];
+let grassBlades: {
+  x: number;
+  height: number;
+  swayOffset: number;
+  width: number;
+  bend: number;
+}[] = [];
 
 // UI Yerleşimleri
 const uiButtons = {
@@ -189,13 +220,22 @@ const uiButtons = {
   toggleMagnet: { x: 0, y: 0, w: 0, h: 0 },
 };
 
-const levelGridButtons: { level: number; x: number; y: number; w: number; h: number }[] = [];
+const levelGridButtons: {
+  level: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}[] = [];
 
 function layout() {
   SCALE = Math.min(W, H) / 600;
   jar.w = 110 * SCALE;
   jar.h = 110 * SCALE;
-  jar.y = Math.max(H * 0.15, Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE));
+  jar.y = Math.max(
+    H * 0.15,
+    Math.min(H - jar.h - 32 * SCALE, jar.y || H - jar.h - 32 * SCALE),
+  );
   jar.x = Math.max(0, Math.min(W - jar.w, jar.x || (W - jar.w) / 2));
 
   stars = Array.from({ length: 90 }, () => ({
@@ -206,7 +246,13 @@ function layout() {
     speed: 0.8 + Math.random() * 2,
   }));
 
-  const colors = ["hsl(52 100% 70%)", "hsl(160 100% 65%)", "hsl(200 100% 70%)", "hsl(280 100% 75%)", "hsl(350 100% 70%)"];
+  const colors = [
+    "hsl(52 100% 70%)",
+    "hsl(160 100% 65%)",
+    "hsl(200 100% 70%)",
+    "hsl(280 100% 75%)",
+    "hsl(350 100% 70%)",
+  ];
   bokehOrbs = Array.from({ length: 24 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
@@ -220,7 +266,7 @@ function layout() {
 
   volumetricFog = Array.from({ length: 5 }, (_, i) => ({
     x: (i * W) / 4 - 60 * SCALE,
-    y: H * 0.4 + (Math.random() * 0.3) * H,
+    y: H * 0.4 + Math.random() * 0.3 * H,
     w: (280 + Math.random() * 180) * SCALE,
     h: (80 + Math.random() * 40) * SCALE,
     speed: (8 + Math.random() * 12) * SCALE,
@@ -291,7 +337,13 @@ function resetStage(levelNum = currentLevel) {
 }
 
 function syncJarFireflies() {
-  const colors = ["hsl(52 100% 75%)", "hsl(150 100% 70%)", "hsl(200 100% 75%)", "hsl(280 100% 80%)", "hsl(350 100% 75%)"];
+  const colors = [
+    "hsl(52 100% 75%)",
+    "hsl(150 100% 70%)",
+    "hsl(200 100% 75%)",
+    "hsl(280 100% 80%)",
+    "hsl(350 100% 75%)",
+  ];
   while (jarFireflies.length < caught) {
     jarFireflies.push({
       rx: (Math.random() - 0.5) * 0.5,
@@ -329,14 +381,20 @@ function spawnCritter() {
       offsetY: 0,
       t: Math.random() * 10,
       amp,
-      freq: subType === "red" ? 1.1 + Math.random() * 0.5 : 0.65 + Math.random() * 0.75,
+      freq:
+        subType === "red"
+          ? 1.1 + Math.random() * 0.5
+          : 0.65 + Math.random() * 0.75,
       r: subType === "purple" ? 12 * SCALE : 10 * SCALE,
       pullAngle: Math.random() * Math.PI * 2,
     });
   } else {
     const allowed = levelCfg.allowedHazards;
-    const activeLadybugs = critters.filter((c) => c.kind === "ladybug" && !c.dead).length;
-    const canSpawnLadybug = allowed.includes("ladybug") && activeLadybugs < levelCfg.maxLadybugs;
+    const activeLadybugs = critters.filter(
+      (c) => c.kind === "ladybug" && !c.dead,
+    ).length;
+    const canSpawnLadybug =
+      allowed.includes("ladybug") && activeLadybugs < levelCfg.maxLadybugs;
 
     let kind: CritterKind = "wasp";
     if (canSpawnLadybug && Math.random() < 0.45) {
@@ -395,7 +453,11 @@ function spawnCritter() {
 }
 
 // ANİME / MANGA HIZLI KAYBOLAN ŞOK DALGASI
-function addAnimeShockwave(x: number, y: number, color = "rgba(254, 240, 138, 0.9)") {
+function addAnimeShockwave(
+  x: number,
+  y: number,
+  color = "rgba(254, 240, 138, 0.9)",
+) {
   animeShockwaves.push({
     x,
     y,
@@ -408,16 +470,21 @@ function addAnimeShockwave(x: number, y: number, color = "rgba(254, 240, 138, 0.
 }
 
 // Alev Parçacık Animasyonu (Hızlı Kaybolan Yangın Efekti)
-function spawnFlameBurnEffect(startX: number, startY: number, targetX: number, targetY: number) {
+function spawnFlameBurnEffect(
+  startX: number,
+  startY: number,
+  targetX: number,
+  targetY: number,
+) {
   const count = 28;
   for (let i = 0; i < count; i++) {
     const progress = i / count;
     const px = startX + (targetX - startX) * progress;
     const py = startY + (targetY - startY) * progress;
-    
+
     const colors = ["#ff3300", "#ff7700", "#ffcc00", "#ffffff"];
     const color = colors[Math.floor(Math.random() * colors.length)];
-    
+
     flameParticles.push({
       x: px + (Math.random() - 0.5) * 10 * SCALE,
       y: py + (Math.random() - 0.5) * 10 * SCALE,
@@ -441,12 +508,21 @@ function setPointerTarget(clientX: number, clientY: number) {
 
   pointerTarget = {
     x: Math.max(0, Math.min(W - jar.w, canvasX - jar.w / 2)),
-    y: Math.max(H * 0.12, Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.5)),
+    y: Math.max(
+      H * 0.12,
+      Math.min(H - jar.h - 15 * SCALE, canvasY - jar.h * 0.5),
+    ),
   };
 }
 
-function isInsideRect(x: number, y: number, rect: { x: number; y: number; w: number; h: number }) {
-  return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+function isInsideRect(
+  x: number,
+  y: number,
+  rect: { x: number; y: number; w: number; h: number },
+) {
+  return (
+    x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
+  );
 }
 
 function handlePointerClick(clientX: number, clientY: number) {
@@ -585,13 +661,18 @@ window.addEventListener(
     if (e.key === "Enter") {
       if (state === "levelintro") state = "playing";
       else if (state === "levelcomplete") resetStage(currentLevel + 1);
-      else if (state === "gameover" || state === "campaignwon") resetStage(state === "campaignwon" ? 1 : currentLevel);
+      else if (state === "gameover" || state === "campaignwon")
+        resetStage(state === "campaignwon" ? 1 : currentLevel);
     }
     if (e.key === "Escape") {
       if (state === "playing") {
         state = "settings";
         modalAnimTime = 0;
-      } else if (state === "settings" || state === "tutorial" || state === "levelselect") {
+      } else if (
+        state === "settings" ||
+        state === "tutorial" ||
+        state === "levelselect"
+      ) {
         state = "playing";
       }
     }
@@ -625,7 +706,7 @@ function updateJar(dt: number) {
   if (pointerTarget !== null) {
     const diffX = pointerTarget.x - jar.x;
     const diffY = pointerTarget.y - jar.y;
-    
+
     jar.x += diffX * Math.min(1, dt * 28 * speedMult);
     jar.y += diffY * Math.min(1, dt * 28 * speedMult);
 
@@ -643,8 +724,14 @@ function updateJar(dt: number) {
     if (c.kind === "spider" && c.webActive && !c.dead) {
       const spX = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
       const spY = c.y + c.offsetY;
-      const pull = calculateSpiderWebPull(spX, spY, jar.x + jar.w / 2, jar.y + jar.h / 2, 160 * SCALE);
-      
+      const pull = calculateSpiderWebPull(
+        spX,
+        spY,
+        jar.x + jar.w / 2,
+        jar.y + jar.h / 2,
+        160 * SCALE,
+      );
+
       jar.x += pull.vx * dt;
       jar.y += pull.vy * dt;
     }
@@ -714,7 +801,12 @@ function drawClockIcon(x: number, y: number, r: number, color = "#60a5fa") {
 }
 
 // SANATSAL KRİSTAL YAKUT CAN MÜCEVHERİ
-function drawCrystalHeartIcon(x: number, y: number, size: number, filled = true) {
+function drawCrystalHeartIcon(
+  x: number,
+  y: number,
+  size: number,
+  filled = true,
+) {
   ctx.save();
   ctx.translate(x, y);
 
@@ -773,7 +865,12 @@ function drawCrystalHeartIcon(x: number, y: number, size: number, filled = true)
 }
 
 // Vektör Kaçan Ateşböceği İndikatör İkonu
-function drawHUDMissedFireflyIcon(x: number, y: number, r: number, active = true) {
+function drawHUDMissedFireflyIcon(
+  x: number,
+  y: number,
+  r: number,
+  active = true,
+) {
   ctx.save();
   ctx.translate(x, y);
 
@@ -836,7 +933,12 @@ function burst(x: number, y: number, color = "hsl(52 100% 70%)", count = 18) {
   }
 }
 
-function addFloatingText(x: number, y: number, text: string, color = "#fef08a") {
+function addFloatingText(
+  x: number,
+  y: number,
+  text: string,
+  color = "#fef08a",
+) {
   floatingTexts.push({
     x,
     y,
@@ -902,7 +1004,8 @@ function update(dt: number) {
     const jarMouthX = jar.x + jar.w / 2;
     const jarMouthY = jar.y - 12 * SCALE;
     const baseRadius = highMagnet ? 175 : 140;
-    const MAGNET_RADIUS = (magnetBoostTimer > 0 ? baseRadius * 1.35 : baseRadius) * SCALE;
+    const MAGNET_RADIUS =
+      (magnetBoostTimer > 0 ? baseRadius * 1.35 : baseRadius) * SCALE;
 
     for (const c of critters) {
       c.t += dt;
@@ -910,8 +1013,9 @@ function update(dt: number) {
       if (c.kind === "ladybug") {
         c.roamAngle = (c.roamAngle || 0) + dt * 0.8;
         const roamVx = Math.cos(c.roamAngle) * (c.roamSpeed || 40 * SCALE);
-        const roamVy = Math.sin(c.roamAngle * 1.5) * (c.roamSpeed || 40 * SCALE) * 0.6;
-        
+        const roamVy =
+          Math.sin(c.roamAngle * 1.5) * (c.roamSpeed || 40 * SCALE) * 0.6;
+
         c.baseX += roamVx * dt;
         c.y += roamVy * dt;
 
@@ -935,7 +1039,13 @@ function update(dt: number) {
         }
       } else if (c.kind === "wasp") {
         c.y += fallSpeed * SCALE * dt * 1.1;
-        const { x: aggrX, extraY } = aggressiveSway(c.t, c.baseX, c.amp, c.freq, currentLevel);
+        const { x: aggrX, extraY } = aggressiveSway(
+          c.t,
+          c.baseX,
+          c.amp,
+          c.freq,
+          currentLevel,
+        );
         c.offsetX = aggrX - c.baseX;
         c.offsetY = extraY;
       } else {
@@ -959,16 +1069,28 @@ function update(dt: number) {
           c.beingPulled = true;
           c.pullAngle = (c.pullAngle || 0) + dt * 10;
 
-          const pullForce = (1 - dist / MAGNET_RADIUS) * (highMagnet ? 450 : 360) * SCALE * dt;
-          const spiralX = Math.cos(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
-          const spiralY = Math.sin(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
+          const pullForce =
+            (1 - dist / MAGNET_RADIUS) * (highMagnet ? 450 : 360) * SCALE * dt;
+          const spiralX =
+            Math.cos(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
+          const spiralY =
+            Math.sin(c.pullAngle) * 20 * SCALE * (dist / MAGNET_RADIUS);
 
           c.offsetX += (dx / dist) * pullForce + spiralX * dt * 3;
           c.offsetY += (dy / dist) * pullForce + spiralY * dt * 3;
           c.offsetY = Math.max(-25 * SCALE, c.offsetY);
 
           if (Math.random() < 0.45) {
-            const pColor = c.subType === "purple" ? "hsl(280 100% 80%)" : c.subType === "red" ? "hsl(350 100% 75%)" : c.subType === "emerald" ? "hsl(150 100% 75%)" : c.subType === "azure" ? "hsl(200 100% 80%)" : "hsl(52 100% 80%)";
+            const pColor =
+              c.subType === "purple"
+                ? "hsl(280 100% 80%)"
+                : c.subType === "red"
+                  ? "hsl(350 100% 75%)"
+                  : c.subType === "emerald"
+                    ? "hsl(150 100% 75%)"
+                    : c.subType === "azure"
+                      ? "hsl(200 100% 80%)"
+                      : "hsl(52 100% 80%)";
             particles.push({
               x: currentX,
               y: c.y + c.offsetY,
@@ -988,7 +1110,16 @@ function update(dt: number) {
       }
 
       if (c.kind === "firefly" && Math.random() < 0.38) {
-        const pColor = c.subType === "purple" ? "hsl(280 100% 80%)" : c.subType === "red" ? "hsl(350 100% 75%)" : c.subType === "emerald" ? "hsl(150 100% 70%)" : c.subType === "azure" ? "hsl(200 100% 75%)" : "hsl(54 100% 75%)";
+        const pColor =
+          c.subType === "purple"
+            ? "hsl(280 100% 80%)"
+            : c.subType === "red"
+              ? "hsl(350 100% 75%)"
+              : c.subType === "emerald"
+                ? "hsl(150 100% 70%)"
+                : c.subType === "azure"
+                  ? "hsl(200 100% 75%)"
+                  : "hsl(54 100% 75%)";
         particles.push({
           x: currentX + (Math.random() - 0.5) * 6 * SCALE,
           y: c.y + c.offsetY - 6 * SCALE,
@@ -1039,7 +1170,15 @@ function update(dt: number) {
         let pts = 1;
         let pColor = "hsl(52 100% 75%)";
 
-        addAnimeShockwave(x, y, c.subType === "purple" ? "rgba(216, 180, 254, 0.95)" : c.subType === "red" ? "rgba(252, 165, 165, 0.95)" : "rgba(254, 240, 138, 0.95)");
+        addAnimeShockwave(
+          x,
+          y,
+          c.subType === "purple"
+            ? "rgba(216, 180, 254, 0.95)"
+            : c.subType === "red"
+              ? "rgba(252, 165, 165, 0.95)"
+              : "rgba(254, 240, 138, 0.95)",
+        );
 
         if (c.subType === "purple") {
           pts = 2;
@@ -1127,7 +1266,10 @@ function update(dt: number) {
         }
       }
     }
-    critters = critters.filter((c) => !c.dead && (c.kind === "ladybug" || c.y + c.offsetY < H + 50 * SCALE));
+    critters = critters.filter(
+      (c) =>
+        !c.dead && (c.kind === "ladybug" || c.y + c.offsetY < H + 50 * SCALE),
+    );
   } else {
     modalAnimTime += dt;
   }
@@ -1254,12 +1396,22 @@ function drawBackground() {
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 3.5);
+  const moonGlow = ctx.createRadialGradient(
+    moonX,
+    moonY,
+    0,
+    moonX,
+    moonY,
+    moonR * 3.5,
+  );
   if (levelCfg.skyTheme === "bloodmoon") {
     moonGlow.addColorStop(0, "rgba(255, 100, 100, 0.45)");
     moonGlow.addColorStop(0.4, "rgba(200, 50, 50, 0.2)");
     moonGlow.addColorStop(1, "rgba(200, 0, 0, 0)");
-  } else if (levelCfg.skyTheme === "emerald" || levelCfg.skyTheme === "aurora") {
+  } else if (
+    levelCfg.skyTheme === "emerald" ||
+    levelCfg.skyTheme === "aurora"
+  ) {
     moonGlow.addColorStop(0, "rgba(160, 255, 220, 0.4)");
     moonGlow.addColorStop(0.4, "rgba(100, 220, 180, 0.18)");
     moonGlow.addColorStop(1, "rgba(100, 220, 180, 0)");
@@ -1274,7 +1426,12 @@ function drawBackground() {
   ctx.fill();
   ctx.restore();
 
-  const moonGrad = ctx.createLinearGradient(moonX - moonR, moonY - moonR, moonX + moonR, moonY + moonR);
+  const moonGrad = ctx.createLinearGradient(
+    moonX - moonR,
+    moonY - moonR,
+    moonX + moonR,
+    moonY + moonR,
+  );
   if (levelCfg.skyTheme === "bloodmoon") {
     moonGrad.addColorStop(0, "#fca5a5");
     moonGrad.addColorStop(0.7, "#ef4444");
@@ -1300,7 +1457,12 @@ function drawBackground() {
   ctx.globalCompositeOperation = "lighter";
   for (const ss of shootingStars) {
     const alpha = (ss.life / ss.maxLife) * ss.alpha;
-    const starG = ctx.createLinearGradient(ss.x, ss.y, ss.x - ss.length, ss.y - ss.length * 0.45);
+    const starG = ctx.createLinearGradient(
+      ss.x,
+      ss.y,
+      ss.x - ss.length,
+      ss.y - ss.length * 0.45,
+    );
     starG.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
     starG.addColorStop(0.4, `rgba(96, 165, 250, ${alpha * 0.6})`);
     starG.addColorStop(1, "rgba(255, 255, 255, 0)");
@@ -1354,7 +1516,12 @@ function drawBackground() {
     ctx.beginPath();
     ctx.moveTo(b.x - b.width / 2, H);
     ctx.quadraticCurveTo(b.x, H - b.height * 0.6, b.x + swayX, H - b.height);
-    ctx.quadraticCurveTo(b.x + b.width / 2, H - b.height * 0.6, b.x + b.width / 2, H);
+    ctx.quadraticCurveTo(
+      b.x + b.width / 2,
+      H - b.height * 0.6,
+      b.x + b.width / 2,
+      H,
+    );
     ctx.fill();
   }
 }
@@ -1371,7 +1538,16 @@ function drawSuctionBeams() {
       const cx = sway(c.t, c.baseX, c.amp, c.freq) + c.offsetX;
       const cy = c.y + c.offsetY;
 
-      const beamColor = c.subType === "purple" ? "280 100% 80%" : c.subType === "red" ? "350 100% 75%" : c.subType === "emerald" ? "150 100% 75%" : c.subType === "azure" ? "200 100% 80%" : "52 100% 75%";
+      const beamColor =
+        c.subType === "purple"
+          ? "280 100% 80%"
+          : c.subType === "red"
+            ? "350 100% 75%"
+            : c.subType === "emerald"
+              ? "150 100% 75%"
+              : c.subType === "azure"
+                ? "200 100% 80%"
+                : "52 100% 75%";
 
       const g = ctx.createLinearGradient(jarMouthX, jarMouthY, cx, cy);
       g.addColorStop(0, `hsl(${beamColor} / 0.7)`);
@@ -1386,7 +1562,7 @@ function drawSuctionBeams() {
       ctx.stroke();
 
       for (let i = 0; i < 3; i++) {
-        const pulse = ((elapsed * 5 + i * 0.33) % 1);
+        const pulse = (elapsed * 5 + i * 0.33) % 1;
         const hx = jarMouthX + (cx - jarMouthX) * pulse;
         const hy = jarMouthY + (cy - jarMouthY) * pulse;
         const hr = (4 + pulse * 14) * SCALE;
@@ -1422,7 +1598,15 @@ function drawSuctionBeams() {
   ctx.restore();
 }
 
-function drawFirefly(x: number, y: number, r: number, t: number, amp: number, freq: number, subType: FireflySubtype = "gold") {
+function drawFirefly(
+  x: number,
+  y: number,
+  r: number,
+  t: number,
+  amp: number,
+  freq: number,
+  subType: FireflySubtype = "gold",
+) {
   ctx.save();
 
   const vx = swayVel(t, amp, freq);
@@ -1491,36 +1675,92 @@ function drawFirefly(x: number, y: number, r: number, t: number, amp: number, fr
   ctx.stroke();
   ctx.restore();
 
-  ctx.fillStyle = coreColor;
+  // GÖVDE — gerçek bir ateşböceği (Lampyridae): tepede baş kalkanı (pronotum),
+  // koyu kanat kınları (elytra), altta biyolüminesan parlayan karın.
+  // Antenler (baş, en üstte)
+  ctx.strokeStyle = "#0d0b09";
+  ctx.lineWidth = 0.9 * SCALE;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.ellipse(0, -r * 0.4, r * 0.52, r * 0.68, 0, 0, Math.PI * 2);
+  ctx.moveTo(-r * 0.12, -r * 0.92);
+  ctx.quadraticCurveTo(-r * 0.5, -r * 1.35, -r * 0.62, -r * 1.55);
+  ctx.moveTo(r * 0.12, -r * 0.92);
+  ctx.quadraticCurveTo(r * 0.5, -r * 1.35, r * 0.62, -r * 1.55);
+  ctx.stroke();
+
+  // Kanat kınları (elytra) — koyu, hafif oval gövde
+  const elytra = ctx.createLinearGradient(-r * 0.55, 0, r * 0.55, 0);
+  elytra.addColorStop(0, "#050403");
+  elytra.addColorStop(0.5, "#221b14");
+  elytra.addColorStop(1, "#050403");
+  ctx.fillStyle = elytra;
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.05, r * 0.52, r * 0.98, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // orta dikiş
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 0.7 * SCALE;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.55);
+  ctx.lineTo(0, r * 0.85);
+  ctx.stroke();
+
+  // Pronotum (baş kalkanı) — türe göre sıcak renk, karakteristik ateşböceği detayı
+  const shieldHue =
+    subType === "red"
+      ? "12 90% 55%"
+      : subType === "purple"
+        ? "300 70% 62%"
+        : subType === "emerald"
+          ? "150 70% 50%"
+          : subType === "azure"
+            ? "200 80% 58%"
+            : "28 95% 58%";
+  ctx.fillStyle = `hsl(${shieldHue})`;
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.72, r * 0.46, r * 0.36, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.35)"; // kalkan ortasındaki koyu leke
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.72, r * 0.18, r * 0.2, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Parlayan karın ucu (alt) — asıl ışık kaynağı, biyolüminesans
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const lantern = ctx.createRadialGradient(
+    0,
+    r * 0.62,
+    0,
+    0,
+    r * 0.62,
+    r * 0.85,
+  );
+  lantern.addColorStop(0, coreColor);
+  lantern.addColorStop(0.55, `hsl(${auraHue} / 0.8)`);
+  lantern.addColorStop(1, `hsl(${outerHue} / 0)`);
+  ctx.fillStyle = lantern;
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.6, r * 0.44, r * 0.56, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // sıcak çekirdek
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.ellipse(0, -r * 0.35, r * 0.28, r * 0.38, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, r * 0.58, r * 0.16, r * 0.22, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = "#1e1b18";
-  ctx.beginPath();
-  ctx.arc(0, r * 0.2, r * 0.45, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#0f0d0b";
-  ctx.beginPath();
-  ctx.arc(0, r * 0.65, r * 0.32, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(-r * 0.12, r * 0.72, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(r * 0.12, r * 0.72, r * 0.09, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.restore();
 
   ctx.restore();
 }
 
-function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq: number) {
+function drawWasp(
+  x: number,
+  y: number,
+  r: number,
+  t: number,
+  amp: number,
+  freq: number,
+) {
   ctx.save();
 
   const vx = swayVel(t, amp, freq);
@@ -1528,104 +1768,200 @@ function drawWasp(x: number, y: number, r: number, t: number, amp: number, freq:
 
   ctx.translate(x, y);
   ctx.rotate(tilt * 0.45);
+  // uçuş yönü aşağı: baş altta (+y), iğneli karın yukarıda geride
 
+  // Tehlike aurası — dar ve sıcak, panik kırmızısı değil
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  const hazardGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.8);
-  hazardGlow.addColorStop(0, "rgba(255, 60, 0, 0.35)");
-  hazardGlow.addColorStop(0.5, "rgba(255, 120, 0, 0.15)");
-  hazardGlow.addColorStop(1, "rgba(255, 0, 0, 0)");
+  const hazardGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
+  hazardGlow.addColorStop(0, "rgba(255, 140, 30, 0.22)");
+  hazardGlow.addColorStop(0.6, "rgba(255, 90, 20, 0.08)");
+  hazardGlow.addColorStop(1, "rgba(255, 60, 0, 0)");
   ctx.fillStyle = hazardGlow;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 2.8, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  const wingFlutter = Math.sin(t * 48) * 0.5;
-  ctx.fillStyle = "rgba(200, 230, 255, 0.45)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
-  ctx.lineWidth = 1 * SCALE;
+  // KANATLAR — göğüsten çıkar, hafif geriye süpürülmüş; hayalet kopyalar
+  // motion-blur hissi verir (gerçek arı kanadı görünmeyecek kadar hızlıdır)
+  const flap = Math.sin(t * 52);
+  for (let ghost = 2; ghost >= 0; ghost--) {
+    const gFlap = Math.sin(t * 52 - ghost * 0.9);
+    const alpha = ghost === 0 ? 0.5 : 0.14;
+    ctx.fillStyle = `rgba(215, 235, 255, ${alpha})`;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${ghost === 0 ? 0.55 : 0.12})`;
+    ctx.lineWidth = 0.8 * SCALE;
+    for (const side of [-1, 1]) {
+      ctx.save();
+      ctx.translate(side * r * 0.3, -r * 0.1); // kanat kökü: göğüs omzu
+      ctx.rotate(side * (0.9 + gFlap * 0.55)); // çırpış
+      ctx.beginPath();
+      ctx.ellipse(
+        side * r * 0.85,
+        -r * 0.15,
+        r * 1.05,
+        r * 0.34,
+        side * 0.25,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+      if (ghost === 0) ctx.stroke();
+      ctx.restore();
+    }
+  }
 
-  ctx.save();
-  ctx.rotate(-0.5 - wingFlutter);
-  ctx.beginPath();
-  ctx.ellipse(-r * 1.15, 0, r * 1.35, r * 0.5, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+  // BACAKLAR — göğüsten geriye (yukarı) süpürülmüş üç çift, uçuş pozu
+  ctx.strokeStyle = "#171310";
+  ctx.lineWidth = 1.1 * SCALE;
+  ctx.lineCap = "round";
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * r * 0.3, r * 0.1);
+    ctx.quadraticCurveTo(side * r * 0.75, r * 0.05, side * r * 1.0, -r * 0.35);
+    ctx.moveTo(side * r * 0.32, r * 0.28);
+    ctx.quadraticCurveTo(side * r * 0.8, r * 0.3, side * r * 1.08, -r * 0.05);
+    ctx.moveTo(side * r * 0.3, r * 0.45);
+    ctx.quadraticCurveTo(side * r * 0.72, r * 0.62, side * r * 0.95, r * 0.35);
+    ctx.stroke();
+  }
 
-  ctx.save();
-  ctx.rotate(0.5 + wingFlutter);
+  // KARIN (abdomen) — geride, damla formu; ucunda sivri iğne
+  // iğne: karın ucundan çıkan koyu iğne
+  ctx.fillStyle = "#0c0a08";
   ctx.beginPath();
-  ctx.ellipse(r * 1.15, 0, r * 1.35, r * 0.5, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.fillStyle = "#0f0d0a";
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.25, -r * 1.35);
-  ctx.lineTo(r * 0.25, -r * 1.35);
-  ctx.lineTo(0, -r * 1.9);
+  ctx.moveTo(-r * 0.09, -r * 1.52);
+  ctx.lineTo(r * 0.09, -r * 1.52);
+  ctx.lineTo(0, -r * 1.95);
   ctx.closePath();
   ctx.fill();
 
   ctx.save();
+  // damla gövde: belde dar, ortada geniş, iğneye doğru sivrilir
   ctx.beginPath();
-  ctx.ellipse(0, -r * 0.35, r * 0.92, r * 1.1, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "#facc15";
+  ctx.moveTo(0, -r * 1.55);
+  ctx.bezierCurveTo(
+    -r * 0.55,
+    -r * 1.35,
+    -r * 0.62,
+    -r * 0.72,
+    -r * 0.3,
+    -r * 0.18,
+  );
+  ctx.quadraticCurveTo(0, -r * 0.02, r * 0.3, -r * 0.18);
+  ctx.bezierCurveTo(r * 0.62, -r * 0.72, r * 0.55, -r * 1.35, 0, -r * 1.55);
+  ctx.closePath();
+  const abdomenG = ctx.createLinearGradient(-r * 0.6, 0, r * 0.6, 0);
+  abdomenG.addColorStop(0, "#b8860b");
+  abdomenG.addColorStop(0.45, "#fbbf24");
+  abdomenG.addColorStop(0.55, "#fcd34d");
+  abdomenG.addColorStop(1, "#92600a");
+  ctx.fillStyle = abdomenG;
   ctx.fill();
   ctx.clip();
 
-  ctx.fillStyle = "#14110f";
-  const bH = r * 0.42;
-  ctx.fillRect(-r * 1.2, -r * 0.8, r * 2.4, bH);
-  ctx.fillRect(-r * 1.2, -r * 0.15, r * 2.4, bH);
-  ctx.fillRect(-r * 1.2, r * 0.6, r * 2.4, bH);
+  // şeritler: karına saran hafif kavisli koyu bantlar
+  ctx.fillStyle = "#181310";
+  for (const sy of [-1.38, -0.98, -0.58]) {
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.7, sy * r);
+    ctx.quadraticCurveTo(0, sy * r + r * 0.16, r * 0.7, sy * r);
+    ctx.lineTo(r * 0.7, sy * r + r * 0.22);
+    ctx.quadraticCurveTo(0, sy * r + r * 0.38, -r * 0.7, sy * r + r * 0.22);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // sırt parlaması
+  ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.22, -r * 0.95, r * 0.14, r * 0.5, 0.15, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 
-  ctx.fillStyle = "#26201a";
+  // GÖĞÜS (thorax) — tüylü koyu blok, bel boğumu belirgin
+  const thoraxG = ctx.createRadialGradient(
+    -r * 0.15,
+    r * 0.08,
+    0,
+    0,
+    r * 0.18,
+    r * 0.62,
+  );
+  thoraxG.addColorStop(0, "#3a2f24");
+  thoraxG.addColorStop(0.7, "#1c1611");
+  thoraxG.addColorStop(1, "#0e0b08");
+  ctx.fillStyle = thoraxG;
   ctx.beginPath();
-  ctx.arc(0, r * 0.35, r * 0.68, 0, Math.PI * 2);
+  ctx.ellipse(0, r * 0.2, r * 0.48, r * 0.44, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#14110f";
+  // BAŞ — önde (altta); yanlarda iri petek gözler, önde anten çifti
+  ctx.fillStyle = "#151009";
   ctx.beginPath();
-  ctx.arc(0, r * 0.75, r * 0.45, 0, Math.PI * 2);
+  ctx.arc(0, r * 0.82, r * 0.3, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#ef4444";
-  ctx.beginPath();
-  ctx.arc(-r * 0.22, r * 0.82, r * 0.16, 0, Math.PI * 2);
-  ctx.arc(r * 0.22, r * 0.82, r * 0.16, 0, Math.PI * 2);
-  ctx.fill();
+  // petek gözler: başın YANLARINDA, iri ve badem formlu (karikatür göz değil)
+  for (const side of [-1, 1]) {
+    const eyeG = ctx.createLinearGradient(
+      side * r * 0.1,
+      r * 0.6,
+      side * r * 0.4,
+      r * 1.0,
+    );
+    eyeG.addColorStop(0, "#4a1508");
+    eyeG.addColorStop(0.5, "#7a2410");
+    eyeG.addColorStop(1, "#300d05");
+    ctx.fillStyle = eyeG;
+    ctx.beginPath();
+    ctx.ellipse(
+      side * r * 0.24,
+      r * 0.8,
+      r * 0.13,
+      r * 0.24,
+      side * 0.5,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    // tek ışık noktası — cam gibi
+    ctx.fillStyle = "rgba(255, 220, 180, 0.55)";
+    ctx.beginPath();
+    ctx.arc(side * r * 0.2, r * 0.72, r * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  ctx.fillStyle = "#ffffff";
+  // antenler: baştan öne (aşağı) kavisli, dirsekli
+  ctx.strokeStyle = "#0c0a08";
+  ctx.lineWidth = 1 * SCALE;
   ctx.beginPath();
-  ctx.arc(-r * 0.24, r * 0.86, r * 0.06, 0, Math.PI * 2);
-  ctx.arc(r * 0.2, r * 0.86, r * 0.06, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "#14110f";
-  ctx.lineWidth = 1.8 * SCALE;
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.2, r * 0.8);
-  ctx.quadraticCurveTo(-r * 0.6, r * 1.4, -r * 0.75, r * 1.6);
-  ctx.moveTo(r * 0.2, r * 0.8);
-  ctx.quadraticCurveTo(r * 0.6, r * 1.4, r * 0.75, r * 1.6);
+  ctx.moveTo(-r * 0.1, r * 1.05);
+  ctx.quadraticCurveTo(-r * 0.35, r * 1.35, -r * 0.62, r * 1.42);
+  ctx.moveTo(r * 0.1, r * 1.05);
+  ctx.quadraticCurveTo(r * 0.35, r * 1.35, r * 0.62, r * 1.42);
   ctx.stroke();
 
   ctx.restore();
 }
 
-function drawSpider(x: number, y: number, r: number, t: number, webActive = false) {
+function drawSpider(
+  x: number,
+  y: number,
+  r: number,
+  t: number,
+  webActive = false,
+) {
   ctx.save();
   ctx.translate(x, y);
 
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3.2);
-  g.addColorStop(0, webActive ? "rgba(232, 121, 249, 0.75)" : "rgba(168, 85, 247, 0.35)");
+  g.addColorStop(
+    0,
+    webActive ? "rgba(232, 121, 249, 0.75)" : "rgba(168, 85, 247, 0.35)",
+  );
   g.addColorStop(0.5, "rgba(126, 34, 206, 0.18)");
   g.addColorStop(1, "rgba(0, 0, 0, 0)");
   ctx.fillStyle = g;
@@ -1640,7 +1976,7 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
 
   for (let i = 0; i < 4; i++) {
     const legAngle = -0.7 + i * 0.45 + Math.sin(t * 4 + i) * 0.08;
-    
+
     ctx.save();
     ctx.rotate(legAngle);
     ctx.beginPath();
@@ -1648,7 +1984,7 @@ function drawSpider(x: number, y: number, r: number, t: number, webActive = fals
     ctx.lineTo(-r * 1.3, -r * 0.9);
     ctx.lineTo(-r * 2.3, r * 0.6);
     ctx.stroke();
-    
+
     ctx.fillStyle = "#e879f9";
     ctx.beginPath();
     ctx.arc(-r * 1.3, -r * 0.9, 2.2 * SCALE, 0, Math.PI * 2);
@@ -1801,7 +2137,13 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
     ctx.beginPath();
-    ctx.arc(sp.x - sp.spotR * 0.25, sp.y - sp.spotR * 0.25, sp.spotR * 0.35, 0, Math.PI * 2);
+    ctx.arc(
+      sp.x - sp.spotR * 0.25,
+      sp.y - sp.spotR * 0.25,
+      sp.spotR * 0.35,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
   }
 
@@ -1878,7 +2220,12 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
   ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
   ctx.moveTo(-corkW * 0.4, corkY + 5 * SCALE);
-  ctx.quadraticCurveTo(-corkW * 0.1, corkY + 7 * SCALE, corkW * 0.35, corkY + 4 * SCALE);
+  ctx.quadraticCurveTo(
+    -corkW * 0.1,
+    corkY + 7 * SCALE,
+    corkW * 0.35,
+    corkY + 4 * SCALE,
+  );
   ctx.moveTo(-corkW * 0.3, corkY + 11 * SCALE);
   ctx.quadraticCurveTo(0, corkY + 10 * SCALE, corkW * 0.4, corkY + 12 * SCALE);
   ctx.stroke();
@@ -1887,7 +2234,13 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
 
   ctx.fillStyle = "rgba(255, 240, 215, 0.32)";
   ctx.beginPath();
-  ctx.roundRect(-corkW / 2 + 2 * SCALE, corkY + 1.2 * SCALE, corkW - 4 * SCALE, 3.2 * SCALE, 2 * SCALE);
+  ctx.roundRect(
+    -corkW / 2 + 2 * SCALE,
+    corkY + 1.2 * SCALE,
+    corkW - 4 * SCALE,
+    3.2 * SCALE,
+    2 * SCALE,
+  );
   ctx.fill();
 
   ctx.restore();
@@ -1908,7 +2261,14 @@ function drawJar() {
     const breezeAlpha = Math.min(1, speedBoostTimer / 1.2) * 0.35;
     const breezeR = w * 0.75;
 
-    const breezeG = ctx.createRadialGradient(0, -h * 0.5, 0, 0, -h * 0.5, breezeR);
+    const breezeG = ctx.createRadialGradient(
+      0,
+      -h * 0.5,
+      0,
+      0,
+      -h * 0.5,
+      breezeR,
+    );
     breezeG.addColorStop(0, `rgba(125, 211, 252, ${breezeAlpha})`);
     breezeG.addColorStop(0.6, `rgba(56, 189, 248, ${breezeAlpha * 0.4})`);
     breezeG.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -1925,7 +2285,14 @@ function drawJar() {
     ctx.globalCompositeOperation = "lighter";
     const pulseGlow = 0.85 + 0.15 * Math.sin(elapsed * 3.5);
     const glowR = w * 0.85 * pulseGlow;
-    const fillGlow = ctx.createRadialGradient(0, -h * 0.45, 0, 0, -h * 0.45, glowR);
+    const fillGlow = ctx.createRadialGradient(
+      0,
+      -h * 0.45,
+      0,
+      0,
+      -h * 0.45,
+      glowR,
+    );
     fillGlow.addColorStop(0, `hsl(52 100% 75% / ${0.2 + glow * 0.55})`);
     fillGlow.addColorStop(0.45, `hsl(45 100% 65% / ${glow * 0.25})`);
     fillGlow.addColorStop(0.8, `hsl(40 100% 55% / ${glow * 0.08})`);
@@ -1942,7 +2309,13 @@ function drawJar() {
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.75})`;
     ctx.beginPath();
-    ctx.roundRect(-w / 2 - 6 * SCALE, -h - 12 * SCALE, w + 12 * SCALE, h + 16 * SCALE, 16 * SCALE);
+    ctx.roundRect(
+      -w / 2 - 6 * SCALE,
+      -h - 12 * SCALE,
+      w + 12 * SCALE,
+      h + 16 * SCALE,
+      16 * SCALE,
+    );
     ctx.fill();
     ctx.restore();
   }
@@ -1986,7 +2359,13 @@ function drawJar() {
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(-w / 2 + 3 * SCALE, -h + 3 * SCALE, w - 6 * SCALE, h - 6 * SCALE, 13 * SCALE);
+    ctx.roundRect(
+      -w / 2 + 3 * SCALE,
+      -h + 3 * SCALE,
+      w - 6 * SCALE,
+      h - 6 * SCALE,
+      13 * SCALE,
+    );
     ctx.clip();
 
     const liquidH = h * 0.72 * glow;
@@ -1999,7 +2378,12 @@ function drawJar() {
     ctx.beginPath();
     ctx.moveTo(-w / 2 - 10 * SCALE, 0);
     ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + wave2);
-    ctx.quadraticCurveTo(0, liquidY - wave2, w / 2 + 10 * SCALE, liquidY + wave2);
+    ctx.quadraticCurveTo(
+      0,
+      liquidY - wave2,
+      w / 2 + 10 * SCALE,
+      liquidY + wave2,
+    );
     ctx.lineTo(w / 2 + 10 * SCALE, 0);
     ctx.closePath();
     ctx.fill();
@@ -2012,7 +2396,12 @@ function drawJar() {
     ctx.beginPath();
     ctx.moveTo(-w / 2 - 10 * SCALE, 0);
     ctx.lineTo(-w / 2 - 10 * SCALE, liquidY + wave1);
-    ctx.quadraticCurveTo(0, liquidY - wave1, w / 2 + 10 * SCALE, liquidY + wave1);
+    ctx.quadraticCurveTo(
+      0,
+      liquidY - wave1,
+      w / 2 + 10 * SCALE,
+      liquidY + wave1,
+    );
     ctx.lineTo(w / 2 + 10 * SCALE, 0);
     ctx.closePath();
     ctx.fill();
@@ -2021,7 +2410,12 @@ function drawJar() {
     ctx.lineWidth = 1.8 * SCALE;
     ctx.beginPath();
     ctx.moveTo(-w / 2 + 4 * SCALE, liquidY + wave1);
-    ctx.quadraticCurveTo(0, liquidY - wave1, w / 2 - 4 * SCALE, liquidY + wave1);
+    ctx.quadraticCurveTo(
+      0,
+      liquidY - wave1,
+      w / 2 - 4 * SCALE,
+      liquidY + wave1,
+    );
     ctx.stroke();
 
     ctx.restore();
@@ -2097,7 +2491,11 @@ function drawHUD() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
   ctx.font = `900 ${17 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${currentLevel}/10`, lvlX + lvlW / 2, lvlY + lvlH / 2 + 1 * SCALE);
+  ctx.fillText(
+    `${currentLevel}/10`,
+    lvlX + lvlW / 2,
+    lvlY + lvlH / 2 + 1 * SCALE,
+  );
 
   // 2. Orta-Üst: KRİSTAL CAN MÜCEVHERİ & SADECE RAKAM CAN & VEKTÖR ATEŞBÖCEKLERİ
   const hudCenterW = 200 * SCALE;
@@ -2113,19 +2511,33 @@ function drawHUD() {
   ctx.stroke();
 
   // Kristal Yakut Can Mücevheri İkonu & SADECE RAKAM CAN
-  drawCrystalHeartIcon(hudCenterX + 22 * SCALE, hudCenterY + lvlH / 2, 10 * SCALE, true);
+  drawCrystalHeartIcon(
+    hudCenterX + 22 * SCALE,
+    hudCenterY + lvlH / 2,
+    10 * SCALE,
+    true,
+  );
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${18 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${lives}`, hudCenterX + 40 * SCALE, hudCenterY + lvlH / 2 + 1 * SCALE);
+  ctx.fillText(
+    `${lives}`,
+    hudCenterX + 40 * SCALE,
+    hudCenterY + lvlH / 2 + 1 * SCALE,
+  );
 
   // Kaçan Ateşböcekleri Vektör İkonları (Tek Tek Eksilen 3 Slot)
   const missStartX = hudCenterX + 110 * SCALE;
   for (let i = 0; i < 3; i++) {
     const isMissed = i < missed;
-    drawHUDMissedFireflyIcon(missStartX + i * 24 * SCALE, hudCenterY + lvlH / 2, 6 * SCALE, !isMissed);
+    drawHUDMissedFireflyIcon(
+      missStartX + i * 24 * SCALE,
+      hudCenterY + lvlH / 2,
+      6 * SCALE,
+      !isMissed,
+    );
   }
 
   // 3. Sağ Üst: Süre & Ayarlar Butonu
@@ -2156,13 +2568,22 @@ function drawHUD() {
   ctx.fill();
   ctx.stroke();
 
-  drawClockIcon(timerX + 18 * SCALE, timerY + btnSize / 2, 8 * SCALE, "#60a5fa");
+  drawClockIcon(
+    timerX + 18 * SCALE,
+    timerY + btnSize / 2,
+    8 * SCALE,
+    "#60a5fa",
+  );
 
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
   ctx.font = `900 ${15 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 32 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
+  ctx.fillText(
+    `${elapsed.toFixed(1)}s`,
+    timerX + 32 * SCALE,
+    timerY + btnSize / 2 + 1 * SCALE,
+  );
 
   ctx.restore();
 }
@@ -2207,7 +2628,11 @@ function drawLevelIntroModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#60a5fa";
   ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`BÖLÜM ${levelCfg.level} / 10`, W / 2, badgeY + badgeH / 2 + 1 * SCALE);
+  ctx.fillText(
+    `BÖLÜM ${levelCfg.level} / 10`,
+    W / 2,
+    badgeY + badgeH / 2 + 1 * SCALE,
+  );
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
@@ -2216,18 +2641,35 @@ function drawLevelIntroModal() {
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`Hedef: ${levelCfg.target} Ateşböceği`, W / 2, cardY + 120 * SCALE);
+  ctx.fillText(
+    `Hedef: ${levelCfg.target} Ateşböceği`,
+    W / 2,
+    cardY + 120 * SCALE,
+  );
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
   ctx.beginPath();
-  ctx.roundRect(cardX + 32 * SCALE, cardY + 160 * SCALE, cardW - 64 * SCALE, 68 * SCALE, 16 * SCALE);
+  ctx.roundRect(
+    cardX + 32 * SCALE,
+    cardY + 160 * SCALE,
+    cardW - 64 * SCALE,
+    68 * SCALE,
+    16 * SCALE,
+  );
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#e2e8f0";
   ctx.font = `500 ${14 * SCALE}px 'Outfit', sans-serif`;
-  drawWrappedText(ctx, levelCfg.description, cardX + 44 * SCALE, cardY + 185 * SCALE, cardW - 88 * SCALE, 20 * SCALE);
+  drawWrappedText(
+    ctx,
+    levelCfg.description,
+    cardX + 44 * SCALE,
+    cardY + 185 * SCALE,
+    cardW - 88 * SCALE,
+    20 * SCALE,
+  );
 
   const btnW = Math.min(cardW - 80 * SCALE, 320 * SCALE);
   const btnH = 50 * SCALE;
@@ -2260,7 +2702,7 @@ function drawLevelSelectModal() {
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 540 * SCALE);
+  const cardH = Math.min(H * 0.9, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
@@ -2321,7 +2763,9 @@ function drawLevelSelectModal() {
 
     const isCurrent = lvl.level === currentLevel;
 
-    ctx.fillStyle = isCurrent ? "rgba(37, 99, 235, 0.35)" : "rgba(30, 41, 59, 0.5)";
+    ctx.fillStyle = isCurrent
+      ? "rgba(37, 99, 235, 0.35)"
+      : "rgba(30, 41, 59, 0.5)";
     ctx.strokeStyle = isCurrent ? "#60a5fa" : "rgba(255, 255, 255, 0.12)";
     ctx.lineWidth = (isCurrent ? 2 : 1.2) * SCALE;
     ctx.beginPath();
@@ -2343,9 +2787,17 @@ function drawLevelSelectModal() {
     ctx.font = `500 ${9.5 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(`Hedef: ${lvl.target}`, bx + colW / 2, by + 68 * SCALE);
 
-    ctx.fillStyle = lvl.allowedHazards.includes("spider") ? "#c084fc" : lvl.allowedHazards.includes("ladybug") ? "#f43f5e" : "#facc15";
+    ctx.fillStyle = lvl.allowedHazards.includes("spider")
+      ? "#c084fc"
+      : lvl.allowedHazards.includes("ladybug")
+        ? "#f43f5e"
+        : "#facc15";
     ctx.font = `700 ${9 * SCALE}px 'Outfit', sans-serif`;
-    ctx.fillText(lvl.allowedHazards.length > 1 ? "ÖZEL BÖCEKLER" : "ARI", bx + colW / 2, by + 115 * SCALE);
+    ctx.fillText(
+      lvl.allowedHazards.length > 1 ? "ÖZEL BÖCEKLER" : "ARI",
+      bx + colW / 2,
+      by + 115 * SCALE,
+    );
   }
 
   const btnW = Math.min(cardW - 80 * SCALE, 320 * SCALE);
@@ -2384,11 +2836,13 @@ function drawModalCard(
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 540 * SCALE);
+  const cardH = Math.min(H * 0.9, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
-  const borderColor = isWin ? "rgba(250, 204, 21, 0.45)" : "rgba(239, 68, 68, 0.45)";
+  const borderColor = isWin
+    ? "rgba(250, 204, 21, 0.45)"
+    : "rgba(239, 68, 68, 0.45)";
   const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
   cardGrad.addColorStop(0, "rgba(15, 23, 42, 0.97)");
   cardGrad.addColorStop(1, "rgba(10, 15, 28, 0.99)");
@@ -2409,11 +2863,30 @@ function drawModalCard(
   drawJar();
   ctx.restore();
 
-  drawFirefly(cardX + cardW - 60 * SCALE, cardY + 55 * SCALE, 9 * SCALE, elapsed, 0, 0, "purple");
+  drawFirefly(
+    cardX + cardW - 60 * SCALE,
+    cardY + 55 * SCALE,
+    9 * SCALE,
+    elapsed,
+    0,
+    0,
+    "purple",
+  );
   if (!isWin) {
-    drawSpider(cardX + cardW - 110 * SCALE, cardY + 80 * SCALE, 12 * SCALE, elapsed, true);
+    drawSpider(
+      cardX + cardW - 110 * SCALE,
+      cardY + 80 * SCALE,
+      12 * SCALE,
+      elapsed,
+      true,
+    );
   } else {
-    drawLadybug(cardX + cardW - 115 * SCALE, cardY + 80 * SCALE, 10 * SCALE, elapsed);
+    drawLadybug(
+      cardX + cardW - 115 * SCALE,
+      cardY + 80 * SCALE,
+      10 * SCALE,
+      elapsed,
+    );
   }
 
   const badgeW = 200 * SCALE;
@@ -2421,8 +2894,12 @@ function drawModalCard(
   const badgeX = (W - badgeW) / 2;
   const badgeY = cardY + 24 * SCALE;
 
-  ctx.fillStyle = isWin ? "rgba(250, 204, 21, 0.15)" : "rgba(239, 68, 68, 0.15)";
-  ctx.strokeStyle = isWin ? "rgba(250, 204, 21, 0.5)" : "rgba(239, 68, 68, 0.5)";
+  ctx.fillStyle = isWin
+    ? "rgba(250, 204, 21, 0.15)"
+    : "rgba(239, 68, 68, 0.15)";
+  ctx.strokeStyle = isWin
+    ? "rgba(250, 204, 21, 0.5)"
+    : "rgba(239, 68, 68, 0.5)";
   ctx.lineWidth = 1.2 * SCALE;
   ctx.beginPath();
   ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 16 * SCALE);
@@ -2449,23 +2926,68 @@ function drawModalCard(
 
   const stats = isWin
     ? [
-        { label: "BÖLÜM HEDEFİ", targetVal: caught, total: levelCfg.target, unit: "100% Tamam", color: "#fef08a", type: "ratio" },
-        { label: "BÖLÜM SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: lives, total: 3, unit: "Can Hakları", color: "#ef4444", type: "ratio" },
+        {
+          label: "BÖLÜM HEDEFİ",
+          targetVal: caught,
+          total: levelCfg.target,
+          unit: "100% Tamam",
+          color: "#fef08a",
+          type: "ratio",
+        },
+        {
+          label: "BÖLÜM SÜRESİ",
+          targetVal: finalTime,
+          total: 0,
+          unit: "Saniye",
+          color: "#60a5fa",
+          type: "time",
+        },
+        {
+          label: "KALAN CAN",
+          targetVal: lives,
+          total: 3,
+          unit: "Can Hakları",
+          color: "#ef4444",
+          type: "ratio",
+        },
       ]
     : [
-        { label: "TOPLANAN IŞIK", targetVal: caught, total: levelCfg.target, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
-        { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: 0, total: 3, unit: "Tükendi", color: "#f87171", type: "ratio" },
+        {
+          label: "TOPLANAN IŞIK",
+          targetVal: caught,
+          total: levelCfg.target,
+          unit: "Ateşböceği",
+          color: "#fef08a",
+          type: "ratio",
+        },
+        {
+          label: "GEÇEN SÜRE",
+          targetVal: finalTime,
+          total: 0,
+          unit: "Saniye",
+          color: "#60a5fa",
+          type: "time",
+        },
+        {
+          label: "KALAN CAN",
+          targetVal: 0,
+          total: 3,
+          unit: "Tükendi",
+          color: "#f87171",
+          type: "ratio",
+        },
       ];
 
   for (let i = 0; i < 3; i++) {
     const cx = gridX + i * (colW + 12 * SCALE);
     const s = stats[i];
 
-    const cardDelay = i * 0.20;
-    const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.35));
-    const cardScale = 0.7 + 0.3 * Math.sin(cardProgress * Math.PI / 2);
+    const cardDelay = i * 0.2;
+    const cardProgress = Math.max(
+      0,
+      Math.min(1, (modalAnimTime - cardDelay) / 0.35),
+    );
+    const cardScale = 0.7 + 0.3 * Math.sin((cardProgress * Math.PI) / 2);
 
     ctx.save();
     ctx.globalAlpha = cardProgress;
@@ -2506,7 +3028,7 @@ function drawModalCard(
 
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
-    ? `${levelCfg.name} tamamlandı! ${currentLevel < 10 ? 'Sonraki seviyeye geçmeye hazırsın.' : 'Tüm 10 bölümü başardın!'}`
+    ? `${levelCfg.name} tamamlandı! ${currentLevel < 10 ? "Sonraki seviyeye geçmeye hazırsın." : "Tüm 10 bölümü başardın!"}`
     : "Tüm canların tükendi. Tekrar deneyerek bu bölümü geç!";
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
@@ -2556,7 +3078,7 @@ function drawTutorialModal() {
   ctx.fillRect(0, 0, W, H);
 
   const cardW = Math.min(W * 0.94, 680 * SCALE);
-  const cardH = Math.min(H * 0.90, 540 * SCALE);
+  const cardH = Math.min(H * 0.9, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
 
@@ -2604,10 +3126,30 @@ function drawTutorialModal() {
   const rowH = 150 * SCALE;
 
   const rules = [
-    { drawIcon: (x: number, y: number) => drawSpider(x, y, 11 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK (-1 CAN)", desc: "Örümcek veya Uğur böceği çarptığında DİREKT 1 CAN eksilir!" },
-    { drawIcon: (x: number, y: number) => drawWasp(x, y, 10 * SCALE, elapsed, 0, 0), title: "TEHLİKELİ ARI (-1 / -1 CAN)", desc: "Ateşböceğin varsa -1 eksiltir, 0 ateşböceğinde ise 1 CAN götürür!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Sadece Kızıl Yakut ateşböceği Örümceğin ipek ağını anında yakar!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
+    {
+      drawIcon: (x: number, y: number) =>
+        drawSpider(x, y, 11 * SCALE, elapsed, true),
+      title: "AVCI ÖRÜMCEK (-1 CAN)",
+      desc: "Örümcek veya Uğur böceği çarptığında DİREKT 1 CAN eksilir!",
+    },
+    {
+      drawIcon: (x: number, y: number) =>
+        drawWasp(x, y, 10 * SCALE, elapsed, 0, 0),
+      title: "TEHLİKELİ ARI (-1 / -1 CAN)",
+      desc: "Ateşböceğin varsa -1 eksiltir, 0 ateşböceğinde ise 1 CAN götürür!",
+    },
+    {
+      drawIcon: (x: number, y: number) =>
+        drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"),
+      title: "KIZIL YAKUT (AĞ KIRAN)",
+      desc: "Sadece Kızıl Yakut ateşböceği Örümceğin ipek ağını anında yakar!",
+    },
+    {
+      drawIcon: (x: number, y: number) =>
+        drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"),
+      title: "MOR MİSTİK (+2 IŞIK)",
+      desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır.",
+    },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -2618,7 +3160,10 @@ function drawTutorialModal() {
     const r = rules[i];
 
     const cardDelay = i * 0.15;
-    const cardProgress = Math.max(0, Math.min(1, (modalAnimTime - cardDelay) / 0.3));
+    const cardProgress = Math.max(
+      0,
+      Math.min(1, (modalAnimTime - cardDelay) / 0.3),
+    );
 
     ctx.save();
     ctx.globalAlpha = cardProgress;
@@ -2641,7 +3186,14 @@ function drawTutorialModal() {
 
     ctx.fillStyle = "#94a3b8";
     ctx.font = `400 ${13 * SCALE}px 'Outfit', sans-serif`;
-    drawWrappedText(ctx, r.desc, cx + 22 * SCALE, cy + 62 * SCALE, colW - 44 * SCALE, 18 * SCALE);
+    drawWrappedText(
+      ctx,
+      r.desc,
+      cx + 22 * SCALE,
+      cy + 62 * SCALE,
+      colW - 44 * SCALE,
+      18 * SCALE,
+    );
 
     ctx.restore();
   }
@@ -2740,13 +3292,22 @@ function drawSettingsModal() {
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Oyun içi ses ve çarpışma efektlerini yönet", rowX + 20 * SCALE, row1Y + 32 * SCALE);
+  ctx.fillText(
+    "Oyun içi ses ve çarpışma efektlerini yönet",
+    rowX + 20 * SCALE,
+    row1Y + 32 * SCALE,
+  );
 
   const toggle1W = 100 * SCALE;
   const toggle1H = 32 * SCALE;
   const toggle1X = rowX + rowW - toggle1W - 14 * SCALE;
   const toggle1Y = row1Y + (rowH - toggle1H) / 2;
-  uiButtons.toggleSound = { x: toggle1X, y: toggle1Y, w: toggle1W, h: toggle1H };
+  uiButtons.toggleSound = {
+    x: toggle1X,
+    y: toggle1Y,
+    w: toggle1W,
+    h: toggle1H,
+  };
 
   ctx.fillStyle = soundEnabled ? "#10b981" : "#334155";
   ctx.beginPath();
@@ -2757,7 +3318,11 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(soundEnabled ? "AÇIK" : "KAPALI", toggle1X + toggle1W / 2, toggle1Y + toggle1H / 2);
+  ctx.fillText(
+    soundEnabled ? "AÇIK" : "KAPALI",
+    toggle1X + toggle1W / 2,
+    toggle1Y + toggle1H / 2,
+  );
 
   // 2. Mıknatıs Gücü Toggle
   const row2Y = row1Y + rowH + 10 * SCALE;
@@ -2774,17 +3339,30 @@ function drawSettingsModal() {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `800 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("VAKUM ÇEKİM HASSASİYETİ", rowX + 20 * SCALE, row2Y + 12 * SCALE);
+  ctx.fillText(
+    "VAKUM ÇEKİM HASSASİYETİ",
+    rowX + 20 * SCALE,
+    row2Y + 12 * SCALE,
+  );
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = `400 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Mıknatıs çekim alanının yarıçapını ve gücünü ayarla", rowX + 20 * SCALE, row2Y + 32 * SCALE);
+  ctx.fillText(
+    "Mıknatıs çekim alanının yarıçapını ve gücünü ayarla",
+    rowX + 20 * SCALE,
+    row2Y + 32 * SCALE,
+  );
 
   const toggle2W = 100 * SCALE;
   const toggle2H = 32 * SCALE;
   const toggle2X = rowX + rowW - toggle2W - 14 * SCALE;
   const toggle2Y = row2Y + (rowH - toggle2H) / 2;
-  uiButtons.toggleMagnet = { x: toggle2X, y: toggle2Y, w: toggle2W, h: toggle2H };
+  uiButtons.toggleMagnet = {
+    x: toggle2X,
+    y: toggle2Y,
+    w: toggle2W,
+    h: toggle2H,
+  };
 
   ctx.fillStyle = highMagnet ? "#06b6d4" : "#334155";
   ctx.beginPath();
@@ -2795,14 +3373,23 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(highMagnet ? "YÜKSEK" : "NORMAL", toggle2X + toggle2W / 2, toggle2Y + toggle2H / 2);
+  ctx.fillText(
+    highMagnet ? "YÜKSEK" : "NORMAL",
+    toggle2X + toggle2W / 2,
+    toggle2Y + toggle2H / 2,
+  );
 
   // 3. OYUN REHBERİ BUTONU
   const row3Y = row2Y + rowH + 10 * SCALE;
   const btnTutorialW = rowW;
   const btnTutorialH = 46 * SCALE;
 
-  uiButtons.modalTutorialBtn = { x: rowX, y: row3Y, w: btnTutorialW, h: btnTutorialH };
+  uiButtons.modalTutorialBtn = {
+    x: rowX,
+    y: row3Y,
+    w: btnTutorialW,
+    h: btnTutorialH,
+  };
 
   ctx.fillStyle = "rgba(147, 51, 234, 0.2)";
   ctx.strokeStyle = "rgba(192, 132, 252, 0.6)";
@@ -2816,7 +3403,11 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#e879f9";
   ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUN REHBERİ & BÖCEK KARTLARI", rowX + btnTutorialW / 2, row3Y + btnTutorialH / 2 + 1 * SCALE);
+  ctx.fillText(
+    "OYUN REHBERİ & BÖCEK KARTLARI",
+    rowX + btnTutorialW / 2,
+    row3Y + btnTutorialH / 2 + 1 * SCALE,
+  );
 
   // 4. Bölüm Seçim Tablosu Butonu
   const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
@@ -2824,7 +3415,12 @@ function drawSettingsModal() {
   const btnLvlX = (W - btnLvlW) / 2;
   const btnLvlY = row3Y + btnTutorialH + 12 * SCALE;
 
-  uiButtons.modalLevelSelect = { x: btnLvlX, y: btnLvlY, w: btnLvlW, h: btnLvlH };
+  uiButtons.modalLevelSelect = {
+    x: btnLvlX,
+    y: btnLvlY,
+    w: btnLvlW,
+    h: btnLvlH,
+  };
 
   ctx.fillStyle = "rgba(59, 130, 246, 0.2)";
   ctx.strokeStyle = "rgba(96, 165, 250, 0.6)";
@@ -2838,7 +3434,11 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#93c5fd";
   ctx.font = `900 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("BÖLÜM SEÇİM TABLOSU (10 LEVEL)", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
+  ctx.fillText(
+    "BÖLÜM SEÇİM TABLOSU (10 LEVEL)",
+    W / 2,
+    btnLvlY + btnLvlH / 2 + 1 * SCALE,
+  );
 
   // 5. Devam Et & Baştan Başla Butonları
   const btnW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
@@ -2923,7 +3523,7 @@ function draw() {
   }
 
   for (const sw of animeShockwaves) {
-    const alpha = (sw.life / sw.maxLife);
+    const alpha = sw.life / sw.maxLife;
     ctx.strokeStyle = sw.color;
     ctx.lineWidth = (3 - alpha * 2) * SCALE;
     ctx.beginPath();
@@ -2960,11 +3560,26 @@ function draw() {
   } else if (state === "levelselect") {
     drawLevelSelectModal();
   } else if (state === "levelcomplete") {
-    drawModalCard(`BÖLÜM ${currentLevel} TAMAMLANDI`, `${levelCfg.name} Geçildi!`, `SONRAKİ BÖLÜM (Bölüm ${currentLevel + 1})`, true);
+    drawModalCard(
+      `BÖLÜM ${currentLevel} TAMAMLANDI`,
+      `${levelCfg.name} Geçildi!`,
+      `SONRAKİ BÖLÜM (Bölüm ${currentLevel + 1})`,
+      true,
+    );
   } else if (state === "campaignwon") {
-    drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
+    drawModalCard(
+      "EFSANEVİ ŞAMPİYON",
+      "TÜM BÖLÜMLER BİTTİ",
+      "YENİDEN BAŞLA (Bölüm 1)",
+      true,
+    );
   } else if (state === "gameover") {
-    drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "TÜM CANLAR TÜKENDİ", "TEKRAR DENE", false);
+    drawModalCard(
+      `BÖLÜM ${currentLevel} BAŞARISIZ`,
+      "TÜM CANLAR TÜKENDİ",
+      "TEKRAR DENE",
+      false,
+    );
   } else if (state === "tutorial") {
     drawTutorialModal();
   } else if (state === "settings") {
