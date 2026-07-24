@@ -1870,18 +1870,18 @@ function drawSpider(
   ctx.save();
   ctx.translate(x, y);
 
-  // 1. DANGEROUS AURA (Fiery Crimson/Red when aggressive/web active, subtle dark crimson when idling)
+  // 1. DANGEROUS RED AURA
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const auraR = r * 3.4;
   const auraG = ctx.createRadialGradient(0, 0, 0, 0, 0, auraR);
   if (webActive) {
-    auraG.addColorStop(0, "rgba(239, 68, 68, 0.55)");
-    auraG.addColorStop(0.4, "rgba(185, 28, 28, 0.25)");
+    auraG.addColorStop(0, "rgba(239, 68, 68, 0.6)");
+    auraG.addColorStop(0.4, "rgba(185, 28, 28, 0.28)");
     auraG.addColorStop(1, "rgba(0, 0, 0, 0)");
   } else {
-    auraG.addColorStop(0, "rgba(220, 38, 38, 0.25)");
-    auraG.addColorStop(0.5, "rgba(127, 29, 29, 0.1)");
+    auraG.addColorStop(0, "rgba(220, 38, 38, 0.28)");
+    auraG.addColorStop(0.5, "rgba(127, 29, 29, 0.12)");
     auraG.addColorStop(1, "rgba(0, 0, 0, 0)");
   }
   ctx.fillStyle = auraG;
@@ -1890,101 +1890,109 @@ function drawSpider(
   ctx.fill();
   ctx.restore();
 
-  // Body Micro-Animations (pacing sway, body bobbing)
+  // Body Micro-Animations
   const crawlSpeed = 8;
   const bodyBob = Math.sin(t * crawlSpeed) * (1.2 * SCALE);
-  const bodyTilt = Math.sin(t * (crawlSpeed * 0.5)) * 0.06;
-  const abdomenPacing = Math.sin(t * 3) * 0.05;
+  const bodyTilt = Math.sin(t * (crawlSpeed * 0.5)) * 0.05;
+  const abdomenPacing = Math.sin(t * 3) * 0.04;
 
   ctx.translate(0, bodyBob);
   ctx.rotate(bodyTilt);
 
-  // 2. ORGANIC 8 LEGS (4 on left, 4 on right)
-  const legPairs = [
-    { baseAngle: -1.25, phase: 0, lengthMult: 1.15, reachY: -1.2 },
-    { baseAngle: -0.65, phase: Math.PI * 0.5, lengthMult: 1.25, reachY: -0.5 },
-    { baseAngle: 0.15, phase: Math.PI, lengthMult: 1.25, reachY: 0.4 },
-    { baseAngle: 0.85, phase: Math.PI * 1.5, lengthMult: 1.35, reachY: 1.1 },
+  // 2. PERFECTLY SYMMETRIC 8 LEGS (Purple with Black Borders)
+  const legDefs = [
+    { angle: -1.25, femurLen: 1.1, tibiaLen: 1.25, jointY: -r * 0.45, phase: 0 },
+    { angle: -0.55, femurLen: 1.2, tibiaLen: 1.3, jointY: -r * 0.2, phase: Math.PI * 0.5 },
+    { angle: 0.45, femurLen: 1.2, tibiaLen: 1.3, jointY: r * 0.05, phase: Math.PI },
+    { angle: 1.15, femurLen: 1.3, tibiaLen: 1.35, jointY: r * 0.3, phase: Math.PI * 1.5 },
   ];
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < legPairs.length; i++) {
-      const leg = legPairs[i];
+  for (const side of [1, -1]) {
+    for (let i = 0; i < legDefs.length; i++) {
+      const leg = legDefs[i];
       const sidePhase = side === 1 ? leg.phase : leg.phase + Math.PI;
-      const swing = Math.sin(t * crawlSpeed + sidePhase);
-      const flex = Math.cos(t * crawlSpeed + sidePhase);
+      const swing = Math.sin(t * crawlSpeed + sidePhase) * 0.12;
+      const flex = Math.cos(t * crawlSpeed + sidePhase) * 0.08;
 
-      const angle = (side * leg.baseAngle) + swing * 0.18;
-      
-      const femurLen = r * 1.25 * leg.lengthMult;
-      const tibiaLen = r * 1.35 * leg.lengthMult;
+      const rootX = side * (r * 0.35);
+      const rootY = leg.jointY;
 
-      const kneeX = side * (Math.cos(angle) * femurLen + flex * 2 * SCALE);
-      const kneeY = leg.reachY * r + Math.sin(angle) * femurLen * 0.7 - Math.abs(swing) * 3 * SCALE;
+      // Symmetric angle calculation
+      const effAngle = leg.angle + swing;
+      let baseA = effAngle;
+      let kneeX = 0;
+      let kneeY = 0;
+      let tipX = 0;
+      let tipY = 0;
 
-      const tipX = kneeX + side * (r * 0.9 * leg.lengthMult + swing * 3 * SCALE);
-      const tipY = kneeY + tibiaLen * 0.85 + flex * 2 * SCALE;
+      if (side === 1) {
+        kneeX = rootX + Math.cos(baseA) * (r * leg.femurLen);
+        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 2 * SCALE;
+        tipX = kneeX + Math.cos(baseA + 0.5) * (r * leg.tibiaLen);
+        tipY = kneeY + Math.sin(baseA + 0.5) * (r * leg.tibiaLen) + flex * 2 * SCALE;
+      } else {
+        baseA = Math.PI - effAngle;
+        kneeX = rootX + Math.cos(baseA) * (r * leg.femurLen);
+        kneeY = rootY + Math.sin(baseA) * (r * leg.femurLen) - Math.abs(swing) * 2 * SCALE;
+        tipX = kneeX + Math.cos(baseA - 0.5) * (r * leg.tibiaLen);
+        tipY = kneeY + Math.sin(baseA - 0.5) * (r * leg.tibiaLen) + flex * 2 * SCALE;
+      }
 
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
-      ctx.lineWidth = 2.2 * SCALE;
+      // Outer Black Border Stroke
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 3.6 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(side * (r * 0.3), 3 * SCALE);
-      ctx.lineTo(kneeX + 2 * SCALE, kneeY + 4 * SCALE);
-      ctx.lineTo(tipX + 3 * SCALE, tipY + 5 * SCALE);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#14151e";
-      ctx.lineWidth = 2.8 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(side * (r * 0.35), 0);
+      ctx.moveTo(rootX, rootY);
       ctx.lineTo(kneeX, kneeY);
       ctx.lineTo(tipX, tipY);
       ctx.stroke();
 
-      ctx.strokeStyle = "#3b3c4f";
-      ctx.lineWidth = 1.2 * SCALE;
+      // Inner Purple Chitin Fill Stroke
+      ctx.strokeStyle = webActive ? "#e879f9" : "#a855f7";
+      ctx.lineWidth = 2.0 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(side * (r * 0.35), -0.5 * SCALE);
-      ctx.lineTo(kneeX - side * 0.8 * SCALE, kneeY - 0.8 * SCALE);
+      ctx.moveTo(rootX, rootY);
+      ctx.lineTo(kneeX, kneeY);
+      ctx.lineTo(tipX, tipY);
       ctx.stroke();
 
-      ctx.fillStyle = "#2a2b38";
+      // Knee Joint Accent Bulb
+      ctx.fillStyle = "#6b21a8";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 1 * SCALE;
       ctx.beginPath();
-      ctx.arc(kneeX, kneeY, 1.8 * SCALE, 0, Math.PI * 2);
+      ctx.arc(kneeX, kneeY, 2 * SCALE, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.fillStyle = "#090a0f";
-      ctx.beginPath();
-      ctx.arc(tipX, tipY, 1.1 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.stroke();
     }
   }
 
-  // 3. ABDOMEN (Velvet dark pattern & chitin sheen)
+  // 3. ABDOMEN (Deep Purple & Black Velvet Chitin with Black Borders)
   ctx.save();
   ctx.translate(0, r * 0.45);
   ctx.rotate(abdomenPacing);
 
-  const abG = ctx.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.2);
-  abG.addColorStop(0, "#343644");
-  abG.addColorStop(0.35, "#1c1d26");
-  abG.addColorStop(0.8, "#101117");
-  abG.addColorStop(1, "#07080c");
+  const abG = ctx.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.25);
+  abG.addColorStop(0, "#c084fc");
+  abG.addColorStop(0.3, "#9333ea");
+  abG.addColorStop(0.65, "#581c87");
+  abG.addColorStop(1, "#140727");
 
   ctx.fillStyle = abG;
-  ctx.strokeStyle = "#272936";
-  ctx.lineWidth = 1.4 * SCALE;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2 * SCALE;
 
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 0.88, r * 1.22, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.45)" : "rgba(180, 83, 9, 0.35)";
-  ctx.lineWidth = 1.5 * SCALE;
+  // Purple Chevron Patterns across Abdomen
+  ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.6)" : "rgba(216, 180, 254, 0.5)";
+  ctx.lineWidth = 1.6 * SCALE;
   for (let k = 0; k < 3; k++) {
     const sy = -r * 0.4 + k * (r * 0.35);
     ctx.beginPath();
@@ -1993,31 +2001,31 @@ function drawSpider(
     ctx.stroke();
   }
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
   ctx.beginPath();
   ctx.ellipse(-r * 0.3, -r * 0.35, r * 0.25, r * 0.45, -0.3, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 
-  // 4. CEPHALOTHORAX (Front Head/Chest Segment)
+  // 4. CEPHALOTHORAX (Black / Obsidian Head as requested)
   const cephG = ctx.createRadialGradient(-r * 0.15, -r * 0.5, r * 0.05, 0, -r * 0.45, r * 0.65);
-  cephG.addColorStop(0, "#3b3d4d");
-  cephG.addColorStop(0.5, "#1a1b24");
-  cephG.addColorStop(1, "#0b0c12");
+  cephG.addColorStop(0, "#3f3f46");
+  cephG.addColorStop(0.55, "#18181b");
+  cephG.addColorStop(1, "#09090b");
 
   ctx.fillStyle = cephG;
-  ctx.strokeStyle = "#2e303d";
-  ctx.lineWidth = 1.3 * SCALE;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 1.8 * SCALE;
   ctx.beginPath();
   ctx.ellipse(0, -r * 0.45, r * 0.58, r * 0.55, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 5. PEDIPALPS (Front feeler arms near mouth)
+  // 5. PEDIPALPS (Black & Purple Feelers)
   const palpTwitch = Math.sin(t * 12) * 0.12;
-  ctx.strokeStyle = "#252633";
-  ctx.lineWidth = 1.8 * SCALE;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2.4 * SCALE;
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * (r * 0.2), -r * 0.75);
@@ -2030,9 +2038,23 @@ function drawSpider(
     ctx.stroke();
   }
 
-  // 6. CHELICERAE & FANGS
-  ctx.fillStyle = "#12131a";
-  ctx.strokeStyle = "#383947";
+  ctx.strokeStyle = "#a855f7";
+  ctx.lineWidth = 1.2 * SCALE;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * (r * 0.2), -r * 0.75);
+    ctx.quadraticCurveTo(
+      side * (r * 0.45),
+      -r * 1.05 + palpTwitch * 2 * SCALE,
+      side * (r * 0.25),
+      -r * 1.2 + side * palpTwitch * 3 * SCALE
+    );
+    ctx.stroke();
+  }
+
+  // 6. FANGS (Black & Crimson Tips)
+  ctx.fillStyle = "#18181b";
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1 * SCALE;
   ctx.beginPath();
   ctx.ellipse(-r * 0.14, -r * 0.85, r * 0.12, r * 0.2, 0.2, 0, Math.PI * 2);
@@ -2044,7 +2066,7 @@ function drawSpider(
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = webActive ? "#ef4444" : "#991b1b";
+  ctx.fillStyle = "#ef4444";
   ctx.beginPath();
   ctx.moveTo(-r * 0.2, -r * 0.95);
   ctx.quadraticCurveTo(-r * 0.12, -r * 1.15, -r * 0.04, -r * 0.92);
@@ -2055,14 +2077,14 @@ function drawSpider(
   ctx.quadraticCurveTo(r * 0.12, -r * 1.15, r * 0.04, -r * 0.92);
   ctx.fill();
 
-  // 7. THREATENING SPIDER EYE CLUSTER (8 eyes with white reflection pinpoints)
-  ctx.fillStyle = webActive ? "#ff2a2a" : "#f59e0b";
+  // 7. GLOWING RED SPIDER EYE CLUSTER (8 eyes with white reflection pinpoints)
+  ctx.fillStyle = "#ef4444";
   ctx.beginPath();
   ctx.arc(-r * 0.18, -r * 0.62, r * 0.11, 0, Math.PI * 2);
   ctx.arc(r * 0.18, -r * 0.62, r * 0.11, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = webActive ? "#ef4444" : "#d97706";
+  ctx.fillStyle = "#f87171";
   ctx.beginPath();
   ctx.arc(-r * 0.34, -r * 0.58, r * 0.075, 0, Math.PI * 2);
   ctx.arc(r * 0.34, -r * 0.58, r * 0.075, 0, Math.PI * 2);
