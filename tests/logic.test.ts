@@ -163,28 +163,28 @@ describe("hitCircleRect: daire-dikdörtgen çarpışması", () => {
   });
 });
 
-describe("LEVELS & getLevelConfig: 10 Seviyeli Kurgu & Örümcek/Uğur Böceği", () => {
-  it("tam 10 bölüm tanımlıdır", () => {
-    expect(LEVELS.length).toBe(10);
+describe("LEVELS & getLevelConfig: 25 Seviyeli Kurgu & Örümcek/Uğur Böceği", () => {
+  it("tam 25 bölüm tanımlıdır", () => {
+    expect(LEVELS.length).toBe(25);
   });
 
   it("bölümlerde izin verilen engeller doğru yapılandırılmıştır", () => {
     expect(LEVELS[0].allowedHazards).toContain("wasp");
     expect(LEVELS[1].allowedHazards).toContain("ladybug");
-    expect(LEVELS[2].allowedHazards).toContain("spider");
+    expect(LEVELS[3].allowedHazards).toContain("spider");
   });
 
   it("getLevelConfig aralık dışı bölüm numaralarını güvenle sınırlar", () => {
     expect(getLevelConfig(0).level).toBe(1);
-    expect(getLevelConfig(999).level).toBe(10);
-    expect(getLevelConfig(3).name).toBe("Örümcekli Ağ Vadisi");
+    expect(getLevelConfig(999).level).toBe(25);
+    expect(getLevelConfig(4).name).toBe("Örümcek Bahçesi");
   });
 });
 
 describe("difficulty: zorluk eğrisi", () => {
   it("bölüm 1 taban değerleri", () => {
     const d = difficulty(0, 1);
-    expect(d.spawnEvery).toBeCloseTo(1.5);
+    expect(d.spawnEvery).toBeCloseTo(1.6);
     expect(d.fallSpeed).toBeCloseTo(120);
   });
 
