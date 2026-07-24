@@ -159,7 +159,7 @@ export function shakeOffset(
 // --- Tutam 4 — 10 Bölüm Kurgusu & Tür Özellikleri -----------------------------
 
 export type FireflySubtype = "gold" | "emerald" | "azure" | "purple" | "red";
-export type HazardKind = "wasp" | "spider" | "ladybug";
+export type HazardKind = "wasp" | "spider" | "ladybug" | "moth";
 
 export interface LevelConfig {
   level: number;
@@ -170,22 +170,38 @@ export interface LevelConfig {
   fallSpeedMult: number;
   spawnEvery: number;
   maxLadybugs: number;
+  maxMoths?: number;
   skyTheme: "twilight" | "emerald" | "midnight" | "azure" | "storm" | "aurora" | "bloodmoon" | "fog" | "starstorm" | "legendary";
   description: string;
   allowedHazards: HazardKind[];
 }
 
 export const LEVELS: LevelConfig[] = [
-  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Aydınlık Başlangıç", target: 15, waspChance: 0.10, fallSpeedMult: 1.0, spawnEvery: 1.5, maxLadybugs: 0, skyTheme: "twilight", description: "Altın ve zümrüt ateşböceklerini toplayarak başla.", allowedHazards: ["wasp"] },
-  { level: 2, name: "Gezgin Uğur Bahçesi", subtitle: "Uğur Böcekleri", target: 16, waspChance: 0.15, fallSpeedMult: 1.15, spawnEvery: 1.35, maxLadybugs: 1, skyTheme: "emerald", description: "Ekrandan çıkmayan yavaş uçan uğur böcekleri belirdi.", allowedHazards: ["wasp", "ladybug"] },
-  { level: 3, name: "Örümcekli Ağ Vadisi", subtitle: "Avcı Örümcek", target: 17, waspChance: 0.22, fallSpeedMult: 1.25, spawnEvery: 1.2, maxLadybugs: 1, skyTheme: "midnight", description: "Dikkat! Örümcek kavanoza ağ atıp seni çekmeye çalışır!", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 4, name: "Mor Mistik Gece", subtitle: "Mistik Işıklar", target: 18, waspChance: 0.26, fallSpeedMult: 1.35, spawnEvery: 1.1, maxLadybugs: 2, skyTheme: "azure", description: "+2 değerindeki Mor Mistik Ateşböcekleri gökyüzünde süzülüyor.", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 5, name: "Kızıl Yakut Fırtınası", subtitle: "Ağ Kıran Işıklar", target: 19, waspChance: 0.30, fallSpeedMult: 1.45, spawnEvery: 1.0, maxLadybugs: 2, skyTheme: "storm", description: "Kızıl Yakut Ateşböceği yakalandığında Örümceğin ağını anında yakar!", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 6, name: "Kutup Işıkları", subtitle: "Aurora Gecesi", target: 20, waspChance: 0.34, fallSpeedMult: 1.55, spawnEvery: 0.9, maxLadybugs: 2, skyTheme: "aurora", description: "Ağ atan örümcekler ve uğur böcekleri bir arada.", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 7, name: "Kanlı Ay Tutulması", subtitle: "Kızıl Tehlike", target: 21, waspChance: 0.38, fallSpeedMult: 1.70, spawnEvery: 0.8, maxLadybugs: 2, skyTheme: "bloodmoon", description: "Kızıl ay altında agresif dalış yapan arılar ve örümcekler!", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 8, name: "Derin Orman Ağları", subtitle: "Yoğun Tuzak", target: 22, waspChance: 0.40, fallSpeedMult: 1.85, spawnEvery: 0.72, maxLadybugs: 3, skyTheme: "fog", description: "Maksimum 3 Uğur böceği ekranda sürekli uçuşur.", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 9, name: "Yıldız Fırtınası", subtitle: "Kozmik Tuzak", target: 23, waspChance: 0.44, fallSpeedMult: 2.0, spawnEvery: 0.65, maxLadybugs: 3, skyTheme: "starstorm", description: "Hızlı örümcek ağları ve tüm ateşböceği türleri!", allowedHazards: ["wasp", "spider", "ladybug"] },
-  { level: 10, name: "Işık Muhafızı", subtitle: "Efsanevi Final Boss", target: 25, waspChance: 0.48, fallSpeedMult: 2.2, spawnEvery: 0.55, maxLadybugs: 3, skyTheme: "legendary", description: "Tüm özel böcekler ve 25 ışık hedefi! Efsanevi şampiyon ol!", allowedHazards: ["wasp", "spider", "ladybug"] }
+  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Gece Kapısı", target: 12, waspChance: 0.08, fallSpeedMult: 1, spawnEvery: 1.6, maxLadybugs: 0, maxMoths: 0, skyTheme: "twilight", description: "Bahçenin ilk ışıkları seni çağırıyor.", allowedHazards: ["wasp"] },
+  { level: 2, name: "Yonca Bahçesi", subtitle: "Küçük Gezginler", target: 13, waspChance: 0.098, fallSpeedMult: 1.067, spawnEvery: 1.551, maxLadybugs: 1, maxMoths: 0, skyTheme: "emerald", description: "Uğur böcekleri bu gece yoldaşın oldu.", allowedHazards: ["wasp", "ladybug"] },
+  { level: 3, name: "Söğüt Gölgeleri", subtitle: "Fısıltılı Dallar", target: 14, waspChance: 0.115, fallSpeedMult: 1.133, spawnEvery: 1.502, maxLadybugs: 1, maxMoths: 0, skyTheme: "midnight", description: "Söğütlerin altında ışıklar daha ürkek titrer.", allowedHazards: ["wasp", "ladybug"] },
+  { level: 4, name: "Örümcek Bahçesi", subtitle: "İlk Tuzak", target: 15, waspChance: 0.133, fallSpeedMult: 1.2, spawnEvery: 1.453, maxLadybugs: 1, maxMoths: 0, skyTheme: "azure", description: "Gölgede sabırla bekleyen bir avcı uyandı.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 5, name: "Yakut Vadisi", subtitle: "Alevden Işıklar", target: 16, waspChance: 0.15, fallSpeedMult: 1.267, spawnEvery: 1.403, maxLadybugs: 1, maxMoths: 0, skyTheme: "storm", description: "Kızıl ışıklar örümcek ağını yakabilir artık.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 6, name: "Kutup Fısıltısı", subtitle: "Renkli Perde", target: 17, waspChance: 0.168, fallSpeedMult: 1.333, spawnEvery: 1.354, maxLadybugs: 1, maxMoths: 0, skyTheme: "aurora", description: "Gökyüzü dans ediyor, ışıklar ona eşlik ediyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 7, name: "Kanlı Dolunay", subtitle: "Kızıl Uyarı", target: 17, waspChance: 0.185, fallSpeedMult: 1.4, spawnEvery: 1.305, maxLadybugs: 1, maxMoths: 0, skyTheme: "bloodmoon", description: "Ay kızıla döndü, arılar telaşlandı.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 8, name: "Sisli Koru", subtitle: "Görünmeyen Yollar", target: 18, waspChance: 0.203, fallSpeedMult: 1.467, spawnEvery: 1.256, maxLadybugs: 2, maxMoths: 0, skyTheme: "fog", description: "Sis içinde ışığını takip etmeyi unutma.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 9, name: "Yıldız Tozu", subtitle: "Gökyüzü Yağmuru", target: 19, waspChance: 0.22, fallSpeedMult: 1.533, spawnEvery: 1.207, maxLadybugs: 2, maxMoths: 0, skyTheme: "starstorm", description: "Yıldızlar bile bu gece yere düşmek istiyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 10, name: "Ay Muhafızı", subtitle: "İlk Sınav", target: 20, waspChance: 0.237, fallSpeedMult: 1.6, spawnEvery: 1.158, maxLadybugs: 2, maxMoths: 0, skyTheme: "legendary", description: "Bahçenin eski bekçisi seni sınıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 11, name: "Çiy Damlası Bahçesi", subtitle: "Yeni Şafak", target: 21, waspChance: 0.255, fallSpeedMult: 1.667, spawnEvery: 1.108, maxLadybugs: 2, maxMoths: 0, skyTheme: "emerald", description: "Her çiy damlası yeni bir ışık saklıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 12, name: "Zümrüt Patika", subtitle: "Yol Arkadaşları", target: 22, waspChance: 0.273, fallSpeedMult: 1.733, spawnEvery: 1.059, maxLadybugs: 2, maxMoths: 0, skyTheme: "midnight", description: "Uğur böcekleri artık daha kalabalık geziyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 13, name: "Gölgeler Diyarı", subtitle: "Derin Sessizlik", target: 23, waspChance: 0.29, fallSpeedMult: 1.8, spawnEvery: 1.01, maxLadybugs: 2, maxMoths: 0, skyTheme: "azure", description: "Karanlık burada daha ağır çöküyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 14, name: "Örümcek Vadisi", subtitle: "Sabırlı Avcı", target: 24, waspChance: 0.307, fallSpeedMult: 1.867, spawnEvery: 0.961, maxLadybugs: 3, maxMoths: 0, skyTheme: "storm", description: "Ağlar bu gece daha sık örülüyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 15, name: "Fırtına Kapısı", subtitle: "Yarı Yol", target: 25, waspChance: 0.325, fallSpeedMult: 1.933, spawnEvery: 0.912, maxLadybugs: 3, maxMoths: 0, skyTheme: "aurora", description: "Bahçenin ortasına vardın, rüzgar hızlanıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 16, name: "Kutup Alevi", subtitle: "Titreşen Gökyüzü", target: 26, waspChance: 0.343, fallSpeedMult: 2, spawnEvery: 0.863, maxLadybugs: 3, maxMoths: 0, skyTheme: "bloodmoon", description: "Renkler coşkuyla savruluyor, ışıklar zorlanıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 17, name: "Kızıl Gece Yarısı", subtitle: "Uyarı Çanları", target: 26, waspChance: 0.36, fallSpeedMult: 2.067, spawnEvery: 0.813, maxLadybugs: 3, maxMoths: 0, skyTheme: "fog", description: "Ay yeniden kızardı, tehlike arttı.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 18, name: "Kayıp Sis", subtitle: "Belirsiz Patika", target: 27, waspChance: 0.378, fallSpeedMult: 2.133, spawnEvery: 0.764, maxLadybugs: 3, maxMoths: 0, skyTheme: "starstorm", description: "Yol kayboldu, sadece ışığına güven.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 19, name: "Göktaşı Yağmuru", subtitle: "Son Hazırlık", target: 28, waspChance: 0.395, fallSpeedMult: 2.2, spawnEvery: 0.715, maxLadybugs: 3, maxMoths: 0, skyTheme: "twilight", description: "Gökyüzü parçalanıyor, büyük sınav yaklaşıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 20, name: "Güve Gecesi", subtitle: "Sahte Işıklar", target: 29, waspChance: 0.412, fallSpeedMult: 2.267, spawnEvery: 0.666, maxLadybugs: 4, maxMoths: 1, skyTheme: "legendary", description: "Bazı ışıklar seni aldatmak için parlıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 21, name: "Alacakaranlık Efsanesi", subtitle: "Eski Anı", target: 30, waspChance: 0.43, fallSpeedMult: 2.333, spawnEvery: 0.617, maxLadybugs: 4, maxMoths: 1, skyTheme: "midnight", description: "Bahçe seni ilk gecesine geri çağırıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 22, name: "Zümrüt Taht", subtitle: "Yeşil Krallık", target: 31, waspChance: 0.448, fallSpeedMult: 2.4, spawnEvery: 0.568, maxLadybugs: 4, maxMoths: 1, skyTheme: "azure", description: "Yeşil ışıklar burada bir krallık kuruyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 23, name: "Kadim Gölge", subtitle: "Unutulmuş Fısıltı", target: 32, waspChance: 0.465, fallSpeedMult: 2.467, spawnEvery: 0.518, maxLadybugs: 4, maxMoths: 1, skyTheme: "storm", description: "En eski gölgeler burada uyanıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 24, name: "Son Ağ", subtitle: "Karanlığın Efendisi", target: 33, waspChance: 0.483, fallSpeedMult: 2.533, spawnEvery: 0.469, maxLadybugs: 4, maxMoths: 2, skyTheme: "aurora", description: "Örümcek bu gece hiç uyumayacak.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 25, name: "Işık Muhafızı", subtitle: "Efsanevi Final", target: 34, waspChance: 0.5, fallSpeedMult: 2.6, spawnEvery: 0.42, maxLadybugs: 4, maxMoths: 2, skyTheme: "legendary", description: "Bahçenin son ve en parlak sınavı seni bekliyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
 ];
 
 export function getLevelConfig(level: number): LevelConfig {
