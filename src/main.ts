@@ -1955,109 +1955,228 @@ function drawSpider(
   ctx.save();
   ctx.translate(x, y);
 
+  // 1. DANGEROUS AURA (Fiery Crimson/Red when aggressive/web active, subtle dark crimson when idling)
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3.2);
-  g.addColorStop(
-    0,
-    webActive ? "rgba(232, 121, 249, 0.75)" : "rgba(168, 85, 247, 0.35)",
-  );
-  g.addColorStop(0.5, "rgba(126, 34, 206, 0.18)");
-  g.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = g;
+  const auraR = r * 3.4;
+  const auraG = ctx.createRadialGradient(0, 0, 0, 0, 0, auraR);
+  if (webActive) {
+    auraG.addColorStop(0, "rgba(239, 68, 68, 0.55)");
+    auraG.addColorStop(0.4, "rgba(185, 28, 28, 0.25)");
+    auraG.addColorStop(1, "rgba(0, 0, 0, 0)");
+  } else {
+    auraG.addColorStop(0, "rgba(220, 38, 38, 0.25)");
+    auraG.addColorStop(0.5, "rgba(127, 29, 29, 0.1)");
+    auraG.addColorStop(1, "rgba(0, 0, 0, 0)");
+  }
+  ctx.fillStyle = auraG;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 3.2, 0, Math.PI * 2);
+  ctx.arc(0, 0, auraR, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  ctx.strokeStyle = "#c084fc";
-  ctx.lineWidth = 2.4 * SCALE;
+  // Body Micro-Animations (pacing sway, body bobbing)
+  const crawlSpeed = 8;
+  const bodyBob = Math.sin(t * crawlSpeed) * (1.2 * SCALE);
+  const bodyTilt = Math.sin(t * (crawlSpeed * 0.5)) * 0.06;
+  const abdomenPacing = Math.sin(t * 3) * 0.05;
+
+  ctx.translate(0, bodyBob);
+  ctx.rotate(bodyTilt);
+
+  // 2. ORGANIC 8 LEGS (4 on left, 4 on right)
+  // Leg pairs have staggered phase offsets for realistic tripod crawl gait
+  const legPairs = [
+    { baseAngle: -1.25, phase: 0, lengthMult: 1.15, reachY: -1.2 },  // Leg 1 (Front)
+    { baseAngle: -0.65, phase: Math.PI * 0.5, lengthMult: 1.25, reachY: -0.5 }, // Leg 2 (Mid-Front)
+    { baseAngle: 0.15, phase: Math.PI, lengthMult: 1.25, reachY: 0.4 },  // Leg 3 (Mid-Back)
+    { baseAngle: 0.85, phase: Math.PI * 1.5, lengthMult: 1.35, reachY: 1.1 },  // Leg 4 (Back)
+  ];
+
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
-  for (let i = 0; i < 4; i++) {
-    const legAngle = -0.7 + i * 0.45 + Math.sin(t * 4 + i) * 0.08;
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < legPairs.length; i++) {
+      const leg = legPairs[i];
+      // Swing phase calculation (opposite sides alternate phase)
+      const sidePhase = side === 1 ? leg.phase : leg.phase + Math.PI;
+      const swing = Math.sin(t * crawlSpeed + sidePhase);
+      const flex = Math.cos(t * crawlSpeed + sidePhase);
 
-    ctx.save();
-    ctx.rotate(legAngle);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-r * 1.3, -r * 0.9);
-    ctx.lineTo(-r * 2.3, r * 0.6);
-    ctx.stroke();
+      const angle = (side * leg.baseAngle) + swing * 0.18;
+      
+      // Segment dimensions
+      const femurLen = r * 1.25 * leg.lengthMult;
+      const tibiaLen = r * 1.35 * leg.lengthMult;
 
-    ctx.fillStyle = "#e879f9";
-    ctx.beginPath();
-    ctx.arc(-r * 1.3, -r * 0.9, 2.2 * SCALE, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+      // Joint 1: Knee position (Extends outward and upward)
+      const kneeX = side * (Math.cos(angle) * femurLen + flex * 2 * SCALE);
+      const kneeY = leg.reachY * r + Math.sin(angle) * femurLen * 0.7 - Math.abs(swing) * 3 * SCALE;
 
-    ctx.save();
-    ctx.rotate(-legAngle);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(r * 1.3, -r * 0.9);
-    ctx.lineTo(r * 2.3, r * 0.6);
-    ctx.stroke();
+      // Joint 2: Foot Tip position (Curves downward and inward)
+      const tipX = kneeX + side * (r * 0.9 * leg.lengthMult + swing * 3 * SCALE);
+      const tipY = kneeY + tibiaLen * 0.85 + flex * 2 * SCALE;
 
-    ctx.fillStyle = "#e879f9";
-    ctx.beginPath();
-    ctx.arc(r * 1.3, -r * 0.9, 2.2 * SCALE, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+      // Leg Shadow
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+      ctx.lineWidth = 2.2 * SCALE;
+      ctx.beginPath();
+      ctx.moveTo(side * (r * 0.3), 3 * SCALE);
+      ctx.lineTo(kneeX + 2 * SCALE, kneeY + 4 * SCALE);
+      ctx.lineTo(tipX + 3 * SCALE, tipY + 5 * SCALE);
+      ctx.stroke();
+
+      // Main Organic Leg Path (Tapering dark chitinous leg)
+      ctx.strokeStyle = "#14151e"; // Dark obsidian black
+      ctx.lineWidth = 2.8 * SCALE;
+      ctx.beginPath();
+      ctx.moveTo(side * (r * 0.35), 0);
+      ctx.lineTo(kneeX, kneeY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      // Upper Leg Highlight (Chitinous sheen on femur)
+      ctx.strokeStyle = "#3b3c4f";
+      ctx.lineWidth = 1.2 * SCALE;
+      ctx.beginPath();
+      ctx.moveTo(side * (r * 0.35), -0.5 * SCALE);
+      ctx.lineTo(kneeX - side * 0.8 * SCALE, kneeY - 0.8 * SCALE);
+      ctx.stroke();
+
+      // Organic Knee Joint Bulb
+      ctx.fillStyle = "#2a2b38";
+      ctx.beginPath();
+      ctx.arc(kneeX, kneeY, 1.8 * SCALE, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sharp Tarsus Tip (Claw)
+      ctx.fillStyle = "#090a0f";
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 1.1 * SCALE, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  const bodyG = ctx.createLinearGradient(-r, -r, r, r);
-  bodyG.addColorStop(0, "#581c87");
-  bodyG.addColorStop(0.5, "#3b0764");
-  bodyG.addColorStop(1, "#1e1b4b");
+  // 3. ABDOMEN (Larger rear body segment with velvet dark pattern & chitin sheen)
+  ctx.save();
+  ctx.translate(0, r * 0.45);
+  ctx.rotate(abdomenPacing);
 
-  ctx.fillStyle = bodyG;
-  ctx.strokeStyle = "rgba(232, 121, 249, 0.6)";
+  // Abdomen Gradient (Natural velvet black / dark charcoal with warm chitin highlight)
+  const abG = ctx.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.2);
+  abG.addColorStop(0, "#343644");
+  abG.addColorStop(0.35, "#1c1d26");
+  abG.addColorStop(0.8, "#101117");
+  abG.addColorStop(1, "#07080c");
+
+  ctx.fillStyle = abG;
+  ctx.strokeStyle = "#272936";
+  ctx.lineWidth = 1.4 * SCALE;
+
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.88, r * 1.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Natural Abdomen Chevron Pattern (Subtle dark crimson / warm amber markings)
+  ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.45)" : "rgba(180, 83, 9, 0.35)";
   ctx.lineWidth = 1.5 * SCALE;
+  for (let k = 0; k < 3; k++) {
+    const sy = -r * 0.4 + k * (r * 0.35);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.45, sy);
+    ctx.quadraticCurveTo(0, sy - r * 0.2, r * 0.45, sy);
+    ctx.stroke();
+  }
 
+  // Velvet Chitin Highlight
+  ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
   ctx.beginPath();
-  ctx.ellipse(0, r * 0.35, r * 0.85, r * 1.15, 0, 0, Math.PI * 2);
+  ctx.ellipse(-r * 0.3, -r * 0.35, r * 0.25, r * 0.45, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  // 4. CEPHALOTHORAX (Front Head/Chest Segment)
+  const cephG = ctx.createRadialGradient(-r * 0.15, -r * 0.5, r * 0.05, 0, -r * 0.45, r * 0.65);
+  cephG.addColorStop(0, "#3b3d4d");
+  cephG.addColorStop(0.5, "#1a1b24");
+  cephG.addColorStop(1, "#0b0c12");
+
+  ctx.fillStyle = cephG;
+  ctx.strokeStyle = "#2e303d";
+  ctx.lineWidth = 1.3 * SCALE;
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.45, r * 0.58, r * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 5. PEDIPALPS (Front feeler arms near mouth - twitches organically)
+  const palpTwitch = Math.sin(t * 12) * 0.12;
+  ctx.strokeStyle = "#252633";
+  ctx.lineWidth = 1.8 * SCALE;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * (r * 0.2), -r * 0.75);
+    ctx.quadraticCurveTo(
+      side * (r * 0.45),
+      -r * 1.05 + palpTwitch * 2 * SCALE,
+      side * (r * 0.25),
+      -r * 1.2 + side * palpTwitch * 3 * SCALE
+    );
+    ctx.stroke();
+  }
+
+  // 6. CHELICERAE & FANGS (Mouthparts)
+  ctx.fillStyle = "#12131a";
+  ctx.strokeStyle = "#383947";
+  ctx.lineWidth = 1 * SCALE;
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.14, -r * 0.85, r * 0.12, r * 0.2, 0.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.ellipse(0, -r * 0.5, r * 0.58, r * 0.58, 0, 0, Math.PI * 2);
+  ctx.ellipse(r * 0.14, -r * 0.85, r * 0.12, r * 0.2, -0.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = "#f43f5e";
+  // Sharp Poison Fangs (Glossy Obsidian / Crimson-tipped)
+  ctx.fillStyle = webActive ? "#ef4444" : "#991b1b";
   ctx.beginPath();
-  ctx.arc(-r * 0.25, -r * 0.62, r * 0.13, 0, Math.PI * 2);
-  ctx.arc(r * 0.25, -r * 0.62, r * 0.13, 0, Math.PI * 2);
-  ctx.arc(-r * 0.09, -r * 0.46, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(r * 0.09, -r * 0.46, r * 0.09, 0, Math.PI * 2);
-  ctx.arc(-r * 0.34, -r * 0.46, r * 0.08, 0, Math.PI * 2);
-  ctx.arc(r * 0.34, -r * 0.46, r * 0.08, 0, Math.PI * 2);
+  ctx.moveTo(-r * 0.2, -r * 0.95);
+  ctx.quadraticCurveTo(-r * 0.12, -r * 1.15, -r * 0.04, -r * 0.92);
   ctx.fill();
 
+  ctx.beginPath();
+  ctx.moveTo(r * 0.2, -r * 0.95);
+  ctx.quadraticCurveTo(r * 0.12, -r * 1.15, r * 0.04, -r * 0.92);
+  ctx.fill();
+
+  // 7. THREATENING SPIDER EYE CLUSTER (Multiple gleaming amber & crimson eyes)
+  ctx.fillStyle = webActive ? "#ff2a2a" : "#f59e0b"; // Glowing red/amber
+  ctx.beginPath();
+  ctx.arc(-r * 0.18, -r * 0.62, r * 0.11, 0, Math.PI * 2);
+  ctx.arc(r * 0.18, -r * 0.62, r * 0.11, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = webActive ? "#ef4444" : "#d97706";
+  ctx.beginPath();
+  ctx.arc(-r * 0.34, -r * 0.58, r * 0.075, 0, Math.PI * 2);
+  ctx.arc(r * 0.34, -r * 0.58, r * 0.075, 0, Math.PI * 2);
+  ctx.arc(-r * 0.1, -r * 0.48, r * 0.07, 0, Math.PI * 2);
+  ctx.arc(r * 0.1, -r * 0.48, r * 0.07, 0, Math.PI * 2);
+  ctx.arc(-r * 0.28, -r * 0.46, r * 0.06, 0, Math.PI * 2);
+  ctx.arc(r * 0.28, -r * 0.46, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye Specular Reflection Pinpoints
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(-r * 0.27, -r * 0.65, r * 0.04, 0, Math.PI * 2);
-  ctx.arc(r * 0.23, -r * 0.65, r * 0.04, 0, Math.PI * 2);
+  ctx.arc(-r * 0.2, -r * 0.65, r * 0.035, 0, Math.PI * 2);
+  ctx.arc(r * 0.16, -r * 0.65, r * 0.035, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = "#e879f9";
-  ctx.strokeStyle = "#a855f7";
-  ctx.lineWidth = 1.2 * SCALE;
-
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.22, -r * 0.28);
-  ctx.quadraticCurveTo(-r * 0.38, -r * 0.08, -r * 0.15, r * 0.08);
-  ctx.quadraticCurveTo(-r * 0.1, -r * 0.1, -r * 0.22, -r * 0.28);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(r * 0.22, -r * 0.28);
-  ctx.quadraticCurveTo(r * 0.38, -r * 0.08, r * 0.15, r * 0.08);
-  ctx.quadraticCurveTo(r * 0.1, -r * 0.1, r * 0.22, -r * 0.28);
-  ctx.fill();
-  ctx.stroke();
 
   ctx.restore();
 }
@@ -2170,76 +2289,62 @@ function drawLadybug(x: number, y: number, r: number, t: number) {
   ctx.restore();
 }
 
+function jarBodyPath(w2: number, h2: number, inset = 0) {
+  const hw = w2 / 2 - inset;
+  const nk = w2 * 0.41 - inset;
+  const topY = -h2 + inset;
+  const shoulderY = -h2 * 0.58;
+  const br = Math.min(14 * SCALE, hw * 0.35);
+  ctx.beginPath();
+  ctx.moveTo(-nk, topY);
+  ctx.quadraticCurveTo(-hw, topY, -hw, shoulderY);
+  ctx.lineTo(-hw, -br - inset);
+  ctx.quadraticCurveTo(-hw, -inset, -hw + br, -inset);
+  ctx.lineTo(hw - br, -inset);
+  ctx.quadraticCurveTo(hw, -inset, hw, -br - inset);
+  ctx.lineTo(hw, shoulderY);
+  ctx.quadraticCurveTo(hw, topY, nk, topY);
+  ctx.closePath();
+}
+
 function drawArtisticCorkStopper(neckW: number, neckY: number) {
-  const corkW = neckW * 0.88;
-  const corkH = 15 * SCALE;
-  const corkY = neckY - 12 * SCALE;
+  // Smaller, realistic cork sitting cleanly atop glass neck
+  const corkW = neckW * 0.74;
+  const corkH = 10 * SCALE;
+  const corkY = neckY - 7 * SCALE;
 
   ctx.save();
-
-  ctx.fillStyle = "rgba(15, 10, 5, 0.35)";
+  // Soft shadow under cork
+  ctx.fillStyle = "rgba(10, 6, 2, 0.45)";
   ctx.beginPath();
-  ctx.roundRect(-corkW / 2, corkY + 3 * SCALE, corkW, corkH, 4 * SCALE);
+  ctx.ellipse(0, corkY + corkH, corkW * 0.48, 2.5 * SCALE, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Solid, realistic cork wood gradient
   const corkG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
-  corkG.addColorStop(0, "#5c371d");
-  corkG.addColorStop(0.2, "#87532a");
-  corkG.addColorStop(0.5, "#b87f4c");
-  corkG.addColorStop(0.8, "#9e683b");
-  corkG.addColorStop(1, "#543118");
+  corkG.addColorStop(0, "#633c1d");
+  corkG.addColorStop(0.25, "#8e572d");
+  corkG.addColorStop(0.5, "#b57b48");
+  corkG.addColorStop(0.75, "#965f33");
+  corkG.addColorStop(1, "#543015");
 
   ctx.fillStyle = corkG;
-  ctx.strokeStyle = "#3d2210";
-  ctx.lineWidth = 1.4 * SCALE;
+  ctx.strokeStyle = "rgba(60, 32, 14, 0.6)";
+  ctx.lineWidth = 1 * SCALE;
   ctx.beginPath();
-  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
+  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 3 * SCALE);
   ctx.fill();
   ctx.stroke();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE);
-  ctx.clip();
-
-  ctx.fillStyle = "rgba(60, 32, 14, 0.55)";
-  const specks = [
-    { x: -corkW * 0.35, y: corkY + 4 * SCALE, r: 1.2 * SCALE },
-    { x: -corkW * 0.18, y: corkY + 9 * SCALE, r: 1.5 * SCALE },
-    { x: 0, y: corkY + 3 * SCALE, r: 1.1 * SCALE },
-    { x: corkW * 0.22, y: corkY + 8 * SCALE, r: 1.4 * SCALE },
-    { x: corkW * 0.38, y: corkY + 5 * SCALE, r: 1.0 * SCALE },
-  ];
-  for (const s of specks) {
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.strokeStyle = "rgba(230, 175, 115, 0.35)";
-  ctx.lineWidth = 1.2 * SCALE;
-  ctx.beginPath();
-  ctx.moveTo(-corkW * 0.4, corkY + 5 * SCALE);
-  ctx.quadraticCurveTo(
-    -corkW * 0.1,
-    corkY + 7 * SCALE,
-    corkW * 0.35,
-    corkY + 4 * SCALE,
-  );
-  ctx.moveTo(-corkW * 0.3, corkY + 11 * SCALE);
-  ctx.quadraticCurveTo(0, corkY + 10 * SCALE, corkW * 0.4, corkY + 12 * SCALE);
-  ctx.stroke();
-
-  ctx.restore();
-
-  ctx.fillStyle = "rgba(255, 240, 215, 0.32)";
+  // Clean top bevel highlight (no clutter/speckles/seams)
+  ctx.fillStyle = "rgba(255, 235, 205, 0.28)";
   ctx.beginPath();
   ctx.roundRect(
-    -corkW / 2 + 2 * SCALE,
-    corkY + 1.2 * SCALE,
-    corkW - 4 * SCALE,
-    3.2 * SCALE,
-    2 * SCALE,
+    -corkW / 2 + 1.5 * SCALE,
+    corkY + 1 * SCALE,
+    corkW - 3 * SCALE,
+    2.5 * SCALE,
+    1.5 * SCALE,
   );
   ctx.fill();
 
@@ -2308,14 +2413,7 @@ function drawJar() {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = `rgba(255, 50, 30, ${waspHitFlash * 0.75})`;
-    ctx.beginPath();
-    ctx.roundRect(
-      -w / 2 - 6 * SCALE,
-      -h - 12 * SCALE,
-      w + 12 * SCALE,
-      h + 16 * SCALE,
-      16 * SCALE,
-    );
+    jarBodyPath(w, h, -6 * SCALE);
     ctx.fill();
     ctx.restore();
   }
@@ -2327,35 +2425,13 @@ function drawJar() {
   glassVolumeGrad.addColorStop(1, "rgba(8, 18, 35, 0.65)");
 
   ctx.fillStyle = glassVolumeGrad;
-  ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 15 * SCALE);
+  jarBodyPath(w, h, 0);
   ctx.fill();
 
   const neckW = w * 0.82;
-  const neckH = 14 * SCALE;
-  const neckY = -h - neckH * 0.5;
+  const neckY = -h;
 
   drawArtisticCorkStopper(neckW, neckY);
-
-  ctx.fillStyle = "rgba(195, 230, 255, 0.35)";
-  ctx.strokeStyle = "rgba(220, 245, 255, 0.85)";
-  ctx.lineWidth = 2 * SCALE;
-  ctx.beginPath();
-  ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 5 * SCALE);
-  ctx.fill();
-  ctx.stroke();
-
-  const ringG = ctx.createLinearGradient(-neckW / 2, 0, neckW / 2, 0);
-  ringG.addColorStop(0, "#d4a373");
-  ringG.addColorStop(0.5, "#fef08a");
-  ringG.addColorStop(1, "#b47b48");
-  ctx.strokeStyle = ringG;
-  ctx.lineWidth = 2.5 * SCALE;
-  ctx.beginPath();
-  ctx.moveTo(-neckW / 2 + 2 * SCALE, neckY + neckH / 2);
-  ctx.lineTo(neckW / 2 - 2 * SCALE, neckY + neckH / 2);
-  ctx.stroke();
-
   if (glow > 0) {
     ctx.save();
     ctx.beginPath();
@@ -2447,8 +2523,7 @@ function drawJar() {
   ctx.strokeStyle = "rgba(215, 240, 255, 0.82)";
   ctx.lineWidth = 3 * SCALE;
   ctx.fillStyle = "rgba(180, 225, 255, 0.08)";
-  ctx.beginPath();
-  ctx.roundRect(-w / 2, -h, w, h, 15 * SCALE);
+  jarBodyPath(w, h, 0);
   ctx.fill();
   ctx.stroke();
 
