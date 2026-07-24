@@ -1978,55 +1978,55 @@ function drawSpider(
     }
   }
 
-  // 3. ABDOMEN (Deep Purple & Black Velvet Chitin with Black Borders)
+  // 3. ABDOMEN (Dark Near-Black Purple Chitin with Black Borders - Compact Size)
   ctx.save();
-  ctx.translate(0, r * 0.45);
+  ctx.translate(0, r * 0.36);
   ctx.rotate(abdomenPacing);
 
-  const abG = ctx.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.25);
-  abG.addColorStop(0, "#c084fc");
-  abG.addColorStop(0.3, "#9333ea");
-  abG.addColorStop(0.65, "#581c87");
-  abG.addColorStop(1, "#140727");
+  const abG = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.08, 0, 0, r * 1.0);
+  abG.addColorStop(0, "#581c87");
+  abG.addColorStop(0.35, "#3b0764");
+  abG.addColorStop(0.7, "#1e0a3b");
+  abG.addColorStop(1, "#0a0414");
 
   ctx.fillStyle = abG;
   ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 2 * SCALE;
+  ctx.lineWidth = 1.8 * SCALE;
 
   ctx.beginPath();
-  ctx.ellipse(0, 0, r * 0.88, r * 1.22, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, r * 0.72, r * 0.98, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Purple Chevron Patterns across Abdomen
-  ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.6)" : "rgba(216, 180, 254, 0.5)";
-  ctx.lineWidth = 1.6 * SCALE;
+  // Subtle Dark Purple Chevron Patterns across Abdomen
+  ctx.strokeStyle = webActive ? "rgba(239, 68, 68, 0.65)" : "rgba(168, 85, 247, 0.35)";
+  ctx.lineWidth = 1.4 * SCALE;
   for (let k = 0; k < 3; k++) {
-    const sy = -r * 0.4 + k * (r * 0.35);
+    const sy = -r * 0.32 + k * (r * 0.28);
     ctx.beginPath();
-    ctx.moveTo(-r * 0.45, sy);
-    ctx.quadraticCurveTo(0, sy - r * 0.2, r * 0.45, sy);
+    ctx.moveTo(-r * 0.36, sy);
+    ctx.quadraticCurveTo(0, sy - r * 0.16, r * 0.36, sy);
     ctx.stroke();
   }
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
   ctx.beginPath();
-  ctx.ellipse(-r * 0.3, -r * 0.35, r * 0.25, r * 0.45, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(-r * 0.24, -r * 0.28, r * 0.2, r * 0.36, -0.3, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 
-  // 4. CEPHALOTHORAX (Black / Obsidian Head as requested)
-  const cephG = ctx.createRadialGradient(-r * 0.15, -r * 0.5, r * 0.05, 0, -r * 0.45, r * 0.65);
+  // 4. CEPHALOTHORAX (Black / Obsidian Head - Compact Size)
+  const cephG = ctx.createRadialGradient(-r * 0.12, -r * 0.42, r * 0.04, 0, -r * 0.38, r * 0.55);
   cephG.addColorStop(0, "#3f3f46");
   cephG.addColorStop(0.55, "#18181b");
   cephG.addColorStop(1, "#09090b");
 
   ctx.fillStyle = cephG;
   ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 1.8 * SCALE;
+  ctx.lineWidth = 1.6 * SCALE;
   ctx.beginPath();
-  ctx.ellipse(0, -r * 0.45, r * 0.58, r * 0.55, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -r * 0.42, r * 0.48, r * 0.44, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
