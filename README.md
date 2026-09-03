@@ -1,5 +1,9 @@
 # FIREFLIES — A Falling Game and Juice on Canvas
 
+<!-- LINKS:BEGIN — üretildi: scripts/sync-repo-links.py · elle düzenleme -->
+**▶ [Live demo](https://m2-md.github.io/canvas-falling-game-from-scratch/)** · [Source](https://github.com/m2-md/canvas-falling-game-from-scratch)
+<!-- LINKS:END -->
+
 Working code for the article "Your Game Works. So Why Isn't It Fun? A Falling Game and
 Juice on Canvas". At midnight in a garden you catch fireflies drifting down from above
 with a jar; wasps that mix into the swarm steal your light. Two layers:
