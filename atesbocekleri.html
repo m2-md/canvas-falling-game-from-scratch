@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>ATEŞBÖCEKLERİ — Night Garden</title>
+<title>FIREFLIES — Night Garden</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
 <script>
 "use strict";
 // ============================================================================
-// SAF OYUN MANTIĞI (logic)
+// PURE GAME LOGIC
 // ============================================================================
 function createSpawnTimer(first = 0.6) { return { next: first, acc: 0 }; }
 function tickSpawn(t, dt, spawnEvery, rand = Math.random) {
@@ -68,31 +68,31 @@ function shakeOffset(s, rand = Math.random) {
   return { x: (rand() * 2 - 1) * s.power, y: (rand() * 2 - 1) * s.power };
 }
 const LEVELS = [
-  { level: 1, name: "Alacakaranlık Çayırı", subtitle: "Gece Kapısı", target: 12, waspChance: 0.08, fallSpeedMult: 1, spawnEvery: 1.6, maxLadybugs: 0, maxMoths: 0, skyTheme: "twilight", description: "Bahçenin ilk ışıkları seni çağırıyor.", allowedHazards: ["wasp"] },
-  { level: 2, name: "Yonca Bahçesi", subtitle: "Küçük Gezginler", target: 13, waspChance: 0.098, fallSpeedMult: 1.067, spawnEvery: 1.551, maxLadybugs: 1, maxMoths: 0, skyTheme: "emerald", description: "Uğur böcekleri bu gece yoldaşın oldu.", allowedHazards: ["wasp", "ladybug"] },
-  { level: 3, name: "Söğüt Gölgeleri", subtitle: "Fısıltılı Dallar", target: 14, waspChance: 0.115, fallSpeedMult: 1.133, spawnEvery: 1.502, maxLadybugs: 1, maxMoths: 0, skyTheme: "midnight", description: "Söğütlerin altında ışıklar daha ürkek titrer.", allowedHazards: ["wasp", "ladybug"] },
-  { level: 4, name: "Örümcek Bahçesi", subtitle: "İlk Tuzak", target: 15, waspChance: 0.133, fallSpeedMult: 1.2, spawnEvery: 1.453, maxLadybugs: 1, maxMoths: 0, skyTheme: "azure", description: "Gölgede sabırla bekleyen bir avcı uyandı.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 5, name: "Yakut Vadisi", subtitle: "Alevden Işıklar", target: 16, waspChance: 0.15, fallSpeedMult: 1.267, spawnEvery: 1.403, maxLadybugs: 1, maxMoths: 0, skyTheme: "storm", description: "Kızıl ışıklar örümcek ağını yakabilir artık.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 6, name: "Kutup Fısıltısı", subtitle: "Renkli Perde", target: 17, waspChance: 0.168, fallSpeedMult: 1.333, spawnEvery: 1.354, maxLadybugs: 1, maxMoths: 0, skyTheme: "aurora", description: "Gökyüzü dans ediyor, ışıklar ona eşlik ediyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 7, name: "Kanlı Dolunay", subtitle: "Kızıl Uyarı", target: 17, waspChance: 0.185, fallSpeedMult: 1.4, spawnEvery: 1.305, maxLadybugs: 1, maxMoths: 0, skyTheme: "bloodmoon", description: "Ay kızıla döndü, arılar telaşlandı.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 8, name: "Sisli Koru", subtitle: "Görünmeyen Yollar", target: 18, waspChance: 0.203, fallSpeedMult: 1.467, spawnEvery: 1.256, maxLadybugs: 2, maxMoths: 0, skyTheme: "fog", description: "Sis içinde ışığını takip etmeyi unutma.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 9, name: "Yıldız Tozu", subtitle: "Gökyüzü Yağmuru", target: 19, waspChance: 0.22, fallSpeedMult: 1.533, spawnEvery: 1.207, maxLadybugs: 2, maxMoths: 0, skyTheme: "starstorm", description: "Yıldızlar bile bu gece yere düşmek istiyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 10, name: "Ay Muhafızı", subtitle: "İlk Sınav", target: 20, waspChance: 0.237, fallSpeedMult: 1.6, spawnEvery: 1.158, maxLadybugs: 2, maxMoths: 0, skyTheme: "legendary", description: "Bahçenin eski bekçisi seni sınıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 11, name: "Çiy Damlası Bahçesi", subtitle: "Yeni Şafak", target: 21, waspChance: 0.255, fallSpeedMult: 1.667, spawnEvery: 1.108, maxLadybugs: 2, maxMoths: 0, skyTheme: "emerald", description: "Her çiy damlası yeni bir ışık saklıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 12, name: "Zümrüt Patika", subtitle: "Yol Arkadaşları", target: 22, waspChance: 0.273, fallSpeedMult: 1.733, spawnEvery: 1.059, maxLadybugs: 2, maxMoths: 0, skyTheme: "midnight", description: "Uğur böcekleri artık daha kalabalık geziyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 13, name: "Gölgeler Diyarı", subtitle: "Derin Sessizlik", target: 23, waspChance: 0.29, fallSpeedMult: 1.8, spawnEvery: 1.01, maxLadybugs: 2, maxMoths: 0, skyTheme: "azure", description: "Karanlık burada daha ağır çöküyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 14, name: "Örümcek Vadisi", subtitle: "Sabırlı Avcı", target: 24, waspChance: 0.307, fallSpeedMult: 1.867, spawnEvery: 0.961, maxLadybugs: 3, maxMoths: 0, skyTheme: "storm", description: "Ağlar bu gece daha sık örülüyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 15, name: "Fırtına Kapısı", subtitle: "Yarı Yol", target: 25, waspChance: 0.325, fallSpeedMult: 1.933, spawnEvery: 0.912, maxLadybugs: 3, maxMoths: 0, skyTheme: "aurora", description: "Bahçenin ortasına vardın, rüzgar hızlanıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 16, name: "Kutup Alevi", subtitle: "Titreşen Gökyüzü", target: 26, waspChance: 0.343, fallSpeedMult: 2, spawnEvery: 0.863, maxLadybugs: 3, maxMoths: 0, skyTheme: "bloodmoon", description: "Renkler coşkuyla savruluyor, ışıklar zorlanıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 17, name: "Kızıl Gece Yarısı", subtitle: "Uyarı Çanları", target: 26, waspChance: 0.36, fallSpeedMult: 2.067, spawnEvery: 0.813, maxLadybugs: 3, maxMoths: 0, skyTheme: "fog", description: "Ay yeniden kızardı, tehlike arttı.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 18, name: "Kayıp Sis", subtitle: "Belirsiz Patika", target: 27, waspChance: 0.378, fallSpeedMult: 2.133, spawnEvery: 0.764, maxLadybugs: 3, maxMoths: 0, skyTheme: "starstorm", description: "Yol kayboldu, sadece ışığına güven.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 19, name: "Göktaşı Yağmuru", subtitle: "Son Hazırlık", target: 28, waspChance: 0.395, fallSpeedMult: 2.2, spawnEvery: 0.715, maxLadybugs: 3, maxMoths: 0, skyTheme: "twilight", description: "Gökyüzü parçalanıyor, büyük sınav yaklaşıyor.", allowedHazards: ["wasp", "ladybug", "spider"] },
-  { level: 20, name: "Güve Gecesi", subtitle: "Sahte Işıklar", target: 29, waspChance: 0.412, fallSpeedMult: 2.267, spawnEvery: 0.666, maxLadybugs: 4, maxMoths: 1, skyTheme: "legendary", description: "Bazı ışıklar seni aldatmak için parlıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
-  { level: 21, name: "Alacakaranlık Efsanesi", subtitle: "Eski Anı", target: 30, waspChance: 0.43, fallSpeedMult: 2.333, spawnEvery: 0.617, maxLadybugs: 4, maxMoths: 1, skyTheme: "midnight", description: "Bahçe seni ilk gecesine geri çağırıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
-  { level: 22, name: "Zümrüt Taht", subtitle: "Yeşil Krallık", target: 31, waspChance: 0.448, fallSpeedMult: 2.4, spawnEvery: 0.568, maxLadybugs: 4, maxMoths: 1, skyTheme: "azure", description: "Yeşil ışıklar burada bir krallık kuruyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
-  { level: 23, name: "Kadim Gölge", subtitle: "Unutulmuş Fısıltı", target: 32, waspChance: 0.465, fallSpeedMult: 2.467, spawnEvery: 0.518, maxLadybugs: 4, maxMoths: 1, skyTheme: "storm", description: "En eski gölgeler burada uyanıyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
-  { level: 24, name: "Son Ağ", subtitle: "Karanlığın Efendisi", target: 33, waspChance: 0.483, fallSpeedMult: 2.533, spawnEvery: 0.469, maxLadybugs: 4, maxMoths: 2, skyTheme: "aurora", description: "Örümcek bu gece hiç uyumayacak.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
-  { level: 25, name: "Işık Muhafızı", subtitle: "Efsanevi Final", target: 34, waspChance: 0.5, fallSpeedMult: 2.6, spawnEvery: 0.42, maxLadybugs: 4, maxMoths: 2, skyTheme: "legendary", description: "Bahçenin son ve en parlak sınavı seni bekliyor.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 1, name: "Twilight Meadow", subtitle: "Night Gate", target: 12, waspChance: 0.08, fallSpeedMult: 1, spawnEvery: 1.6, maxLadybugs: 0, maxMoths: 0, skyTheme: "twilight", description: "The first lights of the garden beckon you.", allowedHazards: ["wasp"] },
+  { level: 2, name: "Clover Garden", subtitle: "Little Wanderers", target: 13, waspChance: 0.098, fallSpeedMult: 1.067, spawnEvery: 1.551, maxLadybugs: 1, maxMoths: 0, skyTheme: "emerald", description: "Ladybugs have become your companions tonight.", allowedHazards: ["wasp", "ladybug"] },
+  { level: 3, name: "Willow Shadows", subtitle: "Whispering Branches", target: 14, waspChance: 0.115, fallSpeedMult: 1.133, spawnEvery: 1.502, maxLadybugs: 1, maxMoths: 0, skyTheme: "midnight", description: "Beneath the willows, lights flicker more timidly.", allowedHazards: ["wasp", "ladybug"] },
+  { level: 4, name: "Spider Garden", subtitle: "First Trap", target: 15, waspChance: 0.133, fallSpeedMult: 1.2, spawnEvery: 1.453, maxLadybugs: 1, maxMoths: 0, skyTheme: "azure", description: "A patient predator waiting in the shadows has awakened.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 5, name: "Ruby Valley", subtitle: "Fiery Lights", target: 16, waspChance: 0.15, fallSpeedMult: 1.267, spawnEvery: 1.403, maxLadybugs: 1, maxMoths: 0, skyTheme: "storm", description: "Crimson lights can now burn and sever the spider web.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 6, name: "Polar Whisper", subtitle: "Color Curtain", target: 17, waspChance: 0.168, fallSpeedMult: 1.333, spawnEvery: 1.354, maxLadybugs: 1, maxMoths: 0, skyTheme: "aurora", description: "The sky dances, and lights accompany its rhythm.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 7, name: "Blood Full Moon", subtitle: "Crimson Warning", target: 17, waspChance: 0.185, fallSpeedMult: 1.4, spawnEvery: 1.305, maxLadybugs: 1, maxMoths: 0, skyTheme: "bloodmoon", description: "The moon turned crimson, wasps are agitated.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 8, name: "Misty Grove", subtitle: "Unseen Paths", target: 18, waspChance: 0.203, fallSpeedMult: 1.467, spawnEvery: 1.256, maxLadybugs: 2, maxMoths: 0, skyTheme: "fog", description: "Remember to follow your light through the mist.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 9, name: "Stardust", subtitle: "Sky Rain", target: 19, waspChance: 0.22, fallSpeedMult: 1.533, spawnEvery: 1.207, maxLadybugs: 2, maxMoths: 0, skyTheme: "starstorm", description: "Even the stars yearn to fall to the earth tonight.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 10, name: "Moon Guardian", subtitle: "First Trial", target: 20, waspChance: 0.237, fallSpeedMult: 1.6, spawnEvery: 1.158, maxLadybugs: 2, maxMoths: 0, skyTheme: "legendary", description: "The ancient keeper of the garden tests you.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 11, name: "Dewdrop Garden", subtitle: "New Dawn", target: 21, waspChance: 0.255, fallSpeedMult: 1.667, spawnEvery: 1.108, maxLadybugs: 2, maxMoths: 0, skyTheme: "emerald", description: "Every dewdrop conceals a brand-new light.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 12, name: "Emerald Path", subtitle: "Fellow Travelers", target: 22, waspChance: 0.273, fallSpeedMult: 1.733, spawnEvery: 1.059, maxLadybugs: 2, maxMoths: 0, skyTheme: "midnight", description: "Ladybugs now roam in greater numbers.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 13, name: "Realm of Shadows", subtitle: "Deep Silence", target: 23, waspChance: 0.29, fallSpeedMult: 1.8, spawnEvery: 1.01, maxLadybugs: 2, maxMoths: 0, skyTheme: "azure", description: "Darkness settles heavier here.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 14, name: "Spider Valley", subtitle: "Patient Hunter", target: 24, waspChance: 0.307, fallSpeedMult: 1.867, spawnEvery: 0.961, maxLadybugs: 3, maxMoths: 0, skyTheme: "storm", description: "Webs are spun more tightly tonight.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 15, name: "Storm Gate", subtitle: "Halfway Point", target: 25, waspChance: 0.325, fallSpeedMult: 1.933, spawnEvery: 0.912, maxLadybugs: 3, maxMoths: 0, skyTheme: "aurora", description: "You reached the heart of the garden; winds accelerate.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 16, name: "Polar Flame", subtitle: "Flickering Sky", target: 26, waspChance: 0.343, fallSpeedMult: 2, spawnEvery: 0.863, maxLadybugs: 3, maxMoths: 0, skyTheme: "bloodmoon", description: "Vivid colors swirl, lights struggle against the gust.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 17, name: "Crimson Midnight", subtitle: "Warning Bells", target: 26, waspChance: 0.36, fallSpeedMult: 2.067, spawnEvery: 0.813, maxLadybugs: 3, maxMoths: 0, skyTheme: "fog", description: "The moon reddened once more; danger heightened.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 18, name: "Lost Mist", subtitle: "Uncertain Path", target: 27, waspChance: 0.378, fallSpeedMult: 2.133, spawnEvery: 0.764, maxLadybugs: 3, maxMoths: 0, skyTheme: "starstorm", description: "The trail has vanished; trust only your light.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 19, name: "Meteor Shower", subtitle: "Final Preparation", target: 28, waspChance: 0.395, fallSpeedMult: 2.2, spawnEvery: 0.715, maxLadybugs: 3, maxMoths: 0, skyTheme: "twilight", description: "The heavens shatter; the final trial approaches.", allowedHazards: ["wasp", "ladybug", "spider"] },
+  { level: 20, name: "Moth Night", subtitle: "False Lights", target: 29, waspChance: 0.412, fallSpeedMult: 2.267, spawnEvery: 0.666, maxLadybugs: 4, maxMoths: 1, skyTheme: "legendary", description: "Certain false lights glow only to deceive you.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 21, name: "Twilight Legend", subtitle: "Ancient Memory", target: 30, waspChance: 0.43, fallSpeedMult: 2.333, spawnEvery: 0.617, maxLadybugs: 4, maxMoths: 1, skyTheme: "midnight", description: "The garden summons you back to its inaugural night.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 22, name: "Emerald Throne", subtitle: "Green Kingdom", target: 31, waspChance: 0.448, fallSpeedMult: 2.4, spawnEvery: 0.568, maxLadybugs: 4, maxMoths: 1, skyTheme: "azure", description: "Emerald lights establish a radiant kingdom here.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 23, name: "Ancient Shadow", subtitle: "Forgotten Whisper", target: 32, waspChance: 0.465, fallSpeedMult: 2.467, spawnEvery: 0.518, maxLadybugs: 4, maxMoths: 1, skyTheme: "storm", description: "The oldest shadows awaken in these depths.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 24, name: "Final Web", subtitle: "Lord of Darkness", target: 33, waspChance: 0.483, fallSpeedMult: 2.533, spawnEvery: 0.469, maxLadybugs: 4, maxMoths: 2, skyTheme: "aurora", description: "The spider will not rest tonight.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
+  { level: 25, name: "Light Guardian", subtitle: "Legendary Finale", target: 34, waspChance: 0.5, fallSpeedMult: 2.6, spawnEvery: 0.42, maxLadybugs: 4, maxMoths: 2, skyTheme: "legendary", description: "The garden's final and most radiant trial awaits you.", allowedHazards: ["wasp", "ladybug", "spider", "moth"] },
 ];
 function getLevelConfig(level) { return LEVELS[Math.max(1, Math.min(LEVELS.length, level)) - 1]; }
 function difficulty(elapsed, level = 1) {
@@ -102,7 +102,7 @@ function difficulty(elapsed, level = 1) {
 }
 
 // ============================================================================
-// SAHNE / RENDER — sinematik gece bahçesi
+// SCENE / RENDER — Cinematic Night Garden
 // ============================================================================
 const w = window;
 if (w.__stopGame) w.__stopGame();
@@ -141,7 +141,7 @@ let soundEnabled = true, highMagnet = false;
 let jarSquash = 0, jarWobble = 0, jarTilt = 0, jarVx = 0, jarVy = 0, waspHitFlash = 0;
 const jar = { x: 0, y: 0, w: 0, h: 0 };
 
-// Atmosfer katmanları
+// Atmospheric layers
 let stars = [], bokehFar = [], bokehNear = [], volumetricFog = [], grassBack = [], grassFront = [];
 let hillsFar = [], hillsNear = [], treeSilhouettes = [];
 let auroraPhase = Math.random() * 10;
@@ -166,7 +166,7 @@ function genHills(baseY, roughness, segments) {
   return pts;
 }
 function genTree(x, h, side) {
-  // basit çınar silueti: gövde + 3-5 yumuşak taç kütlesi
+  // Simple tree silhouette: trunk + soft crown canopy
   const crowns = [];
   const n = 3 + Math.floor(Math.random() * 3);
   for (let i = 0; i < n; i++) {
@@ -307,7 +307,7 @@ function spawnCritter() {
       baseX: amp + 30 * SCALE + Math.random() * (W - 2 * (amp + 30 * SCALE)),
       y: -35 * SCALE, offsetX: 0, offsetY: 0, t: Math.random() * 10, amp,
       freq: subType === "red" ? 1.1 + Math.random() * 0.5 : 0.65 + Math.random() * 0.75,
-      r: (9.6 + Math.random() * 1.6) * SCALE, // renkten bağımsız, küçük rastgele boyut farkı
+      r: (9.6 + Math.random() * 1.6) * SCALE, // color-independent, small random size variation
       pullAngle: Math.random() * Math.PI * 2,
     });
   } else {
@@ -468,7 +468,7 @@ window.addEventListener("keydown", (e) => {
 }, on);
 
 function updateJar(dt) {
-  // ağ menžilini tara: yakalanmışsan kontrol mesafeyle orantılı zayıflar
+  // scan web range: if you are caught, control weakens in proportion to distance
   const WEB_RANGE = 230 * SCALE;
   let webSlow = 1;
   const activeWebs = [];
@@ -526,7 +526,7 @@ function updateJar(dt) {
   }
 }
 
-// --- Vektör ikonlar ----------------------------------------------------------
+// --- Vector Icons ----------------------------------------------------------
 function drawGearIcon(x, y, r, color = "#94a3b8") {
   ctx.save(); ctx.translate(x, y);
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2 * SCALE;
@@ -628,7 +628,7 @@ function drawWrappedText(context, text, x, y, maxWidth, lineHeight) {
   return currentY;
 }
 
-// --- Güncelleme ---------------------------------------------------------------
+// --- Update ---------------------------------------------------------------
 function update(dt) {
   auroraPhase += dt * 0.3;
   if (state === "playing") {
@@ -859,7 +859,7 @@ function update(dt) {
 }
 
 // ============================================================================
-// ÇİZİM — sinematik katmanlar
+// RENDER — Cinematic Layers
 // ============================================================================
 const SKY = {
   twilight:  ["#0a1030", "#182a52", "#0b1631", "#040814"],
@@ -923,14 +923,14 @@ function drawMoon() {
   ctx.beginPath(); ctx.arc(moonX, moonY, moonR * 4.2, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // Ay yüzeyi — ışık sol üstten (terminator sağ altta): tutarlı tek ışık kaynağı
+  // Moon surface — light from the upper left (terminator lower right): one consistent light source
   const mg = ctx.createRadialGradient(moonX - moonR * 0.45, moonY - moonR * 0.45, moonR * 0.1, moonX, moonY, moonR * 1.15);
   if (blood) { mg.addColorStop(0, "#ffb3a8"); mg.addColorStop(0.55, "#e0524a"); mg.addColorStop(1, "#7f1d1d"); }
   else { mg.addColorStop(0, "#ffffff"); mg.addColorStop(0.55, "#e6edf7"); mg.addColorStop(1, "#aab8cf"); }
   ctx.fillStyle = mg;
   ctx.beginPath(); ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2); ctx.fill();
 
-  // Kraterler — gölgesi ışık yönüne göre (koyu kenar sağ altta)
+  // Craters — shadows aligned with primary light vector
   const craters = [
     { dx: -0.28, dy: -0.18, r: 0.17 }, { dx: 0.3, dy: 0.16, r: 0.22 },
     { dx: -0.1, dy: 0.38, r: 0.12 }, { dx: 0.12, dy: -0.34, r: 0.09 },
@@ -975,7 +975,7 @@ function drawTrees(color) {
     ctx.save();
     ctx.translate(t.x, baseY);
     ctx.rotate(swayT);
-    // gövde
+    // Trunk
     ctx.beginPath();
     ctx.moveTo(-t.h * 0.045, 0);
     ctx.quadraticCurveTo(-t.h * 0.02, -t.h * 0.5, -t.h * 0.012, -t.h * 0.72);
@@ -983,7 +983,7 @@ function drawTrees(color) {
     ctx.quadraticCurveTo(t.h * 0.02, -t.h * 0.5, t.h * 0.045, 0);
     ctx.closePath();
     ctx.fill();
-    // taç kütleleri
+    // Crown canopy clusters
     for (const c of t.crowns) {
       ctx.beginPath();
       ctx.arc(c.dx, c.dy, c.r, 0, Math.PI * 2);
@@ -1013,7 +1013,7 @@ function drawBackground() {
   ctx.fillStyle = g;
   ctx.fillRect(-40, -40, W + 80, H + 80);
 
-  // yıldızlar (ayın arkasında)
+  // Stars (behind moon)
   for (const s of stars) {
     const alpha = s.a + Math.sin(elapsed * s.speed + s.x) * 0.15;
     ctx.globalAlpha = Math.max(0.05, Math.min(1, alpha));
@@ -1025,7 +1025,7 @@ function drawBackground() {
   drawAurora();
   drawMoon();
 
-  // kayan yıldızlar
+  // Shooting stars
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const ss of shootingStars) {
@@ -1039,7 +1039,7 @@ function drawBackground() {
   }
   ctx.restore();
 
-  // uzak bokeh (alan derinliği: büyük, silik)
+  // Distant bokeh (depth of field: large, soft blur)
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const b of bokehFar) {
@@ -1052,7 +1052,7 @@ function drawBackground() {
   }
   ctx.restore();
 
-  // paralaks tepeler + ağaç siluetleri
+  // Parallax hills + tree silhouettes
   const hillFarC = levelCfg.skyTheme === "bloodmoon" ? "rgba(28,6,9,0.85)" : "rgba(4,10,18,0.75)";
   const hillNearC = levelCfg.skyTheme === "bloodmoon" ? "#160305" : "#030810";
   drawHillLayer(hillsFar, hillFarC, 6 * SCALE);
@@ -1069,7 +1069,7 @@ function drawBackground() {
     ctx.beginPath(); ctx.ellipse(fg2.x, fg2.y, fg2.w / 2, fg2.h / 2, 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  // yakın bokeh (küçük, canlı)
+  // Foreground bokeh (small, vibrant)
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const b of bokehNear) {
@@ -1081,7 +1081,7 @@ function drawBackground() {
   ctx.restore();
   ctx.globalAlpha = 1;
 
-  // toprak bandı — sahneye zemin ağırlığı
+  // Soil band — ground visual anchor
   const soil = ctx.createLinearGradient(0, H - 80 * SCALE, 0, H);
   soil.addColorStop(0, "rgba(1,4,8,0)");
   soil.addColorStop(0.6, "rgba(1,4,8,0.55)");
@@ -1089,12 +1089,12 @@ function drawBackground() {
   ctx.fillStyle = soil;
   ctx.fillRect(0, H - 80 * SCALE, W, 80 * SCALE);
 
-  // arka çim (koyu, uzun)
+  // Background grass blades (dark, tall)
   drawGrassLayer(grassBack, "#04101a", 4 * SCALE);
 }
 
 function drawVignette() {
-  // renk kademesi: tepe soğuk mavi, alt merkez nötr — sinematik grade
+  // Color grading: cool blue zenith, neutral horizon
   const grade = ctx.createLinearGradient(0, 0, 0, H * 0.5);
   grade.addColorStop(0, "rgba(38,66,130,0.13)");
   grade.addColorStop(1, "rgba(38,66,130,0)");
@@ -1164,7 +1164,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   else if (subType === "emerald") { coreColor = "hsl(154 100% 88%)"; auraHue = "150 100% 80%"; outerHue = "140 100% 60%"; capHue = "150 70% 56%"; }
   else if (subType === "azure") { coreColor = "hsl(198 100% 90%)"; auraHue = "200 100% 84%"; outerHue = "190 100% 64%"; capHue = "200 80% 64%"; }
 
-  // yumuşak dış hale — nefes alan ışık
+  // soft outer halo — breathing light
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const pulse = 0.85 + 0.25 * Math.sin(t * 9);
@@ -1178,7 +1178,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   ctx.beginPath(); ctx.arc(0, 0, auraR, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // kanatlar — büyük, yumuşak damla formu, sedefsi (önceki halinden belirgin şekilde büyütüldü)
+  // wings — large, soft teardrop form, pearlescent (noticeably enlarged from the previous version)
   const wingAngle = Math.sin(t * 34) * 0.42;
   for (const side of [-1, 1]) {
     ctx.save();
@@ -1199,7 +1199,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
     ctx.restore();
   }
 
-  // antenler — ince, ucu yuvarlak toplu (sevimli ama sade detay), baş uçuş yönünde (+y)
+  // antennae — thin, with rounded knob tips (cute but plain detail), head faces the flight direction (+y)
   ctx.strokeStyle = "#0d0b09"; ctx.lineWidth = 0.9 * SCALE; ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(-r * 0.12, r * 0.92); ctx.quadraticCurveTo(-r * 0.5, r * 1.35, -r * 0.6, r * 1.52);
@@ -1209,7 +1209,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   ctx.beginPath(); ctx.arc(-r * 0.6, r * 1.52, r * 0.09, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(r * 0.6, r * 1.52, r * 0.09, 0, Math.PI * 2); ctx.fill();
 
-  // elytra — biraz daha tombul, yumuşak gövde
+  // elytra — a little plumper, soft body
   const elytra = ctx.createLinearGradient(-r * 0.6, 0, r * 0.6, 0);
   elytra.addColorStop(0, "#0a0806"); elytra.addColorStop(0.5, "#241d16"); elytra.addColorStop(1, "#0a0806");
   ctx.fillStyle = elytra;
@@ -1217,7 +1217,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   ctx.strokeStyle = "rgba(255,255,255,0.12)"; ctx.lineWidth = 0.7 * SCALE;
   ctx.beginPath(); ctx.moveTo(0, r * 0.58); ctx.lineTo(0, -r * 0.88); ctx.stroke();
 
-  // pronotum — baş kalkanı, öne (+y) bakar, sevimlilik i\u00e7in biraz daha yuvarlak/parlak
+  // pronotum — head shield, faces forward (+y), a bit rounder/glossier for cuteness
   ctx.fillStyle = `hsl(${capHue})`;
   ctx.beginPath(); ctx.ellipse(0, r * 0.74, r * 0.48, r * 0.38, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.25)";
@@ -1225,7 +1225,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.beginPath(); ctx.ellipse(0, r * 0.74, r * 0.18, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
 
-  // biyolüminesan kuyruk ışığı — arkada (-y, uçuş yönünün tersi) parlar
+  // bioluminescent tail light — glows at the back (-y, opposite the flight direction)
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const lantern = ctx.createRadialGradient(0, -r * 0.62, 0, 0, -r * 0.62, r * 0.88);
@@ -1236,7 +1236,7 @@ function drawFirefly(x, y, r, t, amp, freq, subType = "gold") {
   ctx.beginPath(); ctx.ellipse(0, -r * 0.6, r * 0.46, r * 0.58, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#ffffff";
   ctx.beginPath(); ctx.ellipse(0, -r * 0.58, r * 0.17, r * 0.23, 0, 0, Math.PI * 2); ctx.fill();
-  // küçük pırıltı — büyülü dokunuş
+  // small twinkle — a magical touch
   const twinkle = 0.5 + 0.5 * Math.sin(t * 6.5);
   ctx.strokeStyle = `rgba(255,255,255,${0.5 * twinkle})`;
   ctx.lineWidth = 0.7 * SCALE;
@@ -1480,7 +1480,7 @@ function drawMoth(x, y, r, t, amp, freq) {
   ctx.translate(x, y);
   ctx.rotate(-tilt * 0.5);
 
-  // sahte, düzensiz titreyen ışık — ateşböceğinin düzenli nabzından farkı bu (asla tam sönmez)
+  // fake, irregularly flickering light — this is what separates it from the firefly's steady pulse (it never goes fully dark)
   const flicker = Math.sin(t * 5.5) * Math.sin(t * 1.7) * 0.5 + 0.5;
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
@@ -1492,7 +1492,7 @@ function drawMoth(x, y, r, t, amp, freq) {
   ctx.beginPath(); ctx.arc(0, -r * 0.5, auraR, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // tüylü, üçgen kanatlar — açık kül/toz rengi, karanlığa karşı okunaklı
+  // furry, triangular wings — light ash/dust color, legible against the darkness
   const flap = Math.sin(t * 20) * 0.5;
   const wingG = ctx.createLinearGradient(-r * 1.6, 0, r * 1.6, 0);
   wingG.addColorStop(0, "#ded6e6"); wingG.addColorStop(0.5, "#9686a3"); wingG.addColorStop(1, "#ded6e6");
@@ -1518,14 +1518,14 @@ function drawMoth(x, y, r, t, amp, freq) {
     ctx.restore();
   }
 
-  // gövde — kısa, kürklü, açık-koyu geçişli (silueti belirginleştirir)
+  // body — short, furry, light-to-dark gradient (sharpens the silhouette)
   const bodyG = ctx.createLinearGradient(0, -r * 0.9, 0, r * 0.8);
   bodyG.addColorStop(0, "#8a7d94"); bodyG.addColorStop(1, "#332b3e");
   ctx.fillStyle = bodyG;
   ctx.strokeStyle = "rgba(255,250,245,0.4)"; ctx.lineWidth = 0.8 * SCALE;
   ctx.beginPath(); ctx.ellipse(0, 0, r * 0.32, r * 0.85, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-  // tüylü baş + taraksı antenler (güveyi ateşböceğinden ayıran belirgin özellik)
+  // furry head + comb-like antennae (the distinctive feature separating the moth from the firefly)
   ctx.fillStyle = "#332b3e";
   ctx.beginPath(); ctx.arc(0, r * 0.78, r * 0.24, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "#332b3e"; ctx.lineWidth = 0.9 * SCALE;
@@ -1543,8 +1543,8 @@ function drawMoth(x, y, r, t, amp, freq) {
   ctx.restore();
 }
 
-// --- Kavanoz: perspektifli cam (eliptik ağız + taban, ay yönlü rim light) -----
-// Mason-jar silüeti: omuzlu cam form (roundRect kutu değil)
+// --- Jar: glass in perspective (elliptical mouth + base, moon-facing rim light) -----
+// Mason-jar silhouette: shouldered glass form (not a roundRect box)
 function jarBodyPath(w2, h2, inset = 0) {
   const hw = w2 / 2 - inset;
   const nk = w2 * 0.41 - inset;
@@ -1576,7 +1576,7 @@ function drawArtisticCorkStopper(neckW, neckY) {
   ctx.fillStyle = corkG;
   ctx.strokeStyle = "#3d2210"; ctx.lineWidth = 1.4 * SCALE;
   ctx.beginPath(); ctx.roundRect(-corkW / 2, corkY, corkW, corkH, 4 * SCALE); ctx.fill(); ctx.stroke();
-  // mantar üst yüzeyi: perspektif elips
+  // cork top surface: perspective ellipse
   const topG = ctx.createLinearGradient(-corkW / 2, 0, corkW / 2, 0);
   topG.addColorStop(0, "#9e683b"); topG.addColorStop(0.5, "#d19a63"); topG.addColorStop(1, "#87532a");
   ctx.fillStyle = topG;
@@ -1632,7 +1632,7 @@ function drawJar() {
     ctx.restore();
   }
 
-  // cam gövde
+  // glass body
   const glassVolumeGrad = ctx.createLinearGradient(-w2 / 2, 0, w2 / 2, 0);
   glassVolumeGrad.addColorStop(0, "rgba(8,18,35,0.65)");
   glassVolumeGrad.addColorStop(0.3, "rgba(12,28,50,0.35)");
@@ -1641,7 +1641,7 @@ function drawJar() {
   ctx.fillStyle = glassVolumeGrad;
   jarBodyPath(w2, h2); ctx.fill();
 
-  // cam iç arka duvarı — hacim hissi
+  // inner back wall of the glass — sense of volume
   const backWall = ctx.createLinearGradient(0, -h2, 0, 0);
   backWall.addColorStop(0, "rgba(120,170,220,0.10)");
   backWall.addColorStop(0.5, "rgba(60,100,150,0.05)");
@@ -1649,7 +1649,7 @@ function drawJar() {
   ctx.fillStyle = backWall;
   jarBodyPath(w2, h2, 4 * SCALE); ctx.fill();
 
-  // taban elipsi — perspektif: hafif yukarıdan bakış
+  // base ellipse — perspective: viewed slightly from above
   ctx.fillStyle = "rgba(6,14,28,0.55)";
   ctx.beginPath(); ctx.ellipse(0, -2 * SCALE, w2 / 2 - 3 * SCALE, 7 * SCALE, 0, 0, Math.PI); ctx.fill();
 
@@ -1663,7 +1663,7 @@ function drawJar() {
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath(); ctx.roundRect(-neckW / 2, neckY, neckW, neckH, 5 * SCALE); ctx.fill(); ctx.stroke();
 
-  // ağız elipsi — cam kalınlığı hissi
+  // mouth ellipse — sense of glass thickness
   ctx.strokeStyle = "rgba(230,248,255,0.6)"; ctx.lineWidth = 1.4 * SCALE;
   ctx.beginPath(); ctx.ellipse(0, neckY + neckH, neckW / 2, 5 * SCALE, 0, 0, Math.PI * 2); ctx.stroke();
 
@@ -1730,12 +1730,12 @@ function drawJar() {
   }
   ctx.restore();
 
-  // dış kontur + cam yüzey (fresnel: kenarlar parlak, orta şeffaf)
+  // outer contour + glass surface (fresnel: bright edges, transparent middle)
   ctx.strokeStyle = "rgba(215,240,255,0.85)"; ctx.lineWidth = 2.6 * SCALE;
   ctx.fillStyle = "rgba(180,225,255,0.07)";
   jarBodyPath(w2, h2); ctx.fill(); ctx.stroke();
 
-  // cam yansıma çizgileri — çapraz iki streak
+  // glass reflection lines — two diagonal streaks
   ctx.save();
   jarBodyPath(w2, h2, 2 * SCALE);
   ctx.clip();
@@ -1749,7 +1749,7 @@ function drawJar() {
   ctx.restore();
   ctx.restore();
 
-  // sol dikey highlight (ay ışığı sağdan: sağ kenara rim, sola yumuşak)
+  // left vertical highlight (moonlight from the right: rim on the right edge, soft on the left)
   const highlightAlpha = 0.38 + 0.15 * Math.sin(elapsed * 2.5);
   ctx.strokeStyle = `rgba(255,255,255,${highlightAlpha})`;
   ctx.lineWidth = 3.5 * SCALE;
@@ -1757,7 +1757,7 @@ function drawJar() {
   ctx.moveTo(-w2 / 2 + 6 * SCALE, -h2 + 16 * SCALE);
   ctx.lineTo(-w2 / 2 + 6 * SCALE, -16 * SCALE);
   ctx.stroke();
-  // sağ rim light — ay yönü
+  // right rim light — moon direction
   ctx.strokeStyle = "rgba(210,232,255,0.5)";
   ctx.lineWidth = 2 * SCALE;
   ctx.beginPath();
@@ -1771,7 +1771,7 @@ function drawJar() {
 }
 
 function drawJarShadow() {
-  // zemin temas gölgesi — yükseklikle yumuşar ve büyür (fizik doğruluğu)
+  // ground contact shadow — softens and grows with height (physical accuracy)
   const cx = jar.x + jar.w / 2;
   const groundY = H - 10 * SCALE;
   const height = Math.max(0, groundY - (jar.y + jar.h));
@@ -1787,7 +1787,7 @@ function drawJarShadow() {
 }
 
 // --- HUD ----------------------------------------------------------------------
-// --- HUD: cam kapsüller, iç ışık çizgisi, glow vurguları -----------------------
+// --- HUD: glass capsules, inner light line, glow accents -----------------------
 function hudPanel(x, y, pw, ph, radius) {
   const pg = ctx.createLinearGradient(x, y, x, y + ph);
   pg.addColorStop(0, "rgba(22,32,58,0.82)");
@@ -1853,7 +1853,7 @@ function drawHUD() {
   ctx.fillText(`${elapsed.toFixed(1)}s`, timerX + 32 * SCALE, timerY + btnSize / 2 + 1 * SCALE);
   ctx.shadowBlur = 0;
 
-  // ilerleme çubuğu — ucunda süzülen ışık noktası
+  // progress bar — a light dot drifting at its tip
   const pbW = 220 * SCALE, pbH = 7 * SCALE;
   const pbX = (W - pbW) / 2, pbY = hudCenterY + lvlH + 10 * SCALE;
   ctx.fillStyle = "rgba(8,13,26,0.7)";
@@ -1870,7 +1870,7 @@ function drawHUD() {
     ctx.fillStyle = pg2;
     ctx.beginPath(); ctx.roundRect(pbX, pbY, Math.max(pbH, pbW * prog), pbH, pbH / 2); ctx.fill();
     ctx.restore();
-    // uçtaki ışık noktası
+    // the light dot at the tip
     const tipX = pbX + Math.max(pbH, pbW * prog), tipY = pbY + pbH / 2;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
@@ -1892,7 +1892,7 @@ function drawHUD() {
 function modalBase(borderColor, wide) {
   ctx.fillStyle = "rgba(2,4,12,0.82)";
   ctx.fillRect(0, 0, W, H);
-  // giriş animasyonu: yükselerek belir
+  // entry animation: rise into view
   const p = Math.min(1, modalAnimTime / 0.32);
   const ease = 1 - Math.pow(1 - p, 3);
   ctx.globalAlpha = ease;
@@ -1901,7 +1901,7 @@ function modalBase(borderColor, wide) {
   const cardH = wide ? Math.min(H * 0.94, 720 * SCALE) : Math.min(H * 0.9, 540 * SCALE);
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
-  // arka ışıma
+  // back glow
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   const halo = ctx.createRadialGradient(W / 2, cardY + cardH / 2, cardW * 0.2, W / 2, cardY + cardH / 2, cardW * 0.75);
@@ -1924,7 +1924,7 @@ function modalBase(borderColor, wide) {
   ctx.strokeStyle = borderColor;
   ctx.lineWidth = 1.6 * SCALE;
   ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, 28 * SCALE); ctx.stroke();
-  // üst kenar iç ışık çizgisi
+  // inner light line along the top edge
   ctx.strokeStyle = "rgba(255,255,255,0.12)";
   ctx.lineWidth = 1 * SCALE;
   ctx.beginPath();
@@ -1957,7 +1957,7 @@ function primaryButton(text, btnY, cardW, colors, btnH = 50 * SCALE) {
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.roundRect(btnX, btnY, btnW, btnH, radius); ctx.fill();
   ctx.restore();
-  // üst iç parlaklık — butonun kendi şekline klipli, kenardan taşmaz
+  // inner top sheen — clipped to the button's own shape, does not bleed past the edge
   ctx.save();
   ctx.beginPath(); ctx.roundRect(btnX, btnY, btnW, btnH, radius); ctx.clip();
   const sheen = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH * 0.55);
@@ -1985,14 +1985,14 @@ function drawLevelIntroModal() {
   tg.addColorStop(0, "#fffbeb"); tg.addColorStop(0.55, "#fde68a"); tg.addColorStop(1, "#f59e0b");
   ctx.fillStyle = tg;
   ctx.font = `900 ${titleFont}px 'Outfit', sans-serif`;
-  ctx.fillText("ATEŞBÖCEKLERİ", W / 2, titleY);
+  ctx.fillText("FIREFLIES", W / 2, titleY);
   ctx.restore();
-  // dekoratif ateşböcekleri — başlık metninden uzakta, üst köşelerde
+  // decorative fireflies — away from the title text, in the top corners
   drawFirefly(cardX + 44 * SCALE + Math.sin(modalAnimTime * 1.3) * 6 * SCALE, titleY + titleFont * 0.5 + Math.cos(modalAnimTime * 1.7) * 5 * SCALE, 5 * SCALE, modalAnimTime + 2, 0, 0, "gold");
   drawFirefly(cardX + cardW - 44 * SCALE + Math.cos(modalAnimTime * 1.1) * 6 * SCALE, titleY + titleFont * 0.5 + Math.sin(modalAnimTime * 1.5) * 5 * SCALE, 4.5 * SCALE, modalAnimTime, 0, 0, "emerald");
 
   const badgeY = titleY + titleFont + 22 * SCALE;
-  modalBadge(`BÖLÜM ${levelCfg.level} / ${LEVELS.length} • ${levelCfg.subtitle.toLocaleUpperCase("tr")}`, badgeY, "#fde68a", "rgba(250,204,21,0.12)", "rgba(250,204,21,0.35)");
+  modalBadge(`STAGE ${levelCfg.level} / ${LEVELS.length} • ${levelCfg.subtitle.toLocaleUpperCase("en-US")}`, badgeY, "#fde68a", "rgba(250,204,21,0.12)", "rgba(250,204,21,0.35)");
 
   const nameY = badgeY + 30 * SCALE + 26 * SCALE;
   ctx.textAlign = "center"; ctx.textBaseline = "top";
@@ -2001,7 +2001,7 @@ function drawLevelIntroModal() {
   ctx.fillText(levelCfg.name, W / 2, nameY);
   ctx.fillStyle = "#94a3b8";
   ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`Hedef: ${levelCfg.target} Ateşböceği • 3 Can`, W / 2, nameY + 32 * SCALE);
+  ctx.fillText(`Target: ${levelCfg.target} Fireflies • 3 Lives`, W / 2, nameY + 32 * SCALE);
 
   const descY = nameY + 70 * SCALE;
   const descH = 64 * SCALE;
@@ -2018,22 +2018,22 @@ function drawLevelIntroModal() {
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "rgba(148,163,184,0.75)";
   ctx.font = `500 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("← → ok tuşları • WASD • dokun & sürükle", W / 2, btnY - 22 * SCALE);
-  primaryButton("BAŞLA", btnY, cardW, ["#f59e0b", "#d97706"]);
+  ctx.fillText("← → Arrow keys • WASD • Touch & Drag", W / 2, btnY - 22 * SCALE);
+  primaryButton("START", btnY, cardW, ["#f59e0b", "#d97706"]);
   ctx.restore();
 }
 
 function drawLevelSelectModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(96,165,250,0.45)", true);
-  modalBadge("BÖLÜM SEÇİMİ", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
+  modalBadge("STAGE SELECT", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
   ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.04, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`${LEVELS.length} EFSANEVİ DURAK`, W / 2, cardY + 58 * SCALE);
+  ctx.fillText(`${LEVELS.length} LEGENDARY STAGES`, W / 2, cardY + 58 * SCALE);
   ctx.fillStyle = "rgba(148,163,184,0.8)";
   ctx.font = `500 ${12.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Bir durağın üzerine gel, açıklamasını gör", W / 2, cardY + 88 * SCALE);
+  ctx.fillText("Hover over a stage to preview details", W / 2, cardY + 88 * SCALE);
 
   const mapX = cardX + 56 * SCALE;
   const mapY = cardY + 124 * SCALE;
@@ -2052,7 +2052,7 @@ function drawLevelSelectModal() {
     return { level: lvl.level, x: mapX + col * colGap, y: mapY + row * rowGap + wob };
   });
 
-  // ateşböceğinin izlediği patika
+  // the path the firefly follows
   ctx.save();
   ctx.strokeStyle = "rgba(250,204,21,0.32)";
   ctx.lineWidth = 3 * SCALE;
@@ -2143,7 +2143,7 @@ function drawLevelSelectModal() {
     drawWrappedText(ctx, lvl.description, tipX + tipW / 2, tipY + 30 * SCALE, tipW - 24 * SCALE, 15 * SCALE);
   }
 
-  primaryButton("GERİ DÖN", cardY + cardH - 66 * SCALE, cardW, ["#334155", "#1e293b"]);
+  primaryButton("BACK", cardY + cardH - 66 * SCALE, cardW, ["#334155", "#1e293b"]);
   ctx.restore();
 }
 
@@ -2174,14 +2174,14 @@ function drawModalCard(statusBadge, title, primaryBtnText, isWin) {
   const colW = (gridW - 24 * SCALE) / 3;
   const stats = isWin
     ? [
-        { label: "BÖLÜM HEDEFİ", targetVal: caught, total: levelCfg.target, unit: "Tamamlandı", color: "#fef08a", type: "ratio" },
-        { label: "BÖLÜM SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: lives, total: 3, unit: "Can Hakkı", color: "#f43f5e", type: "ratio" },
+        { label: "STAGE TARGET", targetVal: caught, total: levelCfg.target, unit: "Completed", color: "#fef08a", type: "ratio" },
+        { label: "STAGE TIME", targetVal: finalTime, total: 0, unit: "Seconds", color: "#60a5fa", type: "time" },
+        { label: "LIVES REMAINING", targetVal: lives, total: 3, unit: "Lives", color: "#f43f5e", type: "ratio" },
       ]
     : [
-        { label: "TOPLANAN IŞIK", targetVal: caught, total: levelCfg.target, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
-        { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: 0, total: 3, unit: "Tükendi", color: "#f87171", type: "ratio" },
+        { label: "LIGHT COLLECTED", targetVal: caught, total: levelCfg.target, unit: "Fireflies", color: "#fef08a", type: "ratio" },
+        { label: "TIME ELAPSED", targetVal: finalTime, total: 0, unit: "Seconds", color: "#60a5fa", type: "time" },
+        { label: "LIVES REMAINING", targetVal: 0, total: 3, unit: "Depleted", color: "#f87171", type: "ratio" },
       ];
   for (let i = 0; i < 3; i++) {
     const cx = gridX + i * (colW + 12 * SCALE);
@@ -2213,8 +2213,8 @@ function drawModalCard(statusBadge, title, primaryBtnText, isWin) {
 
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
-    ? `${levelCfg.name} tamamlandı! ${currentLevel < LEVELS.length ? "Sonraki seviyeye geçmeye hazırsın." : "Tüm " + LEVELS.length + " bölümü başardın!"}`
-    : "Tüm canların tükendi. Tekrar deneyerek bu bölümü geç!";
+    ? `${levelCfg.name} cleared! ${currentLevel < LEVELS.length ? "Ready to advance to next stage." : "All " + LEVELS.length + " stages conquered!"}`
+    : "All lives depleted. Try again to pass this stage!";
   ctx.fillStyle = "rgba(255,255,255,0.05)";
   ctx.beginPath(); ctx.roundRect(gridX, descY, gridW, 44 * SCALE, 12 * SCALE); ctx.fill();
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -2229,22 +2229,22 @@ function drawModalCard(statusBadge, title, primaryBtnText, isWin) {
 function drawTutorialModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(96,165,250,0.45)", true);
-  modalBadge("OYUN REHBERİ", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
+  modalBadge("GAME GUIDE", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
   ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.05, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("CAN & ÖZEL BÖCEK MEKANİĞİ", W / 2, cardY + 62 * SCALE);
+  ctx.fillText("LIVES & SPECIAL INSECT MECHANICS", W / 2, cardY + 62 * SCALE);
 
   const gridW = cardW - 56 * SCALE;
   const gridX = cardX + 28 * SCALE;
   const gridY = cardY + 106 * SCALE;
   const colW = (gridW - 20 * SCALE) / 2;
   const rules = [
-    { drawIcon: (x, y) => drawSpider(x, y, 10 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK (-1 CAN)", desc: "Örümcek veya Uğur böceği çarptığında direkt 1 can eksilir!" },
-    { drawIcon: (x, y) => drawMoth(x, y, 10 * SCALE, elapsed, 0, 0), title: "SAHTE IŞIK GÜVE (-1 + KARARTMA)", desc: "Can götürür ve kavanozun çekim gücünü bir süreliğine söndürür!" },
-    { drawIcon: (x, y) => drawWasp(x, y, 9 * SCALE, elapsed, 0, 0), title: "TEHLİKELİ ARI (-1)", desc: "Ateşböceğin varsa -1 eksiltir, 0 ateşböceğinde ise 1 can götürür!" },
-    { drawIcon: (x, y) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Sadece Kızıl Yakut ateşböceği örümceğin ipek ağını anında yakar!" },
-    { drawIcon: (x, y) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
+    { drawIcon: (x, y) => drawSpider(x, y, 10 * SCALE, elapsed, true), title: "HUNTER SPIDER (-1 LIFE)", desc: "Directly lose 1 life on spider or ladybug impact!" },
+    { drawIcon: (x, y) => drawMoth(x, y, 10 * SCALE, elapsed, 0, 0), title: "DECEPTIVE MOTH (-1 + DARKEN)", desc: "Drains lives and temporarily disables jar vacuum attraction!" },
+    { drawIcon: (x, y) => drawWasp(x, y, 9 * SCALE, elapsed, 0, 0), title: "HAZARDOUS WASP (-1)", desc: "Depletes 1 firefly if available, otherwise costs 1 life!" },
+    { drawIcon: (x, y) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "CRIMSON RUBY FIREFLY (WEB BREAKER)", desc: "Only Crimson Ruby Firefly instantly incinerates spider webs!" },
+    { drawIcon: (x, y) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "PURPLE MYSTIC (+2 LIGHT)", desc: "Ultra rare! Instantly awards +2 light charges to the jar." },
   ];
   const ruleRows = Math.ceil(rules.length / 2);
   const rowH = ((cardH - 200 * SCALE) - (ruleRows - 1) * 16 * SCALE) / ruleRows;
@@ -2272,18 +2272,18 @@ function drawTutorialModal() {
     drawWrappedText(ctx, r.desc, cx + colW / 2, cy + 60 * SCALE, colW - 40 * SCALE, 17 * SCALE);
     ctx.restore();
   }
-  primaryButton("GERİ DÖN", cardY + cardH - 70 * SCALE, cardW, ["#2563eb", "#1d4ed8"]);
+  primaryButton("BACK", cardY + cardH - 70 * SCALE, cardW, ["#2563eb", "#1d4ed8"]);
   ctx.restore();
 }
 
 function drawSettingsModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(255,255,255,0.18)");
-  modalBadge("SİSTEM MENÜSÜ", cardY + 22 * SCALE, "#94a3b8", "rgba(255,255,255,0.1)", "rgba(255,255,255,0.25)");
+  modalBadge("SYSTEM MENU", cardY + 22 * SCALE, "#94a3b8", "rgba(255,255,255,0.1)", "rgba(255,255,255,0.25)");
   ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.05, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/${LEVELS.length}`, W / 2, cardY + 56 * SCALE);
+  ctx.fillText(`SETTINGS • STAGE ${currentLevel}/${LEVELS.length}`, W / 2, cardY + 56 * SCALE);
 
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
@@ -2313,9 +2313,9 @@ function drawSettingsModal() {
     ctx.font = `900 ${11.5 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(onText, tX + tW / 2, tY + tH / 2);
   }
-  settingRow(row1Y, "SES EFEKTLERİ", "Oyun içi ses ve çarpışma efektlerini yönet", uiButtons.toggleSound, soundEnabled ? "#10b981" : "#334155", soundEnabled ? "AÇIK" : "KAPALI");
+  settingRow(row1Y, "SOUND EFFECTS", "Manage in-game audio and impact sound effects", uiButtons.toggleSound, soundEnabled ? "#10b981" : "#334155", soundEnabled ? "ON" : "OFF");
   const row2Y = row1Y + rowH + 10 * SCALE;
-  settingRow(row2Y, "VAKUM ÇEKİM HASSASİYETİ", "Mıknatıs çekim alanının yarıçapını ayarla", uiButtons.toggleMagnet, highMagnet ? "#06b6d4" : "#334155", highMagnet ? "YÜKSEK" : "NORMAL");
+  settingRow(row2Y, "VACUUM PULL SENSITIVITY", "Adjust magnetic attraction pull radius", uiButtons.toggleMagnet, highMagnet ? "#06b6d4" : "#334155", highMagnet ? "HIGH" : "NORMAL");
 
   const row3Y = row2Y + rowH + 12 * SCALE;
   const btnTutH = 44 * SCALE;
@@ -2327,7 +2327,7 @@ function drawSettingsModal() {
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillStyle = "#e879f9";
   ctx.font = `900 ${13.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUN REHBERİ & BÖCEK KARTLARI", rowX + rowW / 2, row3Y + btnTutH / 2 + 1 * SCALE);
+  ctx.fillText("GAME GUIDE & CREATURE CARDS", rowX + rowW / 2, row3Y + btnTutH / 2 + 1 * SCALE);
 
   const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnLvlH = 40 * SCALE;
@@ -2340,13 +2340,13 @@ function drawSettingsModal() {
   ctx.beginPath(); ctx.roundRect(btnLvlX, btnLvlY, btnLvlW, btnLvlH, 20 * SCALE); ctx.fill(); ctx.stroke();
   ctx.fillStyle = "#93c5fd";
   ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("BÖLÜM SEÇİM TABLOSU", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
+  ctx.fillText("STAGE SELECT MENU", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
 
   const btnW = Math.min(cardW - 80 * SCALE, 340 * SCALE);
   const btnH = 44 * SCALE;
   const btnX = (W - btnW) / 2;
   const btn1Y = cardY + cardH - 110 * SCALE;
-  primaryButton("DEVAM ET", btn1Y, cardW, ["#2563eb", "#1d4ed8"], btnH);
+  primaryButton("CONTINUE", btn1Y, cardW, ["#2563eb", "#1d4ed8"], btnH);
 
   const btn2Y = cardY + cardH - 58 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
@@ -2359,11 +2359,11 @@ function drawSettingsModal() {
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillStyle = "#fca5a5";
   ctx.font = `800 ${13.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
+  ctx.fillText("RESTART (STAGE 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
   ctx.restore();
 }
 
-// --- Ana çizim ------------------------------------------------------------------
+// --- Main draw ------------------------------------------------------------------
 function draw() {
   const { x: sx, y: sy } = shakeOffset(shake);
   ctx.save();
@@ -2422,7 +2422,7 @@ function draw() {
   }
 
   drawJarShadow();
-  // kavanoz ışığının zemine sıcak yansıması — dünyaya yazılan skor
+  // warm reflection of the jar's light on the ground — the score written into the world
   {
     const glow = caught / levelCfg.target;
     if (glow > 0.02) {
@@ -2446,7 +2446,7 @@ function draw() {
   drawJar();
   ctx.restore();
 
-  // ön çim — kavanozun önünde: sahne derinliği
+  // foreground grass — in front of the jar: scene depth
   drawGrassLayer(grassFront, "#07121c", 6 * SCALE);
   if (blackoutTimer > 0) {
     ctx.save();
@@ -2461,9 +2461,9 @@ function draw() {
 
   if (state === "levelintro") drawLevelIntroModal();
   else if (state === "levelselect") drawLevelSelectModal();
-  else if (state === "levelcomplete") drawModalCard(`BÖLÜM ${currentLevel} TAMAMLANDI`, `${levelCfg.name} Geçildi!`, `SONRAKİ BÖLÜM (${currentLevel + 1})`, true);
-  else if (state === "campaignwon") drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
-  else if (state === "gameover") drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "TÜM CANLAR TÜKENDİ", "TEKRAR DENE", false);
+  else if (state === "levelcomplete") drawModalCard(`STAGE ${currentLevel} COMPLETED`, `${levelCfg.name} Cleared!`, `NEXT STAGE (${currentLevel + 1})`, true);
+  else if (state === "campaignwon") drawModalCard("LEGENDARY CHAMPION", "ALL STAGES CLEARED", "PLAY AGAIN (Stage 1)", true);
+  else if (state === "gameover") drawModalCard(`STAGE ${currentLevel} FAILED`, "ALL LIVES EXTINGUISHED", "TRY AGAIN", false);
   else if (state === "tutorial") drawTutorialModal();
   else if (state === "settings") drawSettingsModal();
 }

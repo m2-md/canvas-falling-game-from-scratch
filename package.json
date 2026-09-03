@@ -1,7 +1,7 @@
 {
   "name": "canvas-falling-game-from-scratch",
   "version": "1.0.0",
-  "description": "ATEŞBÖCEKLERİ — Canvas'ta sıfırdan falling game + juice: rastgele spawner, sinüs salınımı, klavye+dokunmatik girdi, daire-dikdörtgen çarpışma, ekran sarsıntısı, parçacıklar",
+  "description": "Juicy falling catch game built from scratch on HTML5 Canvas: sine swaying physics, dynamic juice, screenshake, particles, 25 campaign stages, a three-lives system, and spider web-pull mechanics.",
   "type": "module",
   "license": "MIT",
   "scripts": {

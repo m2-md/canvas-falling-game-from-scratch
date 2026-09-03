@@ -1,71 +1,71 @@
-# ATEŞBÖCEKLERİ — Canvas'ta Falling Game ve Juice
+# FIREFLIES — A Falling Game and Juice on Canvas
 
-"Oyununuz Çalışıyor. Peki Neden Eğlenceli Değil? Canvas'ta Falling Game ve Juice"
-makalesinin çalışan kodu. Gece yarısı bir bahçede yukarıdan süzülen ateşböceklerini
-kavanozla yakalarsınız; araya karışan eşek arıları ışığınızı çalar. İki katman:
+Working code for the article "Your Game Works. So Why Isn't It Fun? A Falling Game and
+Juice on Canvas". At midnight in a garden you catch fireflies drifting down from above
+with a jar; wasps that mix into the swarm steal your light. Two layers:
 
-- **Dört direk** (`src/logic.ts` + `src/main.ts`): accumulator'lı rastgele spawner,
-  `y += hız * dt` + sinüs salınımı, klavye **ve** dokunmatik girdi, iki clamp'lik
-  daire-dikdörtgen çarpışması
-- **Beş tutam juice**: sönümlü ekran sarsıntısı, `lighter` parçacık patlaması,
-  tabandan squash & stretch, 60 sn'de doyuma ulaşan zorluk eğrisi, skoru dünyaya
-  yazan dolan kavanoz
-- Sıfır asset, ses yok, network isteği yok. Üretim build'i: **JS 2.83 KB gzip**
-  (`npm run build` ile doğrula)
+- **Four pillars** (`src/logic.ts` + `src/main.ts`): a random spawner with an accumulator,
+  `y += speed * dt` plus sine sway, keyboard **and** touch input, circle-rectangle
+  collision built from two clamps
+- **Five pinches of juice**: damped screen shake, a `lighter` particle burst, squash &
+  stretch anchored at the base, a difficulty curve that saturates at 60 s, and a filling
+  jar that writes the score into the world
+- Zero assets, no audio, no network requests. Production build: **JS 21.08 kB gzip**
+  (verify it with `npm run build`)
 
-## Kurulum ve çalıştırma
+## Setup and running
 
 ```bash
 npm install
-npm run dev     # http://localhost:5173 (veya Vite'ın verdiği port)
+npm run dev     # http://localhost:5173 (or whichever port Vite gives you)
 ```
 
-**Nasıl oynanır:** Ok tuşları **ya da** parmak/fare sürüklemesi kavanozu oynatır
-(son dokunan girdi kazanır). Ateşböceği **+1** — sarı patlama, kavanoz esner;
-eşek arısı **−1** — ekran sarsılır, kavanozun ışığı azalır. Süre geçtikçe spawn
-sıklaşır ve düşüş hızlanır (60. saniyede doyum). Kavanozun içi yakaladıkça parlar;
-**6** ateşböceğinde kazanırsınız: süreniz ekrana yazılır, dokunuş ya da Enter
-`resetGame()` ile yeni tur başlatır — sayfa yenilenmez.
+**How to play:** the arrow keys **or** a finger/mouse drag move the jar (the most recent
+input source wins). A firefly is **+1** — a yellow burst, and the jar stretches; a wasp is
+**−1** — the screen shakes and the jar's light dims. As time passes, spawns get more
+frequent and the fall speeds up (saturation at the 60th second). The inside of the jar
+glows as you catch more; you win at the stage target: your time is printed on screen, and
+a tap or Enter starts a new round via `resetGame()` — the page is not reloaded.
 
 ## Test
 
 ```bash
-npm test        # 18 birim testi
+npm test        # 28 unit tests
 ```
 
-Testler saf mantığı doğrular: enjekte edilen `rand` ile deterministik `tickSpawn`
-(artık taşıma dahil — makaledeki test birebir), `sway` sınırları ve tepe noktası,
-`hitCircleRect` (içeride / kenar teması / 3-4-5 köşe teması / uzak),
-`difficulty` (0'da taban, 60+'da doyum, monotonluk), sarsıntı üçlüsü
-(tavan 24, doğrusal sönüm, sıfırda tam sıfır ofset).
+The tests verify the pure logic: deterministic `tickSpawn` with an injected `rand`
+(including carrying the remainder — exactly the test from the article), the bounds and peak
+of `sway`, `hitCircleRect` (inside / edge touch / 3-4-5 corner touch / far away),
+`difficulty` (floor at 0, saturation at 60+, monotonicity), and the shake trio
+(ceiling of 24, linear damping, exactly zero offset at zero).
 
-## Dosya yapısı
+## File layout
 
 ```
 src/
-  logic.ts    # saf mantık: tickSpawn, sway, hitCircleRect, shake üçlüsü, difficulty
-  main.ts     # durum, girdi (klavye+pointer), juice, çizim, tam ekran canvas
+  logic.ts    # pure logic: tickSpawn, sway, hitCircleRect, the shake trio, difficulty
+  main.ts     # state, input (keyboard+pointer), juice, drawing, full-screen canvas
 tests/
   logic.test.ts
 ```
 
-## Alınan dersler (makalede de anlatılır)
+## Lessons learned (also covered in the article)
 
-- Sabit aralıklı spawner metronomdur; accumulator + rastgele aralık yağmurdur.
-  `acc -= next` ile artığı taşıyın, uzun karede ritim kaymasın.
-- Rastgele faz (`t: Math.random() * 10`) olmadan sürü asker gibi senkron salınır.
-- `pointermove`/`pointerup` **window'dan** dinlenir; canvas'tan dinlerseniz parmak
-  bir piksel dışarı kayınca kavanoz donar.
-- Parmak modunda kavanoz hedefe ışınlanmaz, sınırlı hızla koşar — ağırlık hissi
-  o kısacık gecikmede saklıdır.
-- Sarsıntıya tavan ve sönüm koyun: sönümsüz sarsıntı titremedir, sönümlü sarsıntı
-  darbedir.
-- Squash & stretch merkezi kavanozun **tabanına** alın; merkezden ölçeklerseniz
-  kavanoz havada asılı ezilir.
-- "Tekrar oyna" bir `location.reload()` değil, bir `resetGame()` fonksiyonudur.
-- Rastgelelik fonksiyona gömülmez, kapıdan (`rand` parametresi) verilir —
-  rastgele görünen sistemler deterministik test edilir.
+- A fixed-interval spawner is a metronome; an accumulator plus a random interval is rain.
+  Carry the remainder with `acc -= next` so the rhythm does not drift on a long frame.
+- Without a random phase (`t: Math.random() * 10`) the swarm sways in sync like soldiers.
+- `pointermove`/`pointerup` are listened for **on window**; if you listen on the canvas,
+  the jar freezes the moment the finger slides one pixel outside.
+- In finger mode the jar does not teleport to the target, it runs there at a limited speed —
+  the sense of weight is hidden in that tiny delay.
+- Give the shake a ceiling and damping: shake without damping is a tremor, shake with
+  damping is a blow.
+- Put the center of squash & stretch at the **base** of the jar; if you scale from the
+  center, the jar squashes while hanging in mid-air.
+- "Play again" is not a `location.reload()`, it is a `resetGame()` function.
+- Randomness is not buried inside a function, it is handed in at the door (the `rand`
+  parameter) — systems that look random get tested deterministically.
 
-## Lisans
+## License
 
 MIT

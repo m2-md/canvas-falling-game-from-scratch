@@ -1,5 +1,5 @@
-// ATEŞBÖCEKLERİ — Zümrüt Rüzgar Harlesi (Speed Breeze FX) & Sanatsal Akıcı Atmosfer
-// Özellikler: 25 Bölüm Yapısı, Sahte Işık Güve Tehlikesi, Zengin İnfografik Rehber, 8-Bacaklı Organik Örümcek ve Pürüzsüz Cam Kavanoz.
+// FIREFLIES — Emerald Breeze FX (Speed Breeze FX) & Atmospheric Ambience
+// Features: 25-stage structure, deceptive-light moth hazard, rich infographic guide, 8-legged organic spider and smooth glass jar.
 
 import {
   type FireflySubtype,
@@ -26,7 +26,7 @@ import {
   updateShake,
 } from "./logic";
 
-// --- Çift Yükleme Koruması ---------------------------------------------------
+// --- Double-load guard ---------------------------------------------------
 const w = window as unknown as { __stopGame?: () => void };
 w.__stopGame?.();
 let running = true;
@@ -54,7 +54,7 @@ function fitCanvas() {
 }
 fitCanvas();
 
-// --- Oyun Durumu & Tipler ---------------------------------------------------
+// --- Game State & Types ---------------------------------------------------
 type GameState =
   | "playing"
   | "paused"
@@ -182,11 +182,11 @@ let nextCritterId = 1;
 let spawnTimer: SpawnTimer = createSpawnTimer();
 const shake: Shake = { power: 0, t: 0 };
 
-// Ayarlar
+// Settings
 let soundEnabled = true;
 let highMagnet = false;
 
-// Sanatsal Kavanoz Fizik & Animasyon Değişkenleri
+// Jar physics & animation variables
 let jarSquash = 0;
 let jarWobble = 0;
 let jarTilt = 0;
@@ -196,7 +196,7 @@ let waspHitFlash = 0;
 
 const jar = { x: 0, y: 0, w: 0, h: 0 };
 
-// Atmosferik Ögeler
+// Atmospheric Elements
 let stars: { x: number; y: number; r: number; a: number; speed: number; warm: boolean }[] = [];
 let bokehFar: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
 let bokehNear: { x: number; y: number; r: number; vy: number; vx: number; alpha: number; t: number; color: string }[] = [];
@@ -774,7 +774,7 @@ function updateJar(dt: number) {
   }
 }
 
-// --- Vektör ikonlar ----------------------------------------------------------
+// --- Vector Icons ----------------------------------------------------------
 function drawGearIcon(x: number, y: number, r: number, color = "#94a3b8") {
   ctx.save();
   ctx.translate(x, y);
@@ -941,7 +941,7 @@ function drawWrappedText(context: CanvasRenderingContext2D, text: string, x: num
   return currentY;
 }
 
-// --- Güncelleme ---------------------------------------------------------------
+// --- Update ---------------------------------------------------------------
 function update(dt: number) {
   auroraPhase += dt * 0.3;
   if (state === "playing") {
@@ -1248,7 +1248,7 @@ function update(dt: number) {
 }
 
 // ============================================================================
-// ÇİZİM — sinematik katmanlar
+// RENDER — Cinematic Layers
 // ============================================================================
 const SKY = {
   twilight: ["#0a1030", "#182a52", "#0b1631", "#040814"],
@@ -2351,7 +2351,7 @@ function drawArtisticCorkStopper(neckW: number, neckY: number) {
   ctx.restore();
 }
 
-// ULTRA-HIGH END SANATSAL KLASİK CAM KAVANOZ & YUMUŞAK AZURE RÜZGAR HARLESİ (SPEED BREEZE FX)
+// High-end classic glass jar & soft azure wind aura (Speed Breeze FX)
 function drawJar() {
   const w2 = jar.w;
   const h2 = jar.h;
@@ -2797,14 +2797,14 @@ function drawLevelIntroModal() {
   tg.addColorStop(1, "#f59e0b");
   ctx.fillStyle = tg;
   ctx.font = `900 ${titleFont}px 'Outfit', sans-serif`;
-  ctx.fillText("ATEŞBÖCEKLERİ", W / 2, titleY);
+  ctx.fillText("FIREFLIES", W / 2, titleY);
   ctx.restore();
 
   drawFirefly(cardX + 44 * SCALE + Math.sin(modalAnimTime * 1.3) * 6 * SCALE, titleY + titleFont * 0.5 + Math.cos(modalAnimTime * 1.7) * 5 * SCALE, 5 * SCALE, modalAnimTime + 2, 0, 0, "gold");
   drawFirefly(cardX + cardW - 44 * SCALE + Math.cos(modalAnimTime * 1.1) * 6 * SCALE, titleY + titleFont * 0.5 + Math.sin(modalAnimTime * 1.5) * 5 * SCALE, 4.5 * SCALE, modalAnimTime, 0, 0, "emerald");
 
   const badgeY = titleY + titleFont + 22 * SCALE;
-  modalBadge(`BÖLÜM ${levelCfg.level} / ${LEVELS.length} • ${levelCfg.subtitle.toLocaleUpperCase("tr")}`, badgeY, "#fde68a", "rgba(250,204,21,0.12)", "rgba(250,204,21,0.35)");
+  modalBadge(`STAGE ${levelCfg.level} / ${LEVELS.length} • ${levelCfg.subtitle.toLocaleUpperCase("en-US")}`, badgeY, "#fde68a", "rgba(250,204,21,0.12)", "rgba(250,204,21,0.35)");
 
   const nameY = badgeY + 30 * SCALE + 26 * SCALE;
   ctx.textAlign = "center";
@@ -2814,7 +2814,7 @@ function drawLevelIntroModal() {
   ctx.fillText(levelCfg.name, W / 2, nameY);
   ctx.fillStyle = "#94a3b8";
   ctx.font = `600 ${14 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText(`Hedef: ${levelCfg.target} Ateşböceği • 3 Can`, W / 2, nameY + 32 * SCALE);
+  ctx.fillText(`Target: ${levelCfg.target} Fireflies • 3 Lives`, W / 2, nameY + 32 * SCALE);
 
   const descY = nameY + 70 * SCALE;
   const descH = 64 * SCALE;
@@ -2832,23 +2832,23 @@ function drawLevelIntroModal() {
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "rgba(148,163,184,0.75)";
   ctx.font = `500 ${12 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("← → ok tuşları • WASD • dokun & sürükle", W / 2, btnY - 22 * SCALE);
-  primaryButton("BAŞLA", btnY, cardW, ["#f59e0b", "#d97706"]);
+  ctx.fillText("← → Arrow keys • WASD • Touch & Drag", W / 2, btnY - 22 * SCALE);
+  primaryButton("START", btnY, cardW, ["#f59e0b", "#d97706"]);
   ctx.restore();
 }
 
 function drawLevelSelectModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(96,165,250,0.45)", true);
-  modalBadge("BÖLÜM SEÇİMİ", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
+  modalBadge("STAGE SELECT", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.04, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`${LEVELS.length} EFSANEVİ DURAK`, W / 2, cardY + 58 * SCALE);
+  ctx.fillText(`${LEVELS.length} LEGENDARY STAGES`, W / 2, cardY + 58 * SCALE);
   ctx.fillStyle = "rgba(148,163,184,0.8)";
   ctx.font = `500 ${12.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("Bir durağın üzerine gel, açıklamasını gör", W / 2, cardY + 88 * SCALE);
+  ctx.fillText("Hover over a stage to preview details", W / 2, cardY + 88 * SCALE);
 
   const mapX = cardX + 56 * SCALE;
   const mapY = cardY + 124 * SCALE;
@@ -2984,7 +2984,7 @@ function drawLevelSelectModal() {
     drawWrappedText(ctx, lvl.description, tipX + tipW / 2, tipY + 30 * SCALE, tipW - 24 * SCALE, 15 * SCALE);
   }
 
-  primaryButton("GERİ DÖN", cardY + cardH - 66 * SCALE, cardW, ["#334155", "#1e293b"]);
+  primaryButton("BACK", cardY + cardH - 66 * SCALE, cardW, ["#334155", "#1e293b"]);
   ctx.restore();
 }
 
@@ -3027,14 +3027,14 @@ function drawModalCard(statusBadge: string, title: string, primaryBtnText: strin
 
   const stats = isWin
     ? [
-        { label: "BÖLÜM HEDEFİ", targetVal: caught, total: levelCfg.target, unit: "Tamamlandı", color: "#fef08a", type: "ratio" },
-        { label: "BÖLÜM SÜRESİ", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: lives, total: 3, unit: "Can Hakkı", color: "#f43f5e", type: "ratio" },
+        { label: "STAGE TARGET", targetVal: caught, total: levelCfg.target, unit: "Completed", color: "#fef08a", type: "ratio" },
+        { label: "STAGE TIME", targetVal: finalTime, total: 0, unit: "Seconds", color: "#60a5fa", type: "time" },
+        { label: "LIVES REMAINING", targetVal: lives, total: 3, unit: "Lives", color: "#f43f5e", type: "ratio" },
       ]
     : [
-        { label: "TOPLANAN IŞIK", targetVal: caught, total: levelCfg.target, unit: "Ateşböceği", color: "#fef08a", type: "ratio" },
-        { label: "GEÇEN SÜRE", targetVal: finalTime, total: 0, unit: "Saniye", color: "#60a5fa", type: "time" },
-        { label: "KALAN CAN", targetVal: 0, total: 3, unit: "Tükendi", color: "#f87171", type: "ratio" },
+        { label: "LIGHT COLLECTED", targetVal: caught, total: levelCfg.target, unit: "Firefly", color: "#fef08a", type: "ratio" },
+        { label: "ELAPSED TIME", targetVal: finalTime, total: 0, unit: "Seconds", color: "#60a5fa", type: "time" },
+        { label: "LIVES REMAINING", targetVal: 0, total: 3, unit: "Depleted", color: "#f87171", type: "ratio" },
       ];
 
   for (let i = 0; i < 3; i++) {
@@ -3071,8 +3071,8 @@ function drawModalCard(statusBadge: string, title: string, primaryBtnText: strin
 
   const descY = gridY + gridH + 20 * SCALE;
   const descText = isWin
-    ? `${levelCfg.name} tamamlandı! ${currentLevel < LEVELS.length ? "Sonraki seviyeye geçmeye hazırsın." : "Tüm " + LEVELS.length + " bölümü başardın!"}`
-    : "Tüm canların tükendi. Tekrar deneyerek bu bölümü geç!";
+    ? `${levelCfg.name} cleared! ${currentLevel < LEVELS.length ? "Ready to advance to the next stage." : "All " + LEVELS.length + " stages conquered!"}`
+    : "All lives depleted. Try again to clear this stage!";
   ctx.fillStyle = "rgba(255,255,255,0.05)";
   ctx.beginPath();
   ctx.roundRect(gridX, descY, gridW, 44 * SCALE, 12 * SCALE);
@@ -3090,23 +3090,23 @@ function drawModalCard(statusBadge: string, title: string, primaryBtnText: strin
 function drawTutorialModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(96,165,250,0.45)", true);
-  modalBadge("OYUN REHBERİ", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
+  modalBadge("GAME GUIDE", cardY + 22 * SCALE, "#60a5fa", "rgba(96,165,250,0.15)", "rgba(96,165,250,0.4)");
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.05, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText("CAN & ÖZEL BÖCEK MEKANİĞİ", W / 2, cardY + 62 * SCALE);
+  ctx.fillText("LIVES & SPECIAL INSECT MECHANICS", W / 2, cardY + 62 * SCALE);
 
   const gridW = cardW - 56 * SCALE;
   const gridX = cardX + 28 * SCALE;
   const gridY = cardY + 106 * SCALE;
   const colW = (gridW - 20 * SCALE) / 2;
   const rules = [
-    { drawIcon: (x: number, y: number) => drawSpider(x, y, 10 * SCALE, elapsed, true), title: "AVCI ÖRÜMCEK (-1 CAN)", desc: "Örümcek veya Uğur böceği çarptığında direkt 1 can eksilir!" },
-    { drawIcon: (x: number, y: number) => drawMoth(x, y, 10 * SCALE, elapsed, 0, 0), title: "SAHTE IŞIK GÜVE (-1 + KARARTMA)", desc: "Can götürür ve kavanozun çekim gücünü bir süreliğine söndürür!" },
-    { drawIcon: (x: number, y: number) => drawWasp(x, y, 9 * SCALE, elapsed, 0, 0), title: "TEHLİKELİ ARI (-1)", desc: "Ateşböceğin varsa -1 eksiltir, 0 ateşböceğinde ise 1 can götürür!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "KIZIL YAKUT (AĞ KIRAN)", desc: "Sadece Kızıl Yakut ateşböceği örümceğin ipek ağını anında yakar!" },
-    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "MOR MİSTİK (+2 IŞIK)", desc: "Çok nadirdir ve tek yakalayışta kavanoza tam +2 ışık kazandırır." },
+    { drawIcon: (x: number, y: number) => drawSpider(x, y, 10 * SCALE, elapsed, true), title: "HUNTER SPIDER (-1 LIFE)", desc: "Directly lose 1 life on spider or ladybug impact!" },
+    { drawIcon: (x: number, y: number) => drawMoth(x, y, 10 * SCALE, elapsed, 0, 0), title: "DECEPTIVE MOTH (-1 + DARKEN)", desc: "Drains lives and temporarily disables jar vacuum attraction!" },
+    { drawIcon: (x: number, y: number) => drawWasp(x, y, 9 * SCALE, elapsed, 0, 0), title: "HAZARDOUS WASP (-1)", desc: "Depletes 1 firefly if available, otherwise costs 1 life!" },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "red"), title: "CRIMSON RUBY FIREFLY (WEB BREAKER)", desc: "Only Crimson Ruby Firefly instantly incinerates spider webs!" },
+    { drawIcon: (x: number, y: number) => drawFirefly(x, y, 8 * SCALE, elapsed, 0, 0, "purple"), title: "PURPLE MYSTIC (+2 LIGHT)", desc: "Ultra rare! Instantly awards +2 light charges to the jar." },
   ];
   const ruleRows = Math.ceil(rules.length / 2);
   const rowH = (cardH - 200 * SCALE - (ruleRows - 1) * 16 * SCALE) / ruleRows;
@@ -3139,19 +3139,19 @@ function drawTutorialModal() {
     drawWrappedText(ctx, r.desc, cx + colW / 2, cy + 60 * SCALE, colW - 40 * SCALE, 17 * SCALE);
     ctx.restore();
   }
-  primaryButton("GERİ DÖN", cardY + cardH - 70 * SCALE, cardW, ["#2563eb", "#1d4ed8"]);
+  primaryButton("BACK", cardY + cardH - 70 * SCALE, cardW, ["#2563eb", "#1d4ed8"]);
   ctx.restore();
 }
 
 function drawSettingsModal() {
   ctx.save();
   const { cardX, cardY, cardW, cardH } = modalBase("rgba(255,255,255,0.18)");
-  modalBadge("SİSTEM MENÜSÜ", cardY + 22 * SCALE, "#94a3b8", "rgba(255,255,255,0.1)", "rgba(255,255,255,0.25)");
+  modalBadge("SYSTEM MENU", cardY + 22 * SCALE, "#94a3b8", "rgba(255,255,255,0.1)", "rgba(255,255,255,0.25)");
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 ${Math.min(cardW * 0.05, 24 * SCALE)}px 'Outfit', sans-serif`;
-  ctx.fillText(`AYARLAR • BÖLÜM ${currentLevel}/${LEVELS.length}`, W / 2, cardY + 56 * SCALE);
+  ctx.fillText(`AYARLAR • STAGE ${currentLevel}/${LEVELS.length}`, W / 2, cardY + 56 * SCALE);
 
   const rowW = cardW - 64 * SCALE;
   const rowX = cardX + 32 * SCALE;
@@ -3192,9 +3192,9 @@ function drawSettingsModal() {
     ctx.font = `900 ${11.5 * SCALE}px 'Outfit', sans-serif`;
     ctx.fillText(onText, tX + tW / 2, tY + tH / 2);
   }
-  settingRow(row1Y, "SES EFEKTLERİ", "Oyun içi ses ve çarpışma efektlerini yönet", uiButtons.toggleSound, soundEnabled ? "#10b981" : "#334155", soundEnabled ? "AÇIK" : "KAPALI");
+  settingRow(row1Y, "SOUND EFFECTS", "Manage in-game audio and impact sound effects", uiButtons.toggleSound, soundEnabled ? "#10b981" : "#334155", soundEnabled ? "ON" : "OFF");
   const row2Y = row1Y + rowH + 10 * SCALE;
-  settingRow(row2Y, "VAKUM ÇEKİM HASSASİYETİ", "Mıknatıs çekim alanının yarıçapını ayarla", uiButtons.toggleMagnet, highMagnet ? "#06b6d4" : "#334155", highMagnet ? "YÜKSEK" : "NORMAL");
+  settingRow(row2Y, "VACUUM PULL SENSITIVITY", "Adjust magnetic attraction pull radius", uiButtons.toggleMagnet, highMagnet ? "#06b6d4" : "#334155", highMagnet ? "HIGH" : "NORMAL");
 
   const row3Y = row2Y + rowH + 12 * SCALE;
   const btnTutH = 44 * SCALE;
@@ -3210,7 +3210,7 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#e879f9";
   ctx.font = `900 ${13.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("OYUN REHBERİ & BÖCEK KARTLARI", rowX + rowW / 2, row3Y + btnTutH / 2 + 1 * SCALE);
+  ctx.fillText("GAME GUIDE & CREATURE CARDS", rowX + rowW / 2, row3Y + btnTutH / 2 + 1 * SCALE);
 
   const btnLvlW = Math.min(cardW - 80 * SCALE, 360 * SCALE);
   const btnLvlH = 40 * SCALE;
@@ -3226,13 +3226,13 @@ function drawSettingsModal() {
   ctx.stroke();
   ctx.fillStyle = "#93c5fd";
   ctx.font = `900 ${13 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("BÖLÜM SEÇİM TABLOSU", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
+  ctx.fillText("STAGE SELECT MENU", W / 2, btnLvlY + btnLvlH / 2 + 1 * SCALE);
 
   const btnW = Math.min(cardW - 80 * SCALE, 340 * SCALE);
   const btnH = 44 * SCALE;
   const btnX = (W - btnW) / 2;
   const btn1Y = cardY + cardH - 110 * SCALE;
-  primaryButton("DEVAM ET", btn1Y, cardW, ["#2563eb", "#1d4ed8"], btnH);
+  primaryButton("CONTINUE", btn1Y, cardW, ["#2563eb", "#1d4ed8"], btnH);
 
   const btn2Y = cardY + cardH - 58 * SCALE;
   uiButtons.modalSecondary = { x: btnX, y: btn2Y, w: btnW, h: btnH };
@@ -3253,11 +3253,11 @@ function drawSettingsModal() {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fca5a5";
   ctx.font = `800 ${13.5 * SCALE}px 'Outfit', sans-serif`;
-  ctx.fillText("BAŞTAN BAŞLA (BÖLÜM 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
+  ctx.fillText("RESTART (STAGE 1)", W / 2, btn2Y + btnH / 2 + 1 * SCALE);
   ctx.restore();
 }
 
-// --- Ana çizim ------------------------------------------------------------------
+// --- Main draw ------------------------------------------------------------------
 function draw() {
   const { x: sx, y: sy } = shakeOffset(shake);
   ctx.save();
@@ -3362,9 +3362,9 @@ function draw() {
 
   if (state === "levelintro") drawLevelIntroModal();
   else if (state === "levelselect") drawLevelSelectModal();
-  else if (state === "levelcomplete") drawModalCard(`BÖLÜM ${currentLevel} TAMAMLANDI`, `${levelCfg.name} Geçildi!`, `SONRAKİ BÖLÜM (${currentLevel + 1})`, true);
-  else if (state === "campaignwon") drawModalCard("EFSANEVİ ŞAMPİYON", "TÜM BÖLÜMLER BİTTİ", "YENİDEN BAŞLA (Bölüm 1)", true);
-  else if (state === "gameover") drawModalCard(`BÖLÜM ${currentLevel} BAŞARISIZ`, "TÜM CANLAR TÜKENDİ", "TEKRAR DENE", false);
+  else if (state === "levelcomplete") drawModalCard(`STAGE ${currentLevel} COMPLETED`, `${levelCfg.name} Cleared!`, `NEXT STAGE (${currentLevel + 1})`, true);
+  else if (state === "campaignwon") drawModalCard("LEGENDARY CHAMPION", "ALL STAGES CLEARED", "PLAY AGAIN (Stage 1)", true);
+  else if (state === "gameover") drawModalCard(`STAGE ${currentLevel} FAILED`, "ALL LIVES EXTINGUISHED", "TEKRAR DENE", false);
   else if (state === "tutorial") drawTutorialModal();
   else if (state === "settings") drawSettingsModal();
 }

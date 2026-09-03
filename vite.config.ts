@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
-// Kok dizindeki her HTML ayri bir sayfa; girdiye eklenmezse yalnizca index.html derlenir.
+// Every HTML file in the root is a separate page; without an input entry only index.html is built.
 export default defineConfig({
   build: {
     rollupOptions: {
