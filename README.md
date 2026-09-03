@@ -4,17 +4,27 @@
 **▶ [Live demo](https://m2-md.github.io/canvas-falling-game-from-scratch/)** · [Source](https://github.com/m2-md/canvas-falling-game-from-scratch)
 <!-- LINKS:END -->
 
+> A 25-stage falling-catch game built from scratch on HTML5 Canvas: sine-sway physics,
+> screen shake and particle juice, a 3-lives damage system, and wasp/ladybug/spider/moth
+> hazards, all drawn in code with zero external assets.
+
 Working code for the article "Your Game Works. So Why Isn't It Fun? A Falling Game and
 Juice on Canvas". At midnight in a garden you catch fireflies drifting down from above
-with a jar; wasps that mix into the swarm steal your light. Two layers:
+with a jar, across a 25-stage campaign that layers in wasps, ladybugs, a web-spinning
+spider and a deceptive light-mimicking moth.
 
-- **Four pillars** (`src/logic.ts` + `src/main.ts`): a random spawner with an accumulator,
-  `y += speed * dt` plus sine sway, keyboard **and** touch input, circle-rectangle
-  collision built from two clamps
-- **Five pinches of juice**: damped screen shake, a `lighter` particle burst, squash &
-  stretch anchored at the base, a difficulty curve that saturates at 60 s, and a filling
-  jar that writes the score into the world
-- Zero assets, no audio, no network requests. Production build: **JS 21.08 kB gzip**
+- **Core mechanics** (`src/logic.ts` + `src/main.ts`): an accumulator-driven spawner,
+  sine sway (`sway` / `aggressiveSway`, more aggressive at higher stages), keyboard
+  **and** touch input, circle-rectangle collision built from two clamps, a 3-lives
+  damage system (`processWaspCollision`, `processHazardCollision`, `processFireflyMiss`),
+  a spider web pull force (`calculateSpiderWebPull`), and a rule where only red
+  fireflies can burn through the spider's web (`shouldBurnSpiderWeb`).
+- **Juice**: damped screen shake, a `lighter` particle burst, squash & stretch anchored
+  at the base, a per-stage difficulty curve that saturates at 60 s, and a filling jar
+  that writes the score into the world.
+- **25 named stages** (the `LEVELS` table in `src/logic.ts`), each with its own target,
+  hazard mix, fall-speed multiplier and sky theme.
+- Zero assets, no audio, no network requests. Production build: **JS 21.09 kB gzip**
   (verify it with `npm run build`)
 
 ## Setup and running
@@ -25,11 +35,12 @@ npm run dev     # http://localhost:5173 (or whichever port Vite gives you)
 ```
 
 **How to play:** the arrow keys **or** a finger/mouse drag move the jar (the most recent
-input source wins). A firefly is **+1** — a yellow burst, and the jar stretches; a wasp is
-**−1** — the screen shakes and the jar's light dims. As time passes, spawns get more
-frequent and the fall speeds up (saturation at the 60th second). The inside of the jar
-glows as you catch more; you win at the stage target: your time is printed on screen, and
-a tap or Enter starts a new round via `resetGame()` — the page is not reloaded.
+input source wins). Catching a firefly is **+1** with a yellow burst; missing three in a
+row, taking a wasp hit with an empty jar, or touching a ladybug, spider or moth costs
+**one of your 3 lives**. A red firefly can burn through the spider's web. Clear a stage's
+target to advance to the next of the 25 stages; clear all of them and you win the
+campaign. Losing all 3 lives ends the run. A tap or Enter restarts via `resetGame()` —
+the page is never reloaded.
 
 ## Test
 
@@ -37,18 +48,23 @@ a tap or Enter starts a new round via `resetGame()` — the page is not reloaded
 npm test        # 28 unit tests
 ```
 
-The tests verify the pure logic: deterministic `tickSpawn` with an injected `rand`
-(including carrying the remainder — exactly the test from the article), the bounds and peak
-of `sway`, `hitCircleRect` (inside / edge touch / 3-4-5 corner touch / far away),
-`difficulty` (floor at 0, saturation at 60+, monotonicity), and the shake trio
-(ceiling of 24, linear damping, exactly zero offset at zero).
+The tests verify the pure logic: the 3-lives damage rules (`processWaspCollision`,
+`processHazardCollision`, `processFireflyMiss`), the red-firefly web-burn check
+(`shouldBurnSpiderWeb`), deterministic `tickSpawn` with an injected `rand` (including
+carrying the remainder — exactly the test from the article), the bounds of `sway` and the
+per-stage `aggressiveSway`, the spider web pull vector, `hitCircleRect` (inside / edge
+touch / 3-4-5 corner touch / far away), the 25-entry `LEVELS` table and `getLevelConfig`
+clamping, the difficulty curve, and the shake trio (ceiling of 24, linear damping, exactly
+zero offset at zero).
 
 ## File layout
 
 ```
 src/
-  logic.ts    # pure logic: tickSpawn, sway, hitCircleRect, the shake trio, difficulty
-  main.ts     # state, input (keyboard+pointer), juice, drawing, full-screen canvas
+  logic.ts    # pure logic: spawner, sway, 3-lives damage rules, spider web pull,
+              # hitCircleRect, the 25-stage LEVELS table, difficulty, shake trio
+  main.ts     # state, input (keyboard+pointer), 25-stage progression, juice,
+              # drawing, full-screen canvas
 tests/
   logic.test.ts
 ```
@@ -69,6 +85,13 @@ tests/
 - "Play again" is not a `location.reload()`, it is a `resetGame()` function.
 - Randomness is not buried inside a function, it is handed in at the door (the `rand`
   parameter) — systems that look random get tested deterministically.
+
+## Tech stack
+
+- TypeScript
+- Vite
+- Vitest
+- HTML5 Canvas 2D (no libraries, no external assets)
 
 ## License
 
